@@ -523,6 +523,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 }
 @media (min-width: 761px) { .mobile-only { display: none; } }
 
+/* After the first visit the journal opens as you left it: no entrance animations or growing charts. */
+.calm .reveal { animation: none; opacity: 1; transform: none; }
+.calm .bar-fill, .calm .wr-bar i, .calm .ring .prog, .calm .donut .arc { transition: none; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; }
   .reveal { opacity: 1; transform: none; }
@@ -1018,6 +1022,8 @@ const PRISTINE = "<!doctype html><html lang=\"en\"><head>" + document.head.inner
 const KEY_TRADES = "tj.trades.v1";
 const KEY_SETTINGS = "tj.settings.v1";
 const KEY_UI = "tj.ui.v1";
+const KEY_CACHE = "tj.cloudcache.v1"; // last synced trades, shown instantly on open (this device only)
+const KEY_DRAFT = "tj.draft.v1";      // an unsaved trade form
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
@@ -1040,7 +1046,7 @@ let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 let trades = [];
 
-const ui = Object.assign({ range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
@@ -1060,8 +1066,10 @@ const SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS);
 const clean = o => JSON.parse(JSON.stringify(o, (k, v) => (k === "demo" ? undefined : v)));
 const safeId = id => /^[A-Za-z0-9_-]{1,100}$/.test(String(id || "")) ? String(id) : uid();
 
+let cachedTrades = (store.get(KEY_CACHE, []) || []).filter(t => t && t.id);
 function syncView() {
-  trades = realTrades;
+  // Until the account answers, show the trades this device last synced so opening is instant.
+  trades = persist.loading && !realTrades.length && cachedTrades.length ? cachedTrades : realTrades;
 }
 function setSync(mode, text) {
   const chip = F("syncChip");
@@ -1136,6 +1144,8 @@ async function connectCloud() {
       } else {
         realTrades = incoming;
       }
+      cachedTrades = realTrades;
+      store.set(KEY_CACHE, realTrades.map(clean));
       syncView();
       onDataChanged();
     }, err => { setSync("err", "Sync stopped. Reload to reconnect"); });
@@ -1194,10 +1204,12 @@ let dataTimer;
 function onDataChanged() {
   clearTimeout(dataTimer);
   dataTimer = setTimeout(() => {
+    const y = window.scrollY;
     refreshLists();
     renderRecent();
     if (isAnalytics(currentTab())) renderDashboard();
     if (currentTab() === "log") updatePreview();
+    window.scrollTo(0, y);
   }, 60);
 }
 
@@ -1226,6 +1238,7 @@ const num = v => { if (v === "" || v == null) return null; const n = Number(v); 
 const sum = a => a.reduce((s, v) => s + v, 0);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const calm = () => reduced() || document.documentElement.classList.contains("calm");
 
 function money(v, { signed = true, decimals = 2 } = {}) {
   if (v == null || !Number.isFinite(v)) return "—";
@@ -1259,7 +1272,7 @@ function toast(msg) {
 }
 
 function countUp(el, to, fmt, ms = 1100) {
-  if (reduced() || !Number.isFinite(to)) { el.textContent = fmt(to); return; }
+  if (calm() || !Number.isFinite(to)) { el.textContent = fmt(to); return; }
   const start = performance.now();
   const step = now => {
     const p = Math.min(1, (now - start) / ms);
@@ -1511,7 +1524,7 @@ function renderEquity(list, startBal, st) {
   const svg = $("svg", wrap);
   const path = $(".eq-line", svg);
   const len = path.getTotalLength();
-  if (!reduced()) {
+  if (!calm()) {
     path.style.strokeDasharray = len;
     path.style.strokeDashoffset = len;
     path.getBoundingClientRect();
@@ -1959,7 +1972,19 @@ function refreshLists() {
 }
 
 const F = id => document.getElementById(id);
-function resetForm(keepDate) {
+function restoreDraft() {
+  const d = store.get(KEY_DRAFT, null);
+  if (!d || typeof d !== "object") return;
+  loadIntoForm(d);
+  if (!d._editing) {
+    F("tId").value = "";
+    F("formTitle").textContent = "Log a trade";
+    F("formSubmit").textContent = "Save trade";
+    F("formCancel").hidden = true;
+  }
+}
+function resetForm(keepDate, keepDraft) {
+  if (!keepDraft) { try { localStorage.removeItem(KEY_DRAFT); } catch (e) { /* storage unavailable */ } }
   const d = F("tDate").value;
   $("#tradeForm").reset();
   F("tId").value = "";
@@ -2476,8 +2501,10 @@ function showTab(name, { focus = false, push = true } = {}) {
   if (push && location.hash !== "#" + name) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* sandboxed */ } }
   if (isAnalytics(name)) renderDashboard();
   if (name === "log") { renderRecent(); updatePreview(); }
-  window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
+  if (ui.tab !== name) { ui.tab = name; ui.scrollY = 0; saveUi(); }
+  if (!restoring) window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
 }
+let restoring = false;
 
 function refreshAll() {
   refreshLists();
@@ -2504,7 +2531,12 @@ $$(".tab").forEach(tab => {
 });
 document.addEventListener("click", e => {
   const go = e.target.closest("[data-goto]");
-  if (go) { if (go.dataset.goto === "log") resetForm(); showTab(go.dataset.goto); }
+  if (go) {
+    // Start a new trade, but keep an unsaved new-trade draft rather than wiping it.
+    const draft = store.get(KEY_DRAFT, null);
+    if (go.dataset.goto === "log" && (!draft || draft._editing)) resetForm();
+    showTab(go.dataset.goto);
+  }
 });
 window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { push: false }));
 
@@ -2548,6 +2580,7 @@ F("tableHead").addEventListener("click", e => {
 F("tableBody").addEventListener("click", e => {
   const ed = e.target.closest("[data-edit]");
   const del = e.target.closest("[data-del]");
+  if ((ed || del) && persist.loading && trades === cachedTrades) return toast("Still syncing your journal. Try again in a moment.");
   if (ed) {
     const t = trades.find(x => x.id === ed.dataset.edit);
     if (t) { showTab("log"); loadIntoForm(t); F("tDate").focus(); }
@@ -2565,7 +2598,12 @@ F("tableBody").addEventListener("click", e => {
 });
 
 // Form
-F("tradeForm").addEventListener("input", updatePreview);
+let draftTimer;
+F("tradeForm").addEventListener("input", () => {
+  updatePreview();
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(() => store.set(KEY_DRAFT, Object.assign(readForm(), { _editing: !!F("tId").value })), 300);
+});
 F("tConf").addEventListener("input", e => F("tConfOut").textContent = e.target.value + "/5");
 F("tTime").addEventListener("change", e => {
   const s = guessSession(e.target.value, F("tDate").value);
@@ -2755,10 +2793,26 @@ setSync("", "Connecting…");
 F("fRange").value = ui.range;
 F("fFrom").value = ui.from; F("fTo").value = ui.to;
 F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
-resetForm();
+resetForm(false, true);
 renderListEditors();
 renderAccount();
-showTab(location.hash.slice(1) || "overview", { push: false });
+// Reopen where the journal was left: same tab, same scroll position, same unsaved form.
+const first = !ui.opened;
+if (!first) document.documentElement.classList.add("calm");
+ui.opened = true; saveUi();
+restoreDraft();
+restoring = true;
+const startTab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : ui.tab;
+const savedY = ui.tab === startTab ? ui.scrollY : 0;
+showTab(startTab, { push: false });
+restoring = false;
+requestAnimationFrame(() => window.scrollTo(0, savedY));
+if (first) setTimeout(() => document.documentElement.classList.add("calm"), 2500);
+let scrollTimer;
+window.addEventListener("scroll", () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => { ui.scrollY = Math.round(window.scrollY); saveUi(); }, 250);
+}, { passive: true });
 connectCloud();
 
 // Offline support, only for the hosted app (its page links a web app manifest).
