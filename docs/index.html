@@ -483,6 +483,48 @@ dialog::backdrop { background: rgba(2, 8, 16, 0.72); backdrop-filter: blur(4px);
 @media (max-width: 1040px) { .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .quick-grid .q-wide { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .quick-grid .q-date, .quick-grid .q-dir { grid-column: 1 / -1; } .quick-actions .btn { flex: 1; justify-content: center; } }
 
+/* Weekly review */
+.wk-verdict { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 16px; font-size: 15px; line-height: 1.5; }
+.wk-verdict .emoji { font-size: 22px; line-height: 1; margin-top: 2px; }
+.wk-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 1040px) { .wk-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .wk-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.wk-tile { padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); min-width: 0; }
+.wk-tile > span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+.wk-tile b { display: block; font: 600 19px var(--font-mono); margin-top: 2px; }
+.wk-tile small { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
+.wk-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: end; height: 120px; margin: 6px 0 22px; }
+.wk-day { display: grid; grid-template-rows: 1fr auto auto; height: 100%; gap: 4px; text-align: center; min-width: 0; }
+.wk-day .col { position: relative; border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+.wk-day .col i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 8px; }
+.wk-day .col i.pos { background: linear-gradient(0deg, rgba(52, 210, 123, 0.35), var(--green)); }
+.wk-day .col i.neg { background: linear-gradient(0deg, rgba(255, 92, 122, 0.35), var(--red)); }
+.wk-day .v { font: 600 11px var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wk-day .d { font-size: 11px; color: var(--muted); }
+.wk-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+@media (max-width: 760px) { .wk-cols { grid-template-columns: minmax(0, 1fr); } }
+.wk-box { padding: 14px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); min-width: 0; }
+.wk-box h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.wk-box.good h4 { color: var(--green); }
+.wk-box.bad h4 { color: var(--red); }
+.wk-box.focus h4 { color: var(--accent); }
+.wk-box ul, .wk-box ol { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--text-2); }
+.wk-box li b { color: var(--text); font-weight: 600; }
+.wk-trades { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+@media (max-width: 560px) { .wk-trades { grid-template-columns: minmax(0, 1fr); } }
+.wk-trade { all: unset; box-sizing: border-box; cursor: pointer; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); display: grid; gap: 2px; }
+.wk-trade:hover { background: var(--surface); }
+.wk-trade:focus-visible { outline: 2px solid var(--focus); }
+.wk-trade > span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+.wk-trade b { font: 600 16px var(--font-mono); }
+.wk-trade small { font-size: 12.5px; color: var(--text-2); }
+.week-strip { all: unset; box-sizing: border-box; display: flex; width: 100%; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; cursor: pointer; padding: 14px 20px; }
+.week-strip:hover { background: var(--surface); }
+.week-strip:focus-visible { outline: 2px solid var(--focus); }
+.week-strip .ws-l { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 14px; color: var(--text-2); }
+.week-strip .ws-l strong { color: var(--text); font-weight: 600; }
+.week-strip .ws-r { color: var(--accent); font-size: 13.5px; font-weight: 500; }
+
 /* Before / after charts */
 .chart-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .chart-pair:empty { display: none; }
@@ -503,7 +545,7 @@ dialog::backdrop { background: rgba(2, 8, 16, 0.72); backdrop-filter: blur(4px);
 .td-head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
 .td-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 .td-item { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); min-width: 0; }
-.td-item span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 2px; }
+.td-item > span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 2px; }
 .td-item b { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
 .td-notes { white-space: pre-line; color: var(--text-2); font-size: 14px; margin: 0; }
 
@@ -738,6 +780,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           </section>
         </div>
 
+        <button type="button" class="card week-strip section reveal" style="--d:8" id="weekStrip" hidden></button>
+
         <section class="section reveal" style="--d:9" aria-labelledby="topInsTitle">
           <div class="section-head">
             <h2 id="topInsTitle">Top insights</h2>
@@ -832,6 +876,19 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
     <!-- =================== INSIGHTS =================== -->
     <section id="panel-insights" role="tabpanel" aria-labelledby="tab-insights" data-analytics hidden>
+      <section class="card accent-teal weekly section reveal" style="--d:1" aria-labelledby="wkTitle" id="weeklyReview">
+        <div class="card-head">
+          <div>
+            <h3 id="wkTitle">Weekly review</h3>
+            <div class="sub" id="wkRange" aria-live="polite"></div>
+          </div>
+          <div class="cal-nav">
+            <button class="btn sm ghost" type="button" id="wkPrev" aria-label="Previous week">‹</button>
+            <button class="btn sm ghost" type="button" id="wkNext" aria-label="Next week">›</button>
+          </div>
+        </div>
+        <div id="wkBody"></div>
+      </section>
       <div class="needs-data section">
         <div class="section-head reveal" style="--d:2">
           <h2>Actionable insights</h2>
@@ -1844,6 +1901,7 @@ function stats(list) {
    Rendering — Dashboard
    ====================================================================== */
 function renderDashboard() {
+  renderWeekly();
   const list = filtered();
   const hasAny = trades.length > 0;
 
@@ -1881,6 +1939,7 @@ function renderDashboard() {
   renderDirDow(list);
   renderCalendar(list);
   renderInsights(list, st);
+  renderWeekStrip();
 }
 
 function renderDirDow(list) {
@@ -2228,6 +2287,128 @@ function renderCalendar(list) {
 /* ======================================================================
    Insights engine
    ====================================================================== */
+/* ======================================================================
+   Weekly review (Monday to Sunday), built from all trades with the same rules as Insights
+   ====================================================================== */
+function weekStartOf(iso) {
+  const d = parseIso(iso);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return isoDate(d);
+}
+function addDays(iso, n) { const d = parseIso(iso); d.setDate(d.getDate() + n); return isoDate(d); }
+function latestWeek() {
+  const all = sortChrono(trades);
+  return all.length ? weekStartOf(all[all.length - 1].date) : weekStartOf(isoDate(new Date()));
+}
+function tradesInWeek(start) { const end = addDays(start, 6); return sortChrono(trades).filter(t => t.date >= start && t.date <= end); }
+
+function buildWeek(start) {
+  const list = tradesInWeek(start), prevList = tradesInWeek(addDays(start, -7));
+  const st = stats(list), prev = stats(prevList);
+  const followed = list.filter(t => t.followedPlan !== false), broke = list.filter(t => t.followedPlan === false);
+  const setups = group(list, "setup").sort((a, b) => b.pnl - a.pnl);
+  const sessions = group(list, "session").sort((a, b) => b.pnl - a.pnl);
+  const pairs = group(list, "pair").sort((a, b) => b.pnl - a.pnl);
+  const emos = group(list.filter(t => t.emotionBefore), "emotionBefore").sort((a, b) => b.pnl - a.pnl);
+  const mistakes = {};
+  list.forEach(t => String(t.mistakes || "").split(",").map(m => m.trim()).filter(Boolean).forEach(m => {
+    mistakes[m] = mistakes[m] || { n: 0, pnl: 0 }; mistakes[m].n++; mistakes[m].pnl += t.pnl;
+  }));
+  const topMistakes = Object.entries(mistakes).sort((a, b) => b[1].n - a[1].n || a[1].pnl - b[1].pnl);
+  // Same idea taken on several pairs the same day (stacked risk), when it lost.
+  const clusters = Object.values(list.reduce((acc, t) => {
+    const k = t.date + "|" + t.setup + "|" + t.direction; (acc[k] = acc[k] || []).push(t); return acc;
+  }, {})).filter(c => c.length >= 2 && sum(c.map(t => t.pnl)) < 0);
+  const rec = g => `${g.wins}W–${g.losses}L`;
+  const N = x => `<b>${x}</b>`;
+
+  const worked = [], cost = [], focus = [];
+  // Losing setups: ones traded repeatedly come first (a pattern), then the biggest single losses.
+  const losingSetups = setups.filter(g => g.pnl < 0).sort((a, b) => (b.n >= 2) - (a.n >= 2) || a.pnl - b.pnl).slice(0, 2);
+  const bestSetup = setups.find(g => g.pnl > 0), worstSetup = losingSetups[0];
+  if (bestSetup) worked.push(`${N(esc(bestSetup.name))} went ${rec(bestSetup)} for ${N(money(bestSetup.pnl))}.`);
+  const bestSess = sessions.find(g => g.pnl > 0); if (bestSess) worked.push(`${N(esc(bestSess.name))} was your best session: ${N(money(bestSess.pnl))} (${rec(bestSess)}).`);
+  const bestPair = pairs.find(g => g.pnl > 0); if (bestPair) worked.push(`${N(esc(bestPair.name))} made ${N(money(bestPair.pnl))} from ${plural(bestPair.n, "trade")}.`);
+  const bestEmo = emos.find(g => g.pnl > 0 && g.n >= 2); if (bestEmo) worked.push(`Trades taken feeling ${N(esc(bestEmo.name.toLowerCase()))} returned ${N(money(bestEmo.pnl))} (${rec(bestEmo)}).`);
+  if (followed.length && sum(followed.map(t => t.pnl)) > 0) worked.push(`Following your plan made ${N(money(sum(followed.map(t => t.pnl))))} over ${plural(followed.length, "trade")}.`);
+
+  losingSetups.forEach(g => cost.push(`${N(esc(g.name))} went ${rec(g)} for ${N(money(g.pnl))}.`));
+  const worstSess = sessions.filter(g => g.pnl < 0).pop(); if (worstSess) cost.push(`${N(esc(worstSess.name))} lost ${N(money(worstSess.pnl))} (${rec(worstSess)}).`);
+  const worstEmo = emos.filter(g => g.pnl < 0 && g.n >= 2).pop(); if (worstEmo) cost.push(`Trades taken feeling ${N(esc(worstEmo.name.toLowerCase()))}: ${rec(worstEmo)}, ${N(money(worstEmo.pnl))}.`);
+  if (broke.length) cost.push(`${plural(broke.length, "trade")} broke your plan, for ${N(money(sum(broke.map(t => t.pnl))))}.`);
+  clusters.forEach(c => cost.push(`On ${fmtDate(c[0].date, { weekday: "short", day: "numeric", month: "short" })} you took ${N(esc(c[0].setup))} ${esc(c[0].direction.toLowerCase())} on ${c.length} pairs (${c.map(t => esc(t.pair)).join(", ")}) for ${N(money(sum(c.map(t => t.pnl))))}.`));
+  if (topMistakes.length) cost.push(`Mistakes logged: ${topMistakes.slice(0, 3).map(([m, v]) => `${esc(m)} ×${v.n}`).join(", ")}.`);
+  if (st.longestLoss >= 3) cost.push(`A losing run of ${N(st.longestLoss)} trades in a row.`);
+
+  if (worstEmo) focus.push(`If you feel ${esc(worstEmo.name.toLowerCase())}, skip the trade. Those entries went ${rec(worstEmo)} this week.`);
+  if (clusters.length) focus.push(`One position per idea: when the same setup appears on several correlated pairs, take the best one, not all of them.`);
+  if (mistakes["Closed too early"] && mistakes["Closed too early"].n >= 2) focus.push(`Let winners reach take profit. You closed early ${mistakes["Closed too early"].n} times; set the TP and step away.`);
+  if (st.longestLoss >= 3 && focus.length < 3) focus.push(`Use a daily stop: after 2 losses in a row, finish for the day.`);
+  if (broke.length && focus.length < 3) focus.push(`Stick to the plan. Plan-breaking trades returned ${money(sum(broke.map(t => t.pnl)))}${broke.some(t => /influence/i.test(t.mistakes || "")) ? ", and outside influence was behind some of them" : ""}.`);
+  if (bestSetup && focus.length < 3) focus.push(`Prioritise ${esc(bestSetup.name)} setups. They were your edge this week (${rec(bestSetup)}).`);
+  if (worstSetup && focus.length < 3) focus.push(`Tighten ${esc(worstSetup.name)} entries: wait for confirmation before committing.`);
+
+  const delta = st.total - prev.total;
+  let verdict;
+  if (!list.length) verdict = { emoji: "🗓️", text: "No trades this week." };
+  else if (st.total > 0 && st.pf >= 1.5) verdict = { emoji: "🚀", text: `Strong week. You finished ${N(money(st.total))} across ${plural(st.n, "trade")}${prevList.length ? `, ${delta >= 0 ? "up" : "down"} ${N(money(Math.abs(delta), { signed: false }))} on last week` : ""}.` };
+  else if (st.total > 0) verdict = { emoji: "📈", text: `Positive week: ${N(money(st.total))} from ${plural(st.n, "trade")}. Solid, with room to tighten up.` };
+  else if (st.total === 0) verdict = { emoji: "➖", text: `Flat week across ${plural(st.n, "trade")}.` };
+  else verdict = { emoji: "🧱", text: `Tough week: ${N(money(st.total))} across ${plural(st.n, "trade")}. The notes below show where it went.` };
+
+  const days = Array.from({ length: 7 }, (_, i) => { const d = addDays(start, i); const ts = list.filter(t => t.date === d); return { d, n: ts.length, pnl: sum(ts.map(t => t.pnl)) }; });
+  return { start, end: addDays(start, 6), list, prevList, st, prev, followed, verdict, worked, cost, focus: focus.slice(0, 3), days };
+}
+
+let wkStart = null;
+function renderWeekly() {
+  if (!wkStart) wkStart = latestWeek();
+  const w = buildWeek(wkStart);
+  const fmt = iso => fmtDate(iso, { day: "numeric", month: "short" });
+  F("wkRange").textContent = `${fmt(w.start)} – ${fmtDate(w.end, { day: "numeric", month: "short", year: "numeric" })}${w.start === weekStartOf(isoDate(new Date())) ? " · this week" : ""}`;
+  const first = trades.length ? weekStartOf(sortChrono(trades)[0].date) : w.start;
+  F("wkPrev").disabled = w.start <= first;
+  F("wkNext").disabled = w.start >= latestWeek();
+  if (!w.list.length) { F("wkBody").innerHTML = `<p class="none">No trades in this week.</p>`; return; }
+  const { st, prev } = w;
+  const deltaTxt = (cur, old, f) => w.prevList.length ? `${cur - old >= 0 ? "▲" : "▼"} ${f(Math.abs(cur - old))} vs last week` : "No trades last week";
+  const adherence = w.followed.length / w.list.length;
+  const tiles = [
+    ["P&L", `<span class="${tone(st.total)}">${money(st.total)}</span>`, deltaTxt(st.total, prev.total, v => money(v, { signed: false }))],
+    ["Trades", st.n, `${st.wins}W · ${st.losses}L${st.be ? " · " + st.be + "BE" : ""}`],
+    ["Win rate", `<span class="${st.winRate >= 0.5 ? "pos" : "neg"}">${pct(st.winRate, 0)}</span>`, deltaTxt(st.winRate * 100, prev.winRate * 100, v => v.toFixed(0) + " pts")],
+    ["Avg R", `<span class="${tone(st.avgR)}">${fmtR(st.avgR)}</span>`, `Expectancy ${money(st.expectancy, { decimals: 0 })}`],
+    ["Profit factor", `<span class="hl">${st.pf === Infinity ? "∞" : st.pf.toFixed(2)}</span>`, `Payoff ${st.payoff == null ? "—" : st.payoff.toFixed(2)} : 1`],
+    ["Plan followed", `<span class="hl">${pct(adherence, 0)}</span>`, `${w.followed.length} of ${st.n} trades`]
+  ];
+  const maxAbs = Math.max(1, ...w.days.map(d => Math.abs(d.pnl)));
+  const dayName = iso => parseIso(iso).toLocaleDateString("en-GB", { weekday: "short" });
+  const bestT = st.best, worstT = st.worst && st.worst.pnl < 0 ? st.worst : null;
+  const tradeBtn = (label, t) => `<button type="button" class="wk-trade" data-view-trade="${esc(t.id)}"><span>${label}</span><b class="${tone(t.pnl)}">${money(t.pnl)}</b><small>${esc(t.pair)} · ${esc(t.setup)} · ${fmtDate(t.date, { weekday: "short", day: "numeric", month: "short" })}</small></button>`;
+  F("wkBody").innerHTML = `
+    <p class="wk-verdict"><span class="emoji" aria-hidden="true">${w.verdict.emoji}</span><span>${w.verdict.text}</span></p>
+    <div class="wk-tiles">${tiles.map(([l, v, sub]) => `<div class="wk-tile"><span>${l}</span><b>${v}</b><small>${sub}</small></div>`).join("")}</div>
+    <div class="wk-days" role="list" aria-label="P&amp;L by day">${w.days.map(d => `
+      <div class="wk-day" role="listitem" aria-label="${dayName(d.d)}: ${d.n ? money(d.pnl) + " from " + plural(d.n, "trade") : "no trades"}">
+        <div class="col">${d.n ? `<i class="${d.pnl >= 0 ? "pos" : "neg"}" style="height:${Math.max(6, Math.abs(d.pnl) / maxAbs * 100)}%"></i>` : ""}</div>
+        <div class="v ${d.n ? tone(d.pnl) : "muted"}">${d.n ? money(d.pnl, { decimals: 0 }) : "–"}</div>
+        <div class="d">${dayName(d.d)}</div>
+      </div>`).join("")}</div>
+    <div class="wk-trades">${bestT && bestT.pnl > 0 ? tradeBtn("Best trade", bestT) : ""}${worstT ? tradeBtn("Worst trade", worstT) : ""}</div>
+    <div class="wk-cols">
+      <div class="wk-box good"><h4>What worked</h4>${w.worked.length ? `<ul>${w.worked.map(x => `<li>${x}</li>`).join("")}</ul>` : `<p class="none" style="padding:0">Nothing stood out this week.</p>`}</div>
+      <div class="wk-box bad"><h4>What cost you</h4>${w.cost.length ? `<ul>${w.cost.map(x => `<li>${x}</li>`).join("")}</ul>` : `<p class="none" style="padding:0">No leaks this week.</p>`}</div>
+    </div>
+    ${w.focus.length ? `<div class="wk-box focus"><h4>Focus for next week</h4><ol>${w.focus.map(x => `<li>${x}</li>`).join("")}</ol></div>` : ""}`;
+}
+function renderWeekStrip() {
+  const strip = F("weekStrip");
+  if (!trades.length) { strip.hidden = true; return; }
+  const w = buildWeek(latestWeek());
+  strip.hidden = false;
+  strip.innerHTML = `<span class="ws-l"><strong>Week of ${fmtDate(w.start, { day: "numeric", month: "short" })}</strong><span class="mono ${tone(w.st.total)}">${money(w.st.total)}</span><span>${plural(w.st.n, "trade")} · ${pct(w.st.winRate, 0)} win rate</span></span><span class="ws-r">View weekly review →</span>`;
+}
+
 function renderInsights(list, st) {
   const out = [];
   const N = s => `<span class="num">${s}</span>`;
@@ -3224,6 +3405,13 @@ function openTrade(t) {
   F("tdDone").focus();
 }
 F("tdClose").addEventListener("click", () => F("tradeDlg").close());
+F("wkPrev").addEventListener("click", () => { wkStart = addDays(wkStart, -7); renderWeekly(); });
+F("wkNext").addEventListener("click", () => { wkStart = addDays(wkStart, 7); renderWeekly(); });
+F("wkBody").addEventListener("click", e => {
+  const b = e.target.closest("[data-view-trade]");
+  if (b) { const t = trades.find(x => x.id === b.dataset.viewTrade); if (t) openTrade(t); }
+});
+F("weekStrip").addEventListener("click", () => { wkStart = latestWeek(); showTab("insights"); });
 F("tdDone").addEventListener("click", () => F("tradeDlg").close());
 F("tdEdit").addEventListener("click", () => {
   F("tradeDlg").close();
