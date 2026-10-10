@@ -562,6 +562,41 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .toolbar h2 { font-size: 20px; }
 }
 
+/* Navigation: a sidebar on wide screens; a slide-out menu (☰) on phones and narrow windows. */
+.nav-label, .drawer-brand, .menu-btn { display: none; }
+.nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); padding: 14px 14px 6px; }
+.tabs .tab span[aria-hidden] { width: 22px; text-align: center; }
+@media (min-width: 1041px) {
+  header.top { position: fixed; top: 0; left: 0; bottom: 0; width: 252px; z-index: 40; border-bottom: 0; border-right: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(10, 26, 45, 0.94), rgba(6, 17, 31, 0.97)); padding: 20px 0 84px; overflow-y: auto; }
+  header.top .container { padding: 0 14px; max-width: none; }
+  .top-inner { flex-direction: column; align-items: flex-start; gap: 0; min-height: 0; padding: 0 14px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  #exportJournalTop { position: fixed; left: 14px; bottom: 20px; width: 224px; justify-content: center; }
+  .tabs { flex-direction: column; background: transparent; border: 0; padding: 0; gap: 2px; overflow: visible; margin: 0; scroll-snap-type: none; }
+  .tabs .tab { justify-content: flex-start; flex: none; padding: 11px 14px; font-size: 14.5px; border-radius: 10px; }
+  .tabs .tab[aria-selected="true"] { box-shadow: inset 3px 0 0 var(--brand-2), inset 0 0 0 1px rgba(47, 208, 200, 0.25); }
+  .nav-label { display: block; }
+  main, footer { margin-left: 252px; }
+  main .container { max-width: 1180px; }
+}
+@media (max-width: 1040px) {
+  .menu-btn { display: inline-flex; margin-left: auto; font-size: 20px; padding: 6px 12px; }
+  #exportJournalTop { display: none; }
+  .tabs { position: fixed; top: 0; left: 0; bottom: 0; width: min(290px, 86vw); z-index: 60; margin: 0; border-radius: 0; border: 0;
+    border-right: 1px solid var(--border-strong); flex-direction: column; flex-wrap: nowrap; gap: 2px; overflow-y: auto; scroll-snap-type: none;
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 14px calc(22px + env(safe-area-inset-bottom, 0px)); background: #0a1a2d; box-shadow: 20px 0 60px rgba(0, 0, 0, 0.5);
+    transform: translateX(-100%); visibility: hidden; transition: transform .25s ease, visibility 0s linear .25s; }
+  .tabs.open { transform: none; visibility: visible; transition: transform .25s ease; }
+  .tabs .tab { justify-content: flex-start; flex: none; padding: 13px 14px; font-size: 16px; border-radius: 10px; }
+  .nav-label { display: block; }
+  .drawer-brand { display: flex; gap: 10px; align-items: center; padding: 0 6px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  .drawer-brand img { height: 34px; width: auto; }
+  .drawer-brand b { font-weight: 800; font-size: 18px; letter-spacing: 1.5px; background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  /* Below the header (z-index 40), whose own layer contains the menu, so the menu stays on top. */
+  .scrim { position: fixed; inset: 0; z-index: 39; background: rgba(2, 8, 16, 0.6); }
+}
+@media (prefers-reduced-motion: reduce) { .tabs, .tabs.open { transition: none; } }
+
 /* Phones: lighter rendering and no zoom-on-focus. iOS zooms the page when a field's text is under 16px,
    and many stacked backdrop blurs can stall scrolling or leave parts of the page blank. */
 @media (max-width: 760px), (pointer: coarse) {
@@ -635,16 +670,21 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
     </div>
     <button class="btn sm" type="button" id="exportJournalTop" title="Save a copy of your journal, with all your trades, as a file">⬇ Export journal</button>
+    <button class="btn ghost menu-btn" type="button" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav">☰</button>
   </div>
   <div class="container">
-    <nav class="tabs" role="tablist" aria-label="Main sections">
+    <nav class="tabs" id="mainNav" role="tablist" aria-label="Main sections" aria-orientation="vertical">
+      <div class="drawer-brand" aria-hidden="true"><img alt="" id="drawerLogo"><b>ELEV8</b></div>
+      <div class="nav-label" aria-hidden="true">Analyse</div>
       <button class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" data-tab="overview"><span aria-hidden="true">📊</span> Overview</button>
       <button class="tab" role="tab" id="tab-analytics" aria-controls="panel-analytics" aria-selected="false" tabindex="-1" data-tab="analytics"><span aria-hidden="true">📈</span> Analytics</button>
       <button class="tab" role="tab" id="tab-psychology" aria-controls="panel-psychology" aria-selected="false" tabindex="-1" data-tab="psychology"><span aria-hidden="true">🧠</span> Psychology</button>
       <button class="tab" role="tab" id="tab-calendar" aria-controls="panel-calendar" aria-selected="false" tabindex="-1" data-tab="calendar"><span aria-hidden="true">📅</span> Calendar</button>
       <button class="tab" role="tab" id="tab-insights" aria-controls="panel-insights" aria-selected="false" tabindex="-1" data-tab="insights"><span aria-hidden="true">💡</span> Insights</button>
+      <div class="nav-label" aria-hidden="true">Journal</div>
       <button class="tab" role="tab" id="tab-journal" aria-controls="panel-journal" aria-selected="false" tabindex="-1" data-tab="journal"><span aria-hidden="true">📒</span> Trade log</button>
       <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" data-tab="log"><span aria-hidden="true">✍️</span> Log trade</button>
+      <div class="nav-label" aria-hidden="true">Account</div>
       <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings"><span aria-hidden="true">⚙️</span> Settings</button>
     </nav>
   </div>
@@ -1166,6 +1206,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="scrim" id="navScrim" hidden></div>
 
 <section id="home" class="home" hidden aria-labelledby="homeTitle">
   <div class="home-inner">
@@ -3170,8 +3211,8 @@ $$(".tab").forEach(tab => {
   tab.addEventListener("keydown", e => {
     const i = TABS.indexOf(tab.dataset.tab);
     let n = null;
-    if (e.key === "ArrowRight") n = (i + 1) % TABS.length;
-    if (e.key === "ArrowLeft") n = (i - 1 + TABS.length) % TABS.length;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") n = (i + 1) % TABS.length;
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") n = (i - 1 + TABS.length) % TABS.length;
     if (e.key === "Home") n = 0;
     if (e.key === "End") n = TABS.length - 1;
     if (n != null) { e.preventDefault(); showTab(TABS[n], { focus: true }); }
@@ -3383,6 +3424,24 @@ function openTrade(t) {
   F("tdDone").focus();
 }
 F("tdClose").addEventListener("click", () => F("tradeDlg").close());
+
+/* ---------- Slide-out menu (phones and narrow windows) ---------- */
+F("drawerLogo").src = $(".brand-logo").src;
+function setMenu(open) {
+  const nav = F("mainNav");
+  if (open === nav.classList.contains("open")) return;
+  nav.classList.toggle("open", open);
+  F("navScrim").hidden = !open;
+  F("menuBtn").setAttribute("aria-expanded", open);
+  F("menuBtn").setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  if (open) ($(".tab[aria-selected=true]", nav) || $(".tab", nav)).focus();
+  else F("menuBtn").focus({ preventScroll: true });
+}
+F("menuBtn").addEventListener("click", () => setMenu(true));
+F("navScrim").addEventListener("click", () => setMenu(false));
+F("mainNav").addEventListener("click", e => { if (e.target.closest(".tab") && F("mainNav").classList.contains("open")) setMenu(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && F("mainNav").classList.contains("open")) setMenu(false); });
+window.matchMedia("(min-width: 1041px)").addEventListener("change", e => { if (e.matches) setMenu(false); });
 F("wkPrev").addEventListener("click", () => { wkStart = addDays(wkStart, -7); renderWeekly(); });
 F("wkNext").addEventListener("click", () => { wkStart = addDays(wkStart, 7); renderWeekly(); });
 F("wkBody").addEventListener("click", e => {
