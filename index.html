@@ -947,7 +947,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <p class="muted" style="margin:0;font-size:13.5px"><strong style="color:var(--text)">Export journal</strong> saves a copy of this whole journal with your trades built in. Open it in any browser, no account needed. The Share or Download option in claude.ai saves the page without your trades, so use this instead.</p>
             <p class="muted" style="margin:0;font-size:13.5px">Import an Excel (.xlsx), CSV or JSON file. Columns are matched by name, such as Date, Pair, Session, Direction, Setup, R, P&amp;L, Emotion and Notes.</p>
             <label class="toggle"><input type="checkbox" id="importReplace"> Replace existing trades instead of adding</label>
-            <label class="btn primary file-label">⬆ Import file<input type="file" id="importFile" accept=".xlsx,.csv,.json,.txt" aria-label="Import trades from file"></label>
+            <label class="btn primary file-label">⬆ Import file<input type="file" id="importFile" accept=".html,.htm,.xlsx,.csv,.json,.txt" aria-label="Import trades from file"></label>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn primary" type="button" id="exportJournal">⬇ Export journal (with data)</button>
               <button class="btn" type="button" id="exportXlsx">⬇ Export Excel</button>
@@ -1144,7 +1144,11 @@ async function connectCloud() {
 }
 
 function finishLoading(mode) {
-  if (mode === "local") setSync("local", "Saved in this browser");
+  if (mode === "local") {
+    setSync("local", "Saved on this device");
+    // Ask the browser not to clear this app's storage under pressure.
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* optional */ }
+  }
   persist.loading = false;
   syncView();
   onDataChanged();
@@ -2113,6 +2117,16 @@ async function download(name, data, type, { copyText } = {}) {
     return;
   }
   const blob = data instanceof Blob ? data : new Blob([data], { type });
+  // In a home-screen app on iPhone, plain downloads are unreliable; the share sheet offers "Save to Files".
+  try {
+    const file = new File([blob], name, { type });
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
+      await navigator.share({ files: [file], title: name });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === "AbortError") return;
+  }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
@@ -2394,7 +2408,14 @@ function rowsToTrades(rows) {
 async function importFile(file) {
   const name = file.name.toLowerCase();
   let imported;
-  if (name.endsWith(".json")) {
+  if (name.endsWith(".html") || name.endsWith(".htm")) {
+    // A journal saved with "Export journal": read the trades embedded in it.
+    const doc = new DOMParser().parseFromString(await file.text(), "text/html");
+    const el = doc.getElementById("embedded-data");
+    if (!el) throw new Error("This file isn't an exported journal");
+    const data = JSON.parse(el.textContent);
+    imported = (data.trades || []).map(t => Object.assign({}, t, { id: safeId(t.id), pnl: Number(t.pnl) || 0 }));
+  } else if (name.endsWith(".json")) {
     const data = JSON.parse(await file.text());
     const arr = Array.isArray(data) ? data : data.trades;
     if (!Array.isArray(arr)) throw new Error("JSON must be an array of trades");
@@ -2731,5 +2752,10 @@ renderListEditors();
 renderAccount();
 showTab(location.hash.slice(1) || "overview", { push: false });
 connectCloud();
+
+// Offline support, only for the hosted app (its page links a web app manifest).
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 })();
 </script>

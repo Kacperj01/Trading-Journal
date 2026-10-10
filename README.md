@@ -10,4 +10,12 @@ A self-contained trading journal and performance dashboard. Open `index.html` in
 - Import `.xlsx`, `.csv` or `.json` files (columns are matched by name). Export to JSON or CSV.
 - When published as a claude.ai artifact, trades sync privately to your account across devices; opened as a local file, they are saved in the browser. Export a backup regularly.
 
-`data/notion-q4-2026.json` holds the 22 trades from the Notion database "Trading Journal Q4 2026" (1–9 Oct 2026), converted to the journal's format. Import it from Settings when using the page locally. Setups, mistakes and plan adherence were inferred from each trade's notes, because the Notion database has no columns for them.
+## Install on iPhone
+
+The installable app lives in `docs/` and is built from `index.html`:
+
+```
+python3 site/build.py
+```
+
+Host it with GitHub Pages (Settings → Pages → Deploy from a branch → this branch, folder `/docs`), then open the Pages address in Safari, tap Share → Add to Home Screen. The app opens full screen, works offline, and saves trades on the device. Move trades in from Settings → Import file, using a file saved with Export journal, or an Excel/CSV/JSON export.
