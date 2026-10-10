@@ -27,10 +27,11 @@ if cfg.get("supabaseUrl") and cfg.get("supabaseAnonKey"):
 
 version = hashlib.sha256((src + sync_script).encode()).hexdigest()[:10]
 page = f"""<!doctype html>
-<html lang="en">
+<html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<script>window.ELEV8_BUILD = "{version}";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">

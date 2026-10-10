@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<script>window.ELEV8_BUILD = "96009bed40";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -584,6 +585,22 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 }
 
 /* Navigation: a sidebar on wide screens; a slide-out menu (☰) on phones and narrow windows. */
+.tablist { display: flex; flex-direction: column; gap: 2px; }
+.side-actions { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.side-link { appearance: none; border: 0; background: transparent; color: var(--text-2); font: 500 14.5px var(--font-sans); cursor: pointer;
+  display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 10px; text-align: left; }
+.side-link:hover { background: var(--surface); color: var(--text); }
+.side-link span[aria-hidden] { width: 22px; text-align: center; }
+.side-link.danger { color: var(--red); }
+.side-link.danger:hover { background: var(--red-soft); }
+.bug-dlg { width: min(480px, calc(100vw - 32px)); }
+.bug-dlg textarea { min-height: 0; }
+.seg-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.seg-tabs button { appearance: none; border: 0; background: transparent; color: var(--text-2); font: 500 13.5px var(--font-sans); padding: 7px 12px; border-radius: 9px; cursor: pointer; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.seg-tabs button:hover { color: var(--text); background: var(--surface); }
+.seg-tabs button[aria-pressed="true"] { color: var(--text); background: linear-gradient(120deg, rgba(42, 127, 217, 0.34), rgba(37, 192, 192, 0.16)); box-shadow: inset 0 0 0 1px rgba(47, 208, 200, 0.38); }
+.seg-tabs .cnt { font: 500 11.5px var(--font-mono); color: var(--muted); }
+.seg-tabs button[aria-pressed="true"] .cnt { color: var(--accent); }
 .nav-label, .drawer-brand, .menu-btn { display: none; }
 .nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); padding: 14px 14px 6px; }
 .tabs .tab span[aria-hidden] { width: 22px; text-align: center; }
@@ -608,6 +625,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     transform: translateX(-100%); visibility: hidden; transition: transform .25s ease, visibility 0s linear .25s; }
   .tabs.open { transform: none; visibility: visible; transition: transform .25s ease; }
   .tabs .tab { justify-content: flex-start; flex: none; padding: 13px 14px; font-size: 16px; border-radius: 10px; }
+  .side-link { padding: 13px 14px; font-size: 16px; }
+  .side-actions { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 10px; }
   .nav-label { display: block; }
   .drawer-brand { display: flex; gap: 10px; align-items: center; padding: 0 6px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
   .drawer-brand img { height: 34px; width: auto; }
@@ -703,7 +722,15 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .filters label:not(#fFromWrap):not(#fToWrap) { font-size: 0; gap: 0; }
   #fFromWrap, #fToWrap { grid-column: span 3; flex-direction: row; align-items: center; gap: 10px; font-size: 13px; }
   #fFromWrap { order: 4; } #fToWrap { order: 5; }
-  .filters select, .filters input { width: 100%; padding: 6px 8px; border-radius: 9px; }
+  .filters { gap: 6px; }
+  .filters select { -webkit-appearance: none; appearance: none; width: 100%; height: 34px; padding: 0 26px 0 12px; border-radius: 999px;
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238394ad' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center;
+    border: 1px solid var(--border); color: var(--text-2); text-overflow: ellipsis; }
+  .filters input { width: 100%; padding: 6px 10px; border-radius: 9px; }
+  /* The home-screen app stops iPhone zooming into fields, so its filter text can be smaller. */
+  .hosted .filters select { font-size: 13.5px; }
+  .table-tools .seg-tabs { width: 100%; }
+  .table-tools .seg-tabs button { flex: 1; justify-content: center; padding: 8px 6px; font-size: 13.5px; }
   .table-tools { width: 100%; }
   .table-tools input[type="search"] { flex: 1 1 100%; }
   thead th { position: static; }
@@ -760,8 +787,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <button class="btn ghost menu-btn" type="button" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav">☰</button>
   </div>
   <div class="container">
-    <nav class="tabs" id="mainNav" role="tablist" aria-label="Main sections" aria-orientation="vertical">
+    <nav class="tabs" id="mainNav" aria-label="Main">
       <div class="drawer-brand" aria-hidden="true"><img alt="" id="drawerLogo"><b>ELEV8</b></div>
+      <div class="tablist" role="tablist" aria-label="Main sections" aria-orientation="vertical">
       <div class="nav-label" aria-hidden="true">Analyse</div>
       <button class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" data-tab="overview"><span aria-hidden="true">📊</span> Overview</button>
       <button class="tab" role="tab" id="tab-analytics" aria-controls="panel-analytics" aria-selected="false" tabindex="-1" data-tab="analytics"><span aria-hidden="true">📈</span> Analytics</button>
@@ -773,6 +801,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" data-tab="log"><span aria-hidden="true">✍️</span> Log trade</button>
       <div class="nav-label" aria-hidden="true">Account</div>
       <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings"><span aria-hidden="true">⚙️</span> Settings</button>
+      </div>
+      <div class="side-actions">
+        <button class="side-link" type="button" id="sideBug"><span aria-hidden="true">🐞</span> Report a bug</button>
+        <button class="side-link danger" type="button" id="sideLogout" hidden><span aria-hidden="true">↪︎</span> Log out</button>
+      </div>
     </nav>
   </div>
 </header>
@@ -795,6 +828,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <label>Period
             <select id="fRange">
               <option value="all">All time</option>
+              <option value="week">This week</option>
+              <option value="lastweek">Last week</option>
               <option value="month">This month</option>
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
@@ -1014,13 +1049,12 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <div class="table-tools">
             <label class="sr-only" for="tSearch">Search trades</label>
             <input type="search" id="tSearch" placeholder="Search pair, setup, notes…">
-            <label class="sr-only" for="tResult">Filter by result</label>
-            <select id="tResult">
-              <option value="">All results</option>
-              <option value="Win">Wins</option>
-              <option value="Loss">Losses</option>
-              <option value="BE">Breakeven</option>
-            </select>
+            <div class="seg-tabs" role="group" aria-label="Filter by result" id="tResultTabs">
+              <button type="button" data-res="" aria-pressed="true">All <span class="cnt" data-cnt=""></span></button>
+              <button type="button" data-res="Win" aria-pressed="false">Wins <span class="cnt" data-cnt="Win"></span></button>
+              <button type="button" data-res="Loss" aria-pressed="false">Losses <span class="cnt" data-cnt="Loss"></span></button>
+              <button type="button" data-res="BE" aria-pressed="false">Breakeven <span class="cnt" data-cnt="BE"></span></button>
+            </div>
             <label class="sr-only" for="tSort">Sort trades</label>
             <select id="tSort" class="mobile-only">
               <option value="date:desc">Newest first</option>
@@ -1317,6 +1351,21 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </div>
 </section>
 
+<dialog id="bugDlg" class="bug-dlg" aria-labelledby="bugTitle" aria-describedby="bugIntro">
+  <form id="bugForm" class="dlg-body" novalidate>
+    <h3 id="bugTitle">Report a bug</h3>
+    <p id="bugIntro">Tell us what went wrong. The report includes the section you're on, your device and screen size. Your trades and email aren't included.</p>
+    <div class="field"><label for="bugText">What happened?</label><textarea id="bugText" rows="4" placeholder="e.g. On Calendar, the first week's boxes are taller than the rest."></textarea></div>
+    <div class="field"><label for="bugSteps">Steps to see it (optional)</label><textarea id="bugSteps" rows="3" placeholder="1. Open Calendar  2. …"></textarea></div>
+    <p id="bugMsg" class="q-msg" role="alert"></p>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="bugCancel">Cancel</button>
+      <button class="btn" type="button" id="bugCopy">Copy report</button>
+      <button class="btn primary" type="submit">Send report</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="tradeDlg" class="trade-dlg" aria-labelledby="tdTitle">
   <div class="dlg-body">
     <div class="td-head">
@@ -1602,6 +1651,7 @@ async function sbSync() {
 
 function sbRender() {
   if (!SB || inViewer()) return;
+  F("sideLogout").hidden = !sb.session;
   F("syncCard").hidden = false;
   const on = !!sb.session;
   F("syncSignedOut").hidden = on;
@@ -1929,6 +1979,8 @@ function rangeBounds() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const t = isoDate(today);
   switch (ui.range) {
+    case "week": { const start = weekStartOf(t); return [start, addDays(start, 6)]; }
+    case "lastweek": { const start = addDays(weekStartOf(t), -7); return [start, addDays(start, 6)]; }
     case "month": return [isoDate(new Date(today.getFullYear(), today.getMonth(), 1)), t];
     case "30": { const d = new Date(today); d.setDate(d.getDate() - 29); return [isoDate(d), t]; }
     case "90": { const d = new Date(today); d.setDate(d.getDate() - 89); return [isoDate(d), t]; }
@@ -2013,7 +2065,7 @@ function renderDashboard() {
   const hasAny = trades.length > 0;
 
   const [from, to] = rangeBounds();
-  const labels = { all: "All time", month: "This month", "30": "Last 30 days", "90": "Last 90 days", ytd: "Year to date", custom: "Custom range" };
+  const labels = { all: "All time", week: "This week", lastweek: "Last week", month: "This month", "30": "Last 30 days", "90": "Last 90 days", ytd: "Year to date", custom: "Custom range" };
   let lbl = labels[ui.range];
   if (ui.range !== "all") lbl += " · " + (from.startsWith("0000") ? "start" : fmtDate(from)) + " → " + (to.startsWith("9999") ? "today" : fmtDate(to));
   if (ui.session) lbl += " · " + ui.session;
@@ -2661,10 +2713,14 @@ const COLS = [
   { key: "emotionBefore", label: "Emotion" }, { key: "notes", label: "Notes", static: true }, { key: "actions", label: "Actions", static: true }
 ];
 
+let resultFilter = "";
 function renderTable(list) {
   const indexed = list.map((t, i) => ({ t, idx: i + 1 }));
   const q = $("#tSearch").value.trim().toLowerCase();
-  const res = $("#tResult").value;
+  const res = resultFilter;
+  const counts = { "": list.length, Win: 0, Loss: 0, BE: 0 };
+  list.forEach(t => counts[resultOf(t)]++);
+  $$("[data-cnt]", F("tResultTabs")).forEach(el => el.textContent = counts[el.dataset.cnt]);
   let rows = indexed.filter(({ t }) => (!res || resultOf(t) === res)
     && (!q || [t.pair, t.setup, t.session, t.notes, t.direction, t.emotionBefore, t.emotionAfter, t.mistakes, t.date].join(" ").toLowerCase().includes(q)));
   const k = ui.sortKey, dir = ui.sortDir === "asc" ? 1 : -1;
@@ -3339,7 +3395,13 @@ F("calNext").addEventListener("click", () => shiftMonth(1));
 
 // Table
 F("tSearch").addEventListener("input", () => renderTable(filtered()));
-F("tResult").addEventListener("change", () => renderTable(filtered()));
+F("tResultTabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-res]");
+  if (!b) return;
+  resultFilter = b.dataset.res;
+  $$("[data-res]", F("tResultTabs")).forEach(x => x.setAttribute("aria-pressed", x === b));
+  renderTable(filtered());
+});
 F("tSort").addEventListener("change", e => {
   const [k, d] = e.target.value.split(":");
   ui.sortKey = k; ui.sortDir = d; saveUi(); renderTable(filtered());
@@ -3512,6 +3574,53 @@ function openTrade(t) {
   F("tdDone").focus();
 }
 F("tdClose").addEventListener("click", () => F("tradeDlg").close());
+
+/* ---------- Report a bug: a pre-filled GitHub issue (no trades or email included) ---------- */
+const BUG_REPO = "https://github.com/Kacperj01/Trading-Journal/issues/new";
+function bugReport() {
+  const what = F("bugText").value.trim(), steps = F("bugSteps").value.trim();
+  const where = window.ELEV8_BUILD ? "GitHub app (build " + window.ELEV8_BUILD + ")" : inViewer() ? "claude.ai journal" : "Local file";
+  const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
+  const body = [
+    "**What happened**", what || "(not described)", "",
+    steps ? "**Steps to see it**\n" + steps + "\n" : null,
+    "**Details**",
+    "- Version: " + where,
+    "- Section: " + (TAB_NAMES[currentTab()] || currentTab()),
+    "- Screen: " + innerWidth + "×" + innerHeight + (standalone ? " (home-screen app)" : ""),
+    "- Device: " + navigator.userAgent,
+    "- Trades in journal: " + realTrades.length,
+    "- Reported: " + new Date().toISOString()
+  ].filter(x => x !== null).join("\n");
+  const title = "Bug: " + (what.split("\n")[0].slice(0, 70) || "(no description)");
+  return { title, body };
+}
+function openBugReport() {
+  setMenu(false);
+  F("bugMsg").textContent = "";
+  const dlg = F("bugDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  F("bugText").focus();
+}
+F("sideBug").addEventListener("click", openBugReport);
+F("bugCancel").addEventListener("click", () => F("bugDlg").close());
+F("bugForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!F("bugText").value.trim()) { F("bugMsg").textContent = "Describe what happened first."; F("bugText").focus(); return; }
+  const r = bugReport();
+  const a = document.createElement("a");
+  a.href = BUG_REPO + "?labels=bug&title=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
+  a.target = "_blank"; a.rel = "noopener noreferrer";
+  document.body.appendChild(a); a.click(); a.remove();
+  F("bugDlg").close();
+  F("bugText").value = ""; F("bugSteps").value = "";
+  toast("Opening GitHub to send your report…");
+});
+F("bugCopy").addEventListener("click", async () => {
+  const r = bugReport();
+  try { await navigator.clipboard.writeText(r.title + "\n\n" + r.body); toast("Report copied"); }
+  catch (e) { F("bugMsg").textContent = "Couldn't copy here. Use Send report instead."; }
+});
 
 /* ---------- Slide-out menu (phones and narrow windows) ---------- */
 F("drawerLogo").src = $(".brand-logo").src;
@@ -3724,7 +3833,10 @@ if (SB) {
   F("syncForm").addEventListener("submit", e => { e.preventDefault(); sbSignIn(false); });
   F("syncSignUp").addEventListener("click", () => sbSignIn(true));
   F("syncNow").addEventListener("click", () => { setSync("", "Syncing…"); sbSync(); });
-  F("syncSignOut").addEventListener("click", async () => {
+  F("syncSignOut").addEventListener("click", signOutFlow);
+  F("sideLogout").addEventListener("click", () => { setMenu(false); signOutFlow(); });
+}
+async function signOutFlow() {
     // Send any last changes first, so nothing is lost when this device's copy is cleared.
     await sbSync();
     const unsent = store.get(KEY_SB_OUTBOX, []).length;
@@ -3741,7 +3853,8 @@ if (SB) {
     sbRender();
     setSync("local", "Signed out");
     showHome();
-  });
+}
+if (SB) {
   F("syncChip").style.cursor = "pointer";
   F("syncChip").addEventListener("click", () => { if (sb.session) showTab("settings"); else showHome(); });
   F("homeForm").addEventListener("submit", e => { e.preventDefault(); sbSignIn(homeMode === "signup", "dialog"); });
