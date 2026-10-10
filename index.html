@@ -1,0 +1,2392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Trading Journal</title>
+<meta name="description" content="Trading journal and performance dashboard: log trades, track emotions and sessions, and see analytics.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg-2: #0d1222;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.025);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --highlight: rgba(255, 255, 255, 0.38);
+  --text: #e8ecf5;
+  --text-2: #b4bccd;
+  --muted: #8a93a8;
+  --green: #2ee59d;
+  --green-soft: rgba(46, 229, 157, 0.14);
+  --green-glow: rgba(46, 229, 157, 0.18);
+  --red: #ff5c7a;
+  --red-soft: rgba(255, 92, 122, 0.14);
+  --blue: #5aa9ff;
+  --blue-soft: rgba(90, 169, 255, 0.14);
+  --blue-glow: rgba(56, 132, 255, 0.22);
+  --gold: #f7c64a;
+  --gold-soft: rgba(247, 198, 74, 0.14);
+  --neutral: #7c86a0;
+  --grid: rgba(255, 255, 255, 0.06);
+  --focus: #9cc8ff;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --blur: blur(18px) saturate(140%);
+  --font-sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.6);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(900px 600px at 8% -5%, var(--blue-glow), transparent 60%),
+    radial-gradient(800px 600px at 100% 10%, var(--green-glow), transparent 60%),
+    radial-gradient(900px 700px at 50% 110%, rgba(56, 132, 255, 0.12), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+}
+.glow {
+  position: absolute;
+  z-index: -1;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+.glow.blue { background: radial-gradient(circle, rgba(56, 132, 255, 0.55), transparent 70%); }
+.glow.green { background: radial-gradient(circle, rgba(46, 229, 157, 0.45), transparent 70%); }
+
+.mono, .num { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+.neu { color: var(--blue); }
+.gold { color: var(--gold); }
+.muted { color: var(--muted); }
+
+a { color: var(--blue); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: 16px; top: -60px; z-index: 100;
+  background: var(--blue); color: #04101f; padding: 10px 16px; border-radius: 10px; font-weight: 600;
+}
+.skip-link:focus { top: 12px; }
+
+/* ---------- Layout ---------- */
+.container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 24px; position: relative; }
+header.top {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(10, 14, 26, 0.72);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--border);
+}
+.top-inner { display: flex; align-items: center; gap: 20px; min-height: 68px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
+.brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+  background: linear-gradient(135deg, rgba(90, 169, 255, 0.35), rgba(46, 229, 157, 0.3));
+  border: 1px solid var(--border-strong);
+}
+.brand h1 { font-size: 19px; margin: 0; font-weight: 600; letter-spacing: 0.2px; }
+.brand p { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+.tabs {
+  display: flex; gap: 4px; padding: 4px; margin-bottom: 12px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  appearance: none; border: 0; background: transparent; color: var(--text-2);
+  font: 500 14px var(--font-sans); padding: 9px 16px; border-radius: 10px; cursor: pointer; white-space: nowrap; flex: 1 0 auto; justify-content: center; scroll-snap-align: start;
+  display: inline-flex; align-items: center; gap: 8px; transition: background .2s, color .2s;
+}
+.tab:hover { color: var(--text); background: var(--surface); }
+.tab[aria-selected="true"] {
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(90, 169, 255, 0.22), rgba(90, 169, 255, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(90, 169, 255, 0.35);
+}
+main { padding: 28px 0 80px; overflow-x: clip; }
+[role="tabpanel"][hidden] { display: none; }
+
+.section { margin-top: 22px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; }
+.section-head h2 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: .2px; }
+.section-head p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.grid { display: grid; gap: 18px; }
+.grid-main { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.grid-half { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1040px) {
+  .grid-main, .grid-half { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Glass card ---------- */
+.card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  min-width: 0;
+}
+.card::before {
+  content: ""; position: absolute; top: 0; left: 12%; right: 12%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--highlight), transparent);
+  pointer-events: none;
+}
+.card.accent-green::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+.card.accent-red::before { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+.card.accent-blue::before { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+.card.accent-gold::before { background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+.card h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.card-head .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+/* ---------- Reveal animation ---------- */
+.reveal { opacity: 0; transform: translateY(18px); animation: fadeUp .7s cubic-bezier(.2, .7, .2, 1) forwards; animation-delay: calc(var(--d, 0) * 90ms); }
+@keyframes fadeUp { to { opacity: 1; transform: none; } }
+
+/* ---------- Toolbar / filters ---------- */
+.toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.toolbar .left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toolbar h2 { margin: 0; font-size: 24px; font-weight: 600; }
+.toolbar .lead { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+.filters label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+
+.banner {
+  display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  padding: 14px 18px; margin-top: 18px; border-radius: var(--radius-sm);
+  background: var(--gold-soft); border: 1px solid rgba(247, 198, 74, 0.35);
+}
+.banner p { margin: 0; font-size: 14px; }
+.banner .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Controls ---------- */
+.btn {
+  appearance: none; cursor: pointer; border-radius: 11px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text); font: 500 14px var(--font-sans);
+  padding: 9px 15px; display: inline-flex; align-items: center; gap: 8px; transition: background .2s, border-color .2s, transform .1s;
+  text-decoration: none;
+}
+.btn:hover { background: var(--surface-hover); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: linear-gradient(180deg, #5aa9ff, #3a86e8); border-color: transparent; color: #04101f; font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.success { background: linear-gradient(180deg, #2ee59d, #1fc283); border-color: transparent; color: #03170e; font-weight: 600; }
+.btn.danger { color: var(--red); border-color: rgba(255, 92, 122, 0.4); }
+.btn.danger:hover { background: var(--red-soft); }
+.btn.sm { padding: 6px 10px; font-size: 13px; border-radius: 9px; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--text-2); }
+.btn.ghost:hover { background: var(--surface); color: var(--text); }
+
+input, select, textarea {
+  font: 400 14px var(--font-sans); color: var(--text);
+  background: rgba(8, 12, 24, 0.6); border: 1px solid var(--border-strong); border-radius: 10px;
+  padding: 10px 12px; width: 100%; min-width: 0; transition: border-color .2s, box-shadow .2s;
+}
+input[type="number"], input[type="date"], input[type="time"] { font-family: var(--font-mono); }
+input::placeholder, textarea::placeholder { color: #6b7389; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(90, 169, 255, 0.2); }
+select option { background: #0f1528; color: var(--text); }
+textarea { resize: vertical; min-height: 96px; }
+input[type="checkbox"], input[type="radio"] { width: auto; accent-color: var(--blue); }
+input[type="range"] { padding: 0; accent-color: var(--gold); background: transparent; border: 0; }
+::-webkit-calendar-picker-indicator { filter: invert(0.8); }
+.filters select, .filters input { padding: 8px 10px; width: auto; }
+input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--red); }
+
+/* ---------- KPI ---------- */
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+@media (max-width: 1240px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+.kpi { padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.kpi .label { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .9px; font-weight: 500; }
+.kpi .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.kpi .value { font-family: var(--font-mono); font-size: 25px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.2; overflow-wrap: anywhere; }
+.kpi .value.split { font-size: 19px; }
+.kpi .meta { font-size: 12.5px; color: var(--text-2); }
+.kpi .meta .mono { font-size: 12px; }
+@media (max-width: 640px) { .kpi { padding: 14px; } .kpi .value { font-size: 20px; } .kpi .value.split { font-size: 15px; } }
+
+/* ---------- Charts ---------- */
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap svg { display: block; width: 100%; overflow: visible; }
+.axis-label { fill: var(--muted); font: 11px var(--font-mono); }
+.eq-line { fill: none; stroke: url(#eqStroke); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.eq-dot { stroke: var(--bg); stroke-width: 2; transition: r .15s; }
+.eq-dot.active { r: 7; }
+.tooltip {
+  position: absolute; pointer-events: none; z-index: 5; min-width: 170px;
+  background: rgba(12, 17, 32, 0.92); border: 1px solid var(--border-strong); border-radius: 12px;
+  padding: 10px 12px; font-size: 12.5px; box-shadow: var(--shadow); backdrop-filter: var(--blur);
+  opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s;
+}
+.tooltip.show { opacity: 1; transform: none; }
+.tooltip .row { display: flex; justify-content: space-between; gap: 16px; }
+.tooltip .t { font-weight: 600; margin-bottom: 4px; }
+.eq-stats { display: flex; gap: 22px; flex-wrap: wrap; }
+.eq-stats div { display: flex; flex-direction: column; }
+.eq-stats span:first-child { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+.eq-stats span:last-child { font-family: var(--font-mono); font-weight: 600; }
+
+/* Donut */
+.donut-layout { display: grid; grid-template-columns: 180px 1fr; gap: 22px; align-items: center; }
+@media (max-width: 420px) { .donut-layout { grid-template-columns: 1fr; justify-items: center; } }
+.donut { position: relative; width: 180px; height: 180px; }
+.donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.donut .arc { fill: none; stroke-width: 18; stroke-linecap: butt; transition: stroke-dasharray 1.2s cubic-bezier(.2, .7, .2, 1); }
+.donut .center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.donut .center .big { font: 700 30px var(--font-mono); }
+.donut .center small { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.stat-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; width: 100%; }
+.stat-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 13.5px; }
+.stat-list li:last-child { border-bottom: 0; }
+.stat-list li > span:first-child { color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+.stat-list li > span:last-child { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
+.swatch { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+
+/* Bars */
+.bars { display: grid; gap: 12px; }
+.bar-row { display: grid; grid-template-columns: minmax(70px, 110px) 1fr auto; gap: 12px; align-items: center; }
+.bar-row .name { font-family: var(--font-mono); font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-row .name small { display: block; color: var(--muted); font-family: var(--font-sans); font-size: 11.5px; font-weight: 400; }
+.bar-track { height: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 999px; overflow: hidden; }
+.bar-fill { height: 100%; width: 0; border-radius: 999px; transition: width 1.1s cubic-bezier(.2, .7, .2, 1); }
+.bar-fill.pos { background: linear-gradient(90deg, rgba(46, 229, 157, 0.45), var(--green)); box-shadow: 0 0 14px rgba(46, 229, 157, 0.35); }
+.bar-fill.neg { background: linear-gradient(90deg, rgba(255, 92, 122, 0.45), var(--red)); box-shadow: 0 0 14px rgba(255, 92, 122, 0.35); }
+.bar-row .val { font-family: var(--font-mono); font-weight: 600; font-size: 13.5px; text-align: right; min-width: 92px; }
+
+/* Setup / session cards */
+.mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.mini { padding: 16px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); position: relative; overflow: hidden; }
+.mini::before { content: ""; position: absolute; top: 0; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, var(--highlight), transparent); }
+.mini.win::after, .mini.loss::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.mini.win::after { background: var(--green); }
+.mini.loss::after { background: var(--red); }
+.mini .rank { position: absolute; top: 12px; right: 14px; font: 600 11px var(--font-mono); color: var(--muted); }
+.mini h4 { margin: 0 0 10px; font-size: 14.5px; font-weight: 600; padding-right: 28px; }
+.mini .big { font: 700 21px var(--font-mono); }
+.mini .row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-2); margin-top: 6px; }
+.mini .row b { font-family: var(--font-mono); font-weight: 500; color: var(--text); }
+.wr-bar { height: 5px; border-radius: 999px; background: var(--red-soft); margin-top: 10px; overflow: hidden; }
+.wr-bar i { display: block; height: 100%; width: 0; background: var(--green); border-radius: 999px; transition: width 1.1s cubic-bezier(.2, .7, .2, 1); }
+
+.session-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+.session { display: flex; gap: 16px; align-items: center; }
+.ring { width: 84px; height: 84px; flex: none; position: relative; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .track { fill: none; stroke: rgba(255, 255, 255, 0.07); stroke-width: 8; }
+.ring .prog { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.2, .7, .2, 1); }
+.ring .pct { position: absolute; inset: 0; display: grid; place-items: center; font: 700 15px var(--font-mono); }
+.session h4 { margin: 0 0 4px; font-size: 16px; }
+.session .meta { font-size: 13px; color: var(--text-2); }
+.session .pnl { font: 700 19px var(--font-mono); margin-top: 4px; }
+
+/* Calendar */
+.cal-nav { display: flex; gap: 8px; align-items: center; }
+.cal-nav .month { font-weight: 600; min-width: 140px; text-align: center; }
+.calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.calendar .dow { font-size: 11px; color: var(--muted); text-align: center; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 4px; }
+.day { min-height: 70px; border-radius: 10px; padding: 6px 8px; background: var(--surface-2); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; }
+.day.empty { background: transparent; border-color: transparent; }
+.day .d { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+.day .p { font: 600 12.5px var(--font-mono); }
+.day .n { color: var(--muted); font-size: 10.5px; }
+.day.up { background: var(--green-soft); border-color: rgba(46, 229, 157, 0.35); }
+.day.down { background: var(--red-soft); border-color: rgba(255, 92, 122, 0.35); }
+.day.flat { background: var(--blue-soft); border-color: rgba(90, 169, 255, 0.3); }
+.day.today { box-shadow: inset 0 0 0 1px var(--gold); }
+@media (max-width: 640px) { .day { min-height: 52px; padding: 4px 5px; } .day .p { font-size: 10px; } .day .n { display: none; } }
+
+/* Insights */
+.insights { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+@media (max-width: 400px) { .insights { grid-template-columns: 1fr; } }
+.insight { display: flex; flex-direction: column; gap: 10px; }
+.insight .ihead { display: flex; gap: 12px; align-items: center; }
+.insight .emoji { font-size: 22px; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex: none; background: var(--surface); border: 1px solid var(--border); }
+.insight.good .emoji { background: var(--green-soft); border-color: rgba(46, 229, 157, 0.35); }
+.insight.bad .emoji { background: var(--red-soft); border-color: rgba(255, 92, 122, 0.35); }
+.insight.warn .emoji { background: var(--gold-soft); border-color: rgba(247, 198, 74, 0.35); }
+.insight.info .emoji { background: var(--blue-soft); border-color: rgba(90, 169, 255, 0.35); }
+.insight h3 { font-size: 15.5px; }
+.insight .tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.insight.good .tag { color: var(--green); }
+.insight.bad .tag { color: var(--red); }
+.insight.warn .tag { color: var(--gold); }
+.insight.info .tag { color: var(--blue); }
+.insight p { margin: 0; color: var(--text-2); font-size: 13.5px; }
+.insight .num { color: var(--text); font-weight: 600; }
+.insight .action { margin-top: auto; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); font-size: 13px; }
+.insight .action b { color: var(--gold); font-weight: 600; }
+
+/* Table */
+.table-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.table-tools input, .table-tools select { width: auto; padding: 8px 12px; }
+.table-scroll { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 13.5px; }
+caption { text-align: left; padding: 0 0 10px; color: var(--muted); font-size: 12.5px; caption-side: bottom; padding-top: 10px; padding-left: 14px; }
+thead th {
+  position: sticky; top: 0; background: rgba(14, 19, 36, 0.96); text-align: left; font-weight: 500; color: var(--muted);
+  font-size: 11.5px; text-transform: uppercase; letter-spacing: .8px; padding: 0; border-bottom: 1px solid var(--border-strong); white-space: nowrap;
+}
+thead th button { all: unset; cursor: pointer; display: flex; gap: 6px; align-items: center; padding: 12px 14px; width: 100%; box-sizing: border-box; }
+thead th button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+thead th .arrow { opacity: .4; font-size: 10px; }
+thead th[aria-sort] .arrow { opacity: 1; color: var(--blue); }
+thead th.static { padding: 12px 14px; }
+tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+tbody tr:last-child td { border-bottom: 0; }
+td.num { white-space: nowrap; }
+td.notes { min-width: 240px; max-width: 360px; color: var(--text-2); }
+td.nowrap { white-space: nowrap; }
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge.win { color: var(--green); background: var(--green-soft); border-color: rgba(46, 229, 157, 0.35); }
+.badge.loss { color: var(--red); background: var(--red-soft); border-color: rgba(255, 92, 122, 0.35); }
+.badge.be { color: var(--blue); background: var(--blue-soft); border-color: rgba(90, 169, 255, 0.35); }
+.dir { font-weight: 600; font-size: 12.5px; }
+.dir.long { color: var(--green); }
+.dir.short { color: var(--red); }
+.chip-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 12px; white-space: nowrap; }
+.row-actions { display: flex; gap: 4px; }
+
+/* ---------- Form ---------- */
+.form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 1040px) { .form-layout { grid-template-columns: minmax(0, 1fr); } }
+fieldset { border: 0; margin: 0 0 6px; padding: 0; min-width: 0; }
+legend { font-size: 13px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding: 0; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field.wide { grid-column: 1 / -1; }
+.field label, .field .lbl { font-size: 13px; color: var(--text-2); font-weight: 500; }
+.field .hint { font-size: 12px; color: var(--muted); }
+.req { color: var(--red); }
+.seg { display: flex; border: 1px solid var(--border-strong); border-radius: 10px; overflow: hidden; }
+.seg label { flex: 1; text-align: center; padding: 9px 10px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-2); position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.seg label:has(input:checked).long-opt { background: var(--green-soft); color: var(--green); }
+.seg label:has(input:checked).short-opt { background: var(--red-soft); color: var(--red); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.toggle { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border-strong); background: rgba(8, 12, 24, 0.6); cursor: pointer; font-size: 14px; }
+.range-row { display: flex; gap: 12px; align-items: center; }
+.range-row output { font: 600 14px var(--font-mono); color: var(--gold); min-width: 40px; }
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 18px; }
+.errors { display: none; padding: 12px 14px; border-radius: 10px; background: var(--red-soft); border: 1px solid rgba(255, 92, 122, 0.4); margin-bottom: 18px; font-size: 13.5px; }
+.errors.show { display: block; }
+.errors ul { margin: 6px 0 0; padding-left: 18px; }
+.preview { position: sticky; top: 92px; display: grid; gap: 12px; }
+.preview .pv-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 13.5px; }
+.preview .pv-row:last-child { border-bottom: 0; }
+.preview .pv-row span:last-child { font-family: var(--font-mono); font-weight: 600; }
+.recent { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.recent li { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+
+/* ---------- Settings ---------- */
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+@media (max-width: 400px) { .settings-grid { grid-template-columns: 1fr; } }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border-strong); font-size: 13px; }
+.chip button { all: unset; cursor: pointer; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); font-size: 15px; }
+.chip button:hover { background: var(--red-soft); color: var(--red); }
+.chip button:focus-visible { outline: 2px solid var(--focus); }
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1; }
+.stack { display: grid; gap: 12px; }
+.file-label { position: relative; overflow: hidden; }
+.file-label input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.file-label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.empty { text-align: center; padding: 50px 20px; }
+.empty h3 { font-size: 20px; margin-bottom: 8px; }
+.empty p { color: var(--muted); margin: 0 0 18px; }
+.none { color: var(--muted); font-size: 13.5px; padding: 12px 0; }
+
+.toast {
+  position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 30px); opacity: 0; z-index: 90;
+  background: rgba(14, 20, 38, 0.95); border: 1px solid var(--border-strong); border-radius: 12px;
+  padding: 12px 18px; font-size: 14px; box-shadow: var(--shadow); transition: all .3s; pointer-events: none; max-width: calc(100vw - 32px);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20px 0 30px; }
+
+@media (max-width: 640px) {
+  .container { padding: 0 16px; }
+  .top-inner { gap: 10px; }
+  .tab { padding: 9px 12px; font-size: 13.5px; }
+  .card { padding: 16px; }
+  .bar-row { grid-template-columns: 80px 1fr auto; gap: 8px; }
+  .bar-row .val { min-width: 76px; font-size: 12.5px; }
+  .toolbar h2 { font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="container top-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8ecf5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
+      </div>
+      <div>
+        <h1>Trading Journal</h1>
+        <p>Performance dashboard &amp; trade log</p>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <nav class="tabs" role="tablist" aria-label="Main sections">
+      <button class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" data-tab="overview"><span aria-hidden="true">📊</span> Overview</button>
+      <button class="tab" role="tab" id="tab-analytics" aria-controls="panel-analytics" aria-selected="false" tabindex="-1" data-tab="analytics"><span aria-hidden="true">📈</span> Analytics</button>
+      <button class="tab" role="tab" id="tab-psychology" aria-controls="panel-psychology" aria-selected="false" tabindex="-1" data-tab="psychology"><span aria-hidden="true">🧠</span> Psychology</button>
+      <button class="tab" role="tab" id="tab-calendar" aria-controls="panel-calendar" aria-selected="false" tabindex="-1" data-tab="calendar"><span aria-hidden="true">📅</span> Calendar</button>
+      <button class="tab" role="tab" id="tab-insights" aria-controls="panel-insights" aria-selected="false" tabindex="-1" data-tab="insights"><span aria-hidden="true">💡</span> Insights</button>
+      <button class="tab" role="tab" id="tab-journal" aria-controls="panel-journal" aria-selected="false" tabindex="-1" data-tab="journal"><span aria-hidden="true">📒</span> Trade log</button>
+      <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" data-tab="log"><span aria-hidden="true">✍️</span> Log trade</button>
+      <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings"><span aria-hidden="true">⚙️</span> Settings</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="container">
+    <div class="glow blue" style="top:120px;left:-200px" aria-hidden="true"></div>
+    <div class="glow green" style="top:620px;right:-220px" aria-hidden="true"></div>
+    <div class="glow blue" style="top:1500px;right:10%" aria-hidden="true"></div>
+    <div class="glow green" style="top:2300px;left:-120px" aria-hidden="true"></div>
+
+    <!-- =================== SHARED ANALYTICS HEADER =================== -->
+    <div id="analyticsHeader">
+      <div class="toolbar reveal" style="--d:0">
+        <div>
+          <h2 id="pageTitle">Overview</h2>
+          <p class="lead" id="rangeLabel">All trades</p>
+        </div>
+        <div class="filters" role="group" aria-label="Filters for all analytics tabs">
+          <label>Period
+            <select id="fRange">
+              <option value="all">All time</option>
+              <option value="month">This month</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="ytd">Year to date</option>
+              <option value="custom">Custom range</option>
+            </select>
+          </label>
+          <label id="fFromWrap" hidden>From <input type="date" id="fFrom"></label>
+          <label id="fToWrap" hidden>To <input type="date" id="fTo"></label>
+          <label>Session
+            <select id="fSession"><option value="">All sessions</option></select>
+          </label>
+          <label>Setup
+            <select id="fSetup"><option value="">All setups</option></select>
+          </label>
+        </div>
+      </div>
+
+      <div id="demoBanner" class="banner reveal" style="--d:1" hidden>
+        <p><strong>You're viewing demo data.</strong> Log your own trades, or import your spreadsheet (XLSX/CSV) in Settings.</p>
+        <div class="actions">
+          <button class="btn sm" type="button" data-goto="log">Log a trade</button>
+          <button class="btn sm" type="button" data-goto="settings">Import file</button>
+          <button class="btn sm danger" type="button" id="clearDemo">Remove demo trades</button>
+        </div>
+      </div>
+
+      <div id="dashEmpty" class="card empty reveal" style="--d:1; margin-top:22px" hidden>
+        <h3>No trades in this view</h3>
+        <p id="dashEmptyText">Log your first trade to start seeing analytics.</p>
+        <button class="btn primary" type="button" data-goto="log">Log a trade</button>
+      </div>
+    </div>
+
+    <!-- =================== OVERVIEW =================== -->
+    <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-analytics>
+      <div class="needs-data">
+        <!-- 1. KPIs -->
+        <section class="kpis" id="kpis" aria-label="Key performance indicators"></section>
+
+        <!-- 2 + 3. Equity & Win/Loss -->
+        <div class="grid grid-main section">
+          <section class="card accent-blue reveal" style="--d:7" aria-labelledby="eqTitle">
+            <div class="card-head">
+              <div>
+                <h3 id="eqTitle">Equity curve</h3>
+                <div class="sub">Cumulative balance after each trade · dots coloured by result</div>
+              </div>
+              <div class="eq-stats" id="eqStats"></div>
+            </div>
+            <div class="chart-wrap" id="equityWrap">
+              <div class="tooltip" id="eqTip" role="status" aria-live="polite"></div>
+            </div>
+          </section>
+
+          <section class="card reveal" style="--d:8" aria-labelledby="wlTitle">
+            <div class="card-head">
+              <div>
+                <h3 id="wlTitle">Win / loss distribution</h3>
+                <div class="sub">Breakevens excluded from win rate</div>
+              </div>
+            </div>
+            <div class="donut-layout" id="winloss"></div>
+          </section>
+        </div>
+
+        <section class="section reveal" style="--d:9" aria-labelledby="topInsTitle">
+          <div class="section-head">
+            <h2 id="topInsTitle">Top insights</h2>
+            <p><button class="btn sm ghost" type="button" data-goto="insights">See all insights →</button></p>
+          </div>
+          <div class="insights" id="topInsights"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- =================== ANALYTICS =================== -->
+    <section id="panel-analytics" role="tabpanel" aria-labelledby="tab-analytics" data-analytics hidden>
+      <div class="needs-data">
+        <!-- 4 + 5. Pairs & Setups -->
+        <div class="grid grid-half section">
+          <section class="card reveal" style="--d:2" aria-labelledby="pairTitle">
+            <div class="card-head">
+              <div>
+                <h3 id="pairTitle">P&amp;L by pair</h3>
+                <div class="sub">Sorted highest to lowest</div>
+              </div>
+            </div>
+            <div class="bars" id="pairBars"></div>
+          </section>
+
+          <section class="card reveal" style="--d:3" aria-labelledby="setupTitle">
+            <div class="card-head">
+              <div>
+                <h3 id="setupTitle">Setup performance</h3>
+                <div class="sub">Ranked best to worst by total P&amp;L</div>
+              </div>
+            </div>
+            <div class="mini-grid" id="setupGrid"></div>
+          </section>
+        </div>
+
+        <!-- 6. Sessions -->
+        <section class="section reveal" style="--d:4" aria-labelledby="sessTitle">
+          <div class="section-head">
+            <h2 id="sessTitle">Session breakdown</h2>
+            <p>Win rate, record and P&amp;L for each trading session</p>
+          </div>
+          <div class="session-grid" id="sessionGrid"></div>
+        </section>
+
+        <section class="section card reveal" style="--d:5" aria-labelledby="dirTitle">
+          <div class="card-head">
+            <div>
+              <h3 id="dirTitle">Long vs short &amp; day of week</h3>
+              <div class="sub">Where your edge shows up</div>
+            </div>
+          </div>
+          <div class="grid grid-half" id="dirDow"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- =================== PSYCHOLOGY =================== -->
+    <section id="panel-psychology" role="tabpanel" aria-labelledby="tab-psychology" data-analytics hidden>
+      <div class="needs-data section">
+        <section class="card reveal" style="--d:2" aria-labelledby="psyTitle">
+          <div class="card-head">
+            <div>
+              <h3 id="psyTitle">Psychology &amp; discipline</h3>
+              <div class="sub">P&amp;L by emotion, plan adherence and costliest mistakes</div>
+            </div>
+          </div>
+          <div id="psych"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- =================== CALENDAR =================== -->
+    <section id="panel-calendar" role="tabpanel" aria-labelledby="tab-calendar" data-analytics hidden>
+      <div class="needs-data section">
+        <section class="card reveal" style="--d:2" aria-labelledby="calTitle">
+          <div class="card-head">
+            <div>
+              <h3 id="calTitle">P&amp;L calendar</h3>
+              <div class="sub" id="calSub">Daily results</div>
+            </div>
+            <div class="cal-nav">
+              <button class="btn sm ghost" type="button" id="calPrev" aria-label="Previous month">‹</button>
+              <span class="month" id="calMonth" aria-live="polite"></span>
+              <button class="btn sm ghost" type="button" id="calNext" aria-label="Next month">›</button>
+            </div>
+          </div>
+          <div class="calendar" id="calendar" role="grid" aria-labelledby="calTitle calMonth"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- =================== INSIGHTS =================== -->
+    <section id="panel-insights" role="tabpanel" aria-labelledby="tab-insights" data-analytics hidden>
+      <div class="needs-data section">
+        <div class="section-head reveal" style="--d:2">
+          <h2>Actionable insights</h2>
+          <p>Generated automatically from the trades in this view</p>
+        </div>
+        <div class="insights" id="insights"></div>
+      </div>
+    </section>
+
+    <!-- =================== TRADE LOG =================== -->
+    <section id="panel-journal" role="tabpanel" aria-labelledby="tab-journal" data-analytics hidden>
+      <section class="section card reveal" style="--d:2" aria-labelledby="logTitle" id="tradeLogSection">
+        <div class="card-head">
+          <div>
+            <h3 id="logTitle">Trade log</h3>
+            <div class="sub" id="logCount"></div>
+          </div>
+          <div class="table-tools">
+            <label class="sr-only" for="tSearch">Search trades</label>
+            <input type="search" id="tSearch" placeholder="Search pair, setup, notes…">
+            <label class="sr-only" for="tResult">Filter by result</label>
+            <select id="tResult">
+              <option value="">All results</option>
+              <option value="Win">Wins</option>
+              <option value="Loss">Losses</option>
+              <option value="BE">Breakeven</option>
+            </select>
+            <button class="btn sm primary" type="button" data-goto="log">+ New trade</button>
+          </div>
+        </div>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Trade log table, scrollable">
+          <table>
+            <caption id="tableCaption">Click a column heading to sort.</caption>
+            <thead>
+              <tr id="tableHead"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- =================== LOG TRADE =================== -->
+    <section id="panel-log" role="tabpanel" aria-labelledby="tab-log" hidden>
+      <div class="toolbar reveal" style="--d:0">
+        <div>
+          <h2 id="formTitle">Log a trade</h2>
+          <p class="lead">Fields marked <span class="req">*</span> are required. R multiple is calculated from risk if left blank.</p>
+        </div>
+      </div>
+
+      <div class="form-layout section">
+        <form id="tradeForm" class="card reveal" style="--d:1" novalidate aria-labelledby="formTitle">
+          <div class="errors" id="formErrors" role="alert" tabindex="-1"></div>
+          <input type="hidden" id="tId">
+
+          <fieldset>
+            <legend>Trade details</legend>
+            <div class="fields">
+              <div class="field">
+                <label for="tDate">Date <span class="req" aria-hidden="true">*</span></label>
+                <input type="date" id="tDate" required aria-required="true">
+              </div>
+              <div class="field">
+                <label for="tTime">Time</label>
+                <input type="time" id="tTime" aria-describedby="tTimeHint">
+                <span class="hint" id="tTimeHint">Fills the session automatically</span>
+              </div>
+              <div class="field">
+                <label for="tPair">Pair / instrument <span class="req" aria-hidden="true">*</span></label>
+                <input type="text" id="tPair" list="pairList" required aria-required="true" autocomplete="off" placeholder="e.g. EURUSD">
+                <datalist id="pairList"></datalist>
+              </div>
+              <div class="field">
+                <label for="tSessionSel">Session <span class="req" aria-hidden="true">*</span></label>
+                <select id="tSessionSel" required aria-required="true"></select>
+              </div>
+              <div class="field">
+                <span class="lbl" id="dirLbl">Direction <span class="req" aria-hidden="true">*</span></span>
+                <div class="seg" role="radiogroup" aria-labelledby="dirLbl">
+                  <label class="long-opt"><input type="radio" name="tDir" value="Long" checked> ▲ Long</label>
+                  <label class="short-opt"><input type="radio" name="tDir" value="Short"> ▼ Short</label>
+                </div>
+              </div>
+              <div class="field">
+                <label for="tSetup">Setup <span class="req" aria-hidden="true">*</span></label>
+                <input type="text" id="tSetup" list="setupList" required aria-required="true" autocomplete="off" placeholder="e.g. Breakout">
+                <datalist id="setupList"></datalist>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Execution</legend>
+            <div class="fields">
+              <div class="field"><label for="tEntry">Entry price</label><input type="number" step="any" id="tEntry" inputmode="decimal"></div>
+              <div class="field"><label for="tStop">Stop loss</label><input type="number" step="any" id="tStop" inputmode="decimal"></div>
+              <div class="field"><label for="tTarget">Take profit</label><input type="number" step="any" id="tTarget" inputmode="decimal"></div>
+              <div class="field"><label for="tExit">Exit price</label><input type="number" step="any" id="tExit" inputmode="decimal"></div>
+              <div class="field"><label for="tSize">Position size (lots / units)</label><input type="number" step="any" id="tSize" inputmode="decimal"></div>
+              <div class="field"><label for="tRisk">Risk amount</label><input type="number" step="any" id="tRisk" inputmode="decimal" min="0"></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Outcome</legend>
+            <div class="fields">
+              <div class="field">
+                <label for="tPnl">Net P&amp;L <span class="req" aria-hidden="true">*</span></label>
+                <input type="number" step="any" id="tPnl" required aria-required="true" inputmode="decimal" aria-describedby="tPnlHint" placeholder="e.g. 250 or -100">
+                <span class="hint" id="tPnlHint">Negative for a loss, 0 for breakeven</span>
+              </div>
+              <div class="field">
+                <label for="tR">R multiple</label>
+                <input type="number" step="any" id="tR" inputmode="decimal" aria-describedby="tRHint">
+                <span class="hint" id="tRHint">Leave blank to calculate P&amp;L ÷ risk</span>
+              </div>
+              <div class="field">
+                <label for="tFees">Fees / commission</label>
+                <input type="number" step="any" id="tFees" inputmode="decimal" aria-describedby="tFeesHint">
+                <span class="hint" id="tFeesHint">Recorded only; P&amp;L should already be net</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Psychology</legend>
+            <div class="fields">
+              <div class="field">
+                <label for="tEmoBefore">Emotion before trade</label>
+                <select id="tEmoBefore"></select>
+              </div>
+              <div class="field">
+                <label for="tEmoAfter">Emotion after trade</label>
+                <select id="tEmoAfter"></select>
+              </div>
+              <div class="field">
+                <label for="tConf">Confidence (1–5)</label>
+                <div class="range-row">
+                  <input type="range" id="tConf" min="1" max="5" step="1" value="3" aria-valuemin="1" aria-valuemax="5">
+                  <output id="tConfOut" for="tConf">3/5</output>
+                </div>
+              </div>
+              <div class="field">
+                <span class="lbl">Discipline</span>
+                <label class="toggle"><input type="checkbox" id="tPlan" checked> Followed my trading plan</label>
+              </div>
+              <div class="field wide">
+                <label for="tMistakes">Mistakes</label>
+                <input type="text" id="tMistakes" list="mistakeList" placeholder="e.g. Moved stop, entered early" aria-describedby="tMistakesHint">
+                <datalist id="mistakeList"></datalist>
+                <span class="hint" id="tMistakesHint">Separate multiple mistakes with commas</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Notes</legend>
+            <div class="fields">
+              <div class="field wide">
+                <label for="tNotes">Trade notes</label>
+                <textarea id="tNotes" placeholder="Why did you take it? What did you see? What would you do differently?"></textarea>
+              </div>
+              <div class="field wide">
+                <label for="tShot">Chart / screenshot link</label>
+                <input type="url" id="tShot" placeholder="https://www.tradingview.com/x/…">
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="button" class="btn ghost" id="formReset">Clear form</button>
+            <button type="button" class="btn" id="formCancel" hidden>Cancel edit</button>
+            <button type="submit" class="btn success" id="formSubmit">Save trade</button>
+          </div>
+        </form>
+
+        <aside class="preview" aria-label="Trade preview">
+          <div class="card accent-gold reveal" style="--d:2">
+            <div class="card-head"><h3>Live preview</h3><span id="pvBadge"></span></div>
+            <div id="pvBody"></div>
+          </div>
+          <div class="card reveal" style="--d:3">
+            <div class="card-head"><h3>Recent trades</h3></div>
+            <ul class="recent" id="recentList"></ul>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- =================== SETTINGS =================== -->
+    <section id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+      <div class="toolbar reveal" style="--d:0">
+        <div>
+          <h2>Settings</h2>
+          <p class="lead">Customise your account, dropdown lists and data. Everything is saved in this browser.</p>
+        </div>
+      </div>
+
+      <div class="settings-grid section">
+        <section class="card accent-blue reveal" style="--d:1" aria-labelledby="acctTitle">
+          <div class="card-head"><h3 id="acctTitle">Account</h3></div>
+          <form class="stack" id="acctForm">
+            <div class="field"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal"></div>
+            <div class="field"><label for="sCurrency">Currency symbol</label><input type="text" id="sCurrency" maxlength="4"></div>
+            <div class="field"><label for="sRisk">Default risk per trade</label><input type="number" step="any" id="sRisk" inputmode="decimal"></div>
+            <div class="field">
+              <label for="sSessionMode">Session time zone for auto-fill</label>
+              <select id="sSessionMode">
+                <option value="utc">UTC</option>
+                <option value="local">My local time</option>
+              </select>
+            </div>
+            <div><button class="btn primary" type="submit">Save account</button></div>
+          </form>
+        </section>
+
+        <section class="card accent-green reveal" style="--d:2" aria-labelledby="dataTitle">
+          <div class="card-head"><h3 id="dataTitle">Import &amp; export</h3></div>
+          <div class="stack">
+            <p class="muted" style="margin:0;font-size:13.5px">Import an Excel (.xlsx), CSV or JSON file. Columns are matched by name, such as Date, Pair, Session, Direction, Setup, R, P&amp;L, Emotion and Notes.</p>
+            <label class="toggle"><input type="checkbox" id="importReplace"> Replace existing trades instead of adding</label>
+            <label class="btn primary file-label">⬆ Import file<input type="file" id="importFile" accept=".xlsx,.csv,.json,.txt" aria-label="Import trades from file"></label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" type="button" id="exportJson">⬇ Export JSON</button>
+              <button class="btn" type="button" id="exportCsv">⬇ Export CSV</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px">
+              <button class="btn" type="button" id="loadDemo">Load demo data</button>
+              <button class="btn danger" type="button" id="clearAll">Delete all trades</button>
+            </div>
+          </div>
+        </section>
+
+        <div id="listEditors" style="display:contents"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="container">Data is stored locally in your browser. Export a backup regularly.</div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ======================================================================
+   Storage & state
+   ====================================================================== */
+const KEY_TRADES = "tj.trades.v1";
+const KEY_SETTINGS = "tj.settings.v1";
+const KEY_UI = "tj.ui.v1";
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+};
+
+const DEFAULT_SETTINGS = {
+  balance: 10000,
+  currency: "$",
+  defaultRisk: 100,
+  sessionMode: "utc",
+  pairs: ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "GBPJPY", "NAS100", "US30", "BTCUSD"],
+  setups: ["Liquidity Sweep", "Order Block", "Breakout", "Pullback", "Reversal", "News Fade"],
+  sessions: ["Asia", "London", "New York"],
+  emotions: ["Calm", "Confident", "Focused", "Neutral", "Anxious", "Impatient", "FOMO", "Greedy", "Revenge", "Frustrated", "Tired"],
+  mistakes: ["Entered early", "Moved stop loss", "Closed too early", "Oversized position", "No confirmation", "Chased entry", "Traded news"]
+};
+
+let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
+let trades = store.get(KEY_TRADES, null);
+
+const ui = Object.assign({ range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+
+function saveTrades() { if (!store.set(KEY_TRADES, trades)) toast("Couldn't save — browser storage is unavailable"); }
+function saveSettings() { store.set(KEY_SETTINGS, settings); }
+function saveUi() { store.set(KEY_UI, ui); }
+
+/* ======================================================================
+   Helpers
+   ====================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const num = v => { if (v === "" || v == null) return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
+const sum = a => a.reduce((s, v) => s + v, 0);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function money(v, { signed = true, decimals = 2 } = {}) {
+  if (v == null || !Number.isFinite(v)) return "—";
+  const abs = Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  const sign = v > 0 ? (signed ? "+" : "") : v < 0 ? "−" : "";
+  return sign + settings.currency + abs;
+}
+const fmtR = r => (r == null || !Number.isFinite(r)) ? "—" : (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r).toFixed(2) + "R";
+const pct = (v, d = 1) => (v == null || !Number.isFinite(v)) ? "—" : (v * 100).toFixed(d) + "%";
+const tone = v => v > 0 ? "pos" : v < 0 ? "neg" : "neu";
+const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+
+function isoDate(d) { const z = n => String(n).padStart(2, "0"); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); }
+function parseIso(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function fmtDate(s, opts = { day: "2-digit", month: "short", year: "numeric" }) { return s ? parseIso(s).toLocaleDateString("en-GB", opts) : "—"; }
+
+function resultOf(t) { return t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "BE"; }
+function rOf(t) {
+  if (t.r != null && Number.isFinite(t.r)) return t.r;
+  if (t.risk) return t.pnl / t.risk;
+  return null;
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
+}
+
+function countUp(el, to, fmt, ms = 1100) {
+  if (reduced() || !Number.isFinite(to)) { el.textContent = fmt(to); return; }
+  const start = performance.now();
+  const step = now => {
+    const p = Math.min(1, (now - start) / ms);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = fmt(to * e);
+    if (p < 1) requestAnimationFrame(step); else el.textContent = fmt(to);
+  };
+  requestAnimationFrame(step);
+}
+
+// Two frames so the initial width/offset is painted before transitioning.
+const nextFrame = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
+
+/* ======================================================================
+   Demo data (seeded, deterministic)
+   ====================================================================== */
+function demoTrades() {
+  let seed = 20260701;
+  const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const weighted = obj => { const entries = Object.entries(obj); let x = rnd() * sum(entries.map(e => e[1])); for (const [k, w] of entries) { if ((x -= w) <= 0) return k; } return entries[0][0]; };
+  const pick = a => a[Math.floor(rnd() * a.length)];
+
+  const setupP = { "Liquidity Sweep": 0.7, "Order Block": 0.6, "Breakout": 0.5, "Pullback": 0.46, "Reversal": 0.28, "News Fade": 0 };
+  const setupW = { "Liquidity Sweep": 9, "Order Block": 8, "Breakout": 7, "Pullback": 7, "Reversal": 5, "News Fade": 5 };
+  const sessAdj = { "London": 0.12, "New York": 0.02, "Asia": -0.3 };
+  const sessW = { "London": 9, "New York": 8, "Asia": 3 };
+  const pairW = { "EURUSD": 8, "GBPUSD": 7, "XAUUSD": 7, "USDJPY": 5, "GBPJPY": 4, "NAS100": 4 };
+  const pairAdj = { "EURUSD": 0.06, "GBPUSD": 0.02, "XAUUSD": 0.1, "USDJPY": -0.02, "GBPJPY": -0.18, "NAS100": -0.05 };
+  const base = { EURUSD: [1.0850, 5, 0.0018], GBPUSD: [1.2700, 5, 0.0022], USDJPY: [148.20, 3, 0.25], XAUUSD: [2410, 2, 6], GBPJPY: [189.4, 3, 0.35], NAS100: [19850, 1, 45] };
+  const hours = { "Asia": [1, 5], "London": [7, 10], "New York": [13, 16] };
+  const winNotes = ["Clean sweep of Asian highs, waited for displacement and took the retest.", "Textbook setup, held to target without interfering.", "Patient entry on the 15m confirmation, partials at 1R, rest to TP.", "Followed HTF bias; trailed stop behind structure.", "Strong momentum after open, scaled out into liquidity."];
+  const lossNotes = ["Entered before confirmation, got stopped by a wick.", "Fought the higher-timeframe trend. Should have waited.", "Spread widened around news, stop hit.", "Chop in the range, no follow-through after entry.", "Took it out of boredom, setup wasn't fully formed."];
+  const beNotes = ["Moved to breakeven at 1R, price reversed.", "Scratched the trade, momentum died."];
+
+  const out = [];
+  const d = new Date(2026, 6, 1);
+  const end = new Date(2026, 9, 9);
+  while (d <= end) {
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6 && rnd() < 0.62) {
+      const count = rnd() < 0.25 ? 2 : 1;
+      for (let i = 0; i < count; i++) {
+        const session = weighted(sessW);
+        let setup = weighted(setupW);
+        const pair = weighted(pairW);
+        const p = Math.max(0, Math.min(0.95, setupP[setup] + sessAdj[session] + pairAdj[pair]));
+        const roll = rnd();
+        let r;
+        if (setup === "News Fade") r = rnd() < 0.3 ? -0.5 : -1;
+        else if (roll < p) r = Math.round((1.1 + rnd() * 2.3) * 10) / 10;
+        else if (roll < p + 0.06) r = 0;
+        else r = rnd() < 0.18 ? -0.5 : -1;
+        const risk = 100;
+        const pnl = Math.round(r * risk * 100) / 100;
+        const dir = rnd() < 0.55 ? "Long" : "Short";
+        const [bp, dec, dist] = base[pair];
+        const entry = bp * (1 + (rnd() - 0.5) * 0.03);
+        const sgn = dir === "Long" ? 1 : -1;
+        const stop = entry - sgn * dist;
+        const target = entry + sgn * dist * 2.5;
+        const exit = entry + sgn * dist * r;
+        const [h0, h1] = hours[session];
+        const hh = h0 + Math.floor(rnd() * (h1 - h0 + 1));
+        const mm = Math.floor(rnd() * 12) * 5;
+        const win = r > 0;
+        const emoBefore = win ? pick(["Calm", "Confident", "Focused", "Calm", "Neutral"]) : pick(["FOMO", "Anxious", "Impatient", "Revenge", "Neutral", "Tired", "Calm"]);
+        const emoAfter = win ? pick(["Confident", "Calm", "Focused"]) : r === 0 ? "Neutral" : pick(["Frustrated", "Anxious", "Calm", "Neutral"]);
+        const followed = win ? rnd() < 0.88 : rnd() < 0.45;
+        out.push({
+          id: uid() + i,
+          date: isoDate(d),
+          time: String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0"),
+          pair, session, direction: dir, setup,
+          entry: +entry.toFixed(dec), stop: +stop.toFixed(dec), target: +target.toFixed(dec), exit: +exit.toFixed(dec),
+          size: pair === "XAUUSD" || pair === "NAS100" ? +(0.1 + rnd() * 0.4).toFixed(2) : +(0.3 + rnd() * 1.2).toFixed(2),
+          risk, pnl, r, fees: null,
+          emotionBefore: emoBefore, emotionAfter: emoAfter,
+          confidence: win ? 3 + Math.floor(rnd() * 3) : 1 + Math.floor(rnd() * 4),
+          followedPlan: followed,
+          mistakes: followed ? "" : pick(["Entered early", "Moved stop loss", "No confirmation", "Chased entry", "Oversized position"]),
+          notes: r > 0 ? pick(winNotes) : r === 0 ? pick(beNotes) : (setup === "News Fade" ? "Faded the news spike, price kept running. This setup isn't working." : pick(lossNotes)),
+          screenshot: "",
+          demo: true
+        });
+      }
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+
+/* ======================================================================
+   Analytics
+   ====================================================================== */
+function sortChrono(list) {
+  return list.slice().sort((a, b) => (a.date + (a.time || "")).localeCompare(b.date + (b.time || "")));
+}
+
+function rangeBounds() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const t = isoDate(today);
+  switch (ui.range) {
+    case "month": return [isoDate(new Date(today.getFullYear(), today.getMonth(), 1)), t];
+    case "30": { const d = new Date(today); d.setDate(d.getDate() - 29); return [isoDate(d), t]; }
+    case "90": { const d = new Date(today); d.setDate(d.getDate() - 89); return [isoDate(d), t]; }
+    case "ytd": return [today.getFullYear() + "-01-01", t];
+    case "custom": return [ui.from || "0000-01-01", ui.to || "9999-12-31"];
+    default: return ["0000-01-01", "9999-12-31"];
+  }
+}
+
+function filtered() {
+  const [from, to] = rangeBounds();
+  return sortChrono(trades).filter(t => t.date >= from && t.date <= to
+    && (!ui.session || t.session === ui.session)
+    && (!ui.setup || t.setup === ui.setup));
+}
+
+function group(list, key) {
+  const map = new Map();
+  for (const t of list) {
+    const k = (typeof key === "function" ? key(t) : t[key]) || "Unspecified";
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(t);
+  }
+  return Array.from(map, ([name, items]) => {
+    const wins = items.filter(t => t.pnl > 0).length;
+    const losses = items.filter(t => t.pnl < 0).length;
+    const rs = items.map(rOf).filter(r => r != null);
+    return {
+      name, items, n: items.length, wins, losses, be: items.length - wins - losses,
+      pnl: sum(items.map(t => t.pnl)),
+      winRate: wins + losses ? wins / (wins + losses) : 0,
+      avgR: rs.length ? sum(rs) / rs.length : null
+    };
+  });
+}
+
+function stats(list) {
+  const n = list.length;
+  const winsL = list.filter(t => t.pnl > 0);
+  const lossL = list.filter(t => t.pnl < 0);
+  const grossWin = sum(winsL.map(t => t.pnl));
+  const grossLoss = sum(lossL.map(t => t.pnl));
+  const total = grossWin + grossLoss;
+  const rs = list.map(rOf).filter(r => r != null);
+  const avgWin = winsL.length ? grossWin / winsL.length : 0;
+  const avgLoss = lossL.length ? grossLoss / lossL.length : 0;
+  const decided = winsL.length + lossL.length;
+  const best = list.reduce((b, t) => (!b || t.pnl > b.pnl ? t : b), null);
+  const worst = list.reduce((b, t) => (!b || t.pnl < b.pnl ? t : b), null);
+
+  // Max drawdown on the equity curve.
+  let peak = 0, eq = 0, maxDD = 0;
+  for (const t of list) { eq += t.pnl; peak = Math.max(peak, eq); maxDD = Math.min(maxDD, eq - peak); }
+
+  // Current & longest streaks.
+  let streak = 0, bestW = 0, bestL = 0, cur = 0;
+  for (const t of list) {
+    if (t.pnl > 0) { cur = cur > 0 ? cur + 1 : 1; } else if (t.pnl < 0) { cur = cur < 0 ? cur - 1 : -1; } else { continue; }
+    bestW = Math.max(bestW, cur); bestL = Math.min(bestL, cur);
+  }
+  streak = cur;
+
+  return {
+    n, wins: winsL.length, losses: lossL.length, be: n - decided,
+    total, grossWin, grossLoss,
+    winRate: decided ? winsL.length / decided : 0,
+    pf: grossLoss ? grossWin / Math.abs(grossLoss) : (grossWin > 0 ? Infinity : 0),
+    avgR: rs.length ? sum(rs) / rs.length : null,
+    expectancy: n ? total / n : 0,
+    avgWin, avgLoss,
+    payoff: avgLoss ? avgWin / Math.abs(avgLoss) : null,
+    best, worst, maxDD, streak, longestWin: bestW, longestLoss: -bestL
+  };
+}
+
+/* ======================================================================
+   Rendering — Dashboard
+   ====================================================================== */
+function renderDashboard() {
+  const list = filtered();
+  const hasAny = trades.length > 0;
+  $("#demoBanner").hidden = !trades.some(t => t.demo);
+
+  const [from, to] = rangeBounds();
+  const labels = { all: "All time", month: "This month", "30": "Last 30 days", "90": "Last 90 days", ytd: "Year to date", custom: "Custom range" };
+  let lbl = labels[ui.range];
+  if (ui.range !== "all") lbl += " · " + (from.startsWith("0000") ? "start" : fmtDate(from)) + " → " + (to.startsWith("9999") ? "today" : fmtDate(to));
+  if (ui.session) lbl += " · " + ui.session;
+  if (ui.setup) lbl += " · " + ui.setup;
+  $("#rangeLabel").textContent = lbl + " · " + plural(list.length, "trade");
+
+  const empty = list.length === 0;
+  $("#dashEmpty").hidden = !empty;
+  $$(".needs-data").forEach(el => el.hidden = empty);
+  $("#dashEmptyText").textContent = hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade to start seeing analytics.";
+
+  renderTable(list);
+  if (empty) return;
+
+  const st = stats(list);
+  // Balance before the first trade in view = starting balance + all earlier P&L.
+  const first = list[0];
+  const prior = sum(trades.filter(t => (t.date + (t.time || "")) < (first.date + (first.time || ""))).map(t => t.pnl));
+  const startBal = Number(settings.balance) + (ui.range === "all" && !ui.session && !ui.setup ? 0 : prior);
+
+  renderKpis(st, startBal);
+  renderEquity(list, startBal, st);
+  renderWinLoss(st);
+  renderPairs(list);
+  renderSetups(list);
+  renderSessions(list);
+  renderPsych(list);
+  renderDirDow(list);
+  renderCalendar(list);
+  renderInsights(list, st);
+}
+
+function renderDirDow(list) {
+  const dirs = group(list, "direction").sort((a, b) => b.pnl - a.pnl);
+  const names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const dow = group(list, t => names[(parseIso(t.date).getDay() + 6) % 7])
+    .sort((a, b) => names.indexOf(a.name) - names.indexOf(b.name));
+  const el = $("#dirDow");
+  el.innerHTML = `
+    <div><h4 style="margin:0 0 12px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Direction</h4>
+      <div class="bars" role="list">${barRows(dirs, { sub: x => `${x.n} · ${pct(x.winRate, 0)} WR` })}</div></div>
+    <div><h4 style="margin:0 0 12px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Day of week</h4>
+      <div class="bars" role="list">${barRows(dow, { sub: x => `${x.n} · ${pct(x.winRate, 0)} WR` })}</div></div>`;
+  animateBars(el);
+}
+
+function renderKpis(st, startBal) {
+  const ret = startBal ? st.total / startBal : 0;
+  const pfTxt = v => v === Infinity ? "∞" : v.toFixed(2);
+  const cards = [
+    { label: "Total P&L", tone: tone(st.total), accent: st.total >= 0 ? "green" : "red", val: st.total, fmt: v => money(v),
+      meta: `<span class="mono">${st.n}</span> trades · <span class="mono ${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span>` },
+    { label: "Win rate", tone: st.winRate >= 0.5 ? "pos" : "neg", accent: "blue", val: st.winRate, fmt: v => pct(v),
+      meta: `<span class="mono pos">${st.wins}W</span> / <span class="mono neg">${st.losses}L</span>${st.be ? ` / <span class="mono neu">${st.be}BE</span>` : ""}` },
+    { label: "Profit factor", tone: "gold", accent: "gold", val: st.pf, fmt: pfTxt,
+      meta: `${st.pf >= 1.5 ? "Healthy edge" : st.pf >= 1 ? "Marginal edge" : "Losing edge"} · <span class="mono">${money(st.grossWin, { signed: false, decimals: 0 })}</span> / <span class="mono">${money(Math.abs(st.grossLoss), { signed: false, decimals: 0 })}</span>` },
+    { label: "Avg R multiple", tone: tone(st.avgR), accent: "blue", val: st.avgR ?? 0, fmt: fmtR,
+      meta: `Expectancy <span class="mono ${tone(st.expectancy)}">${money(st.expectancy)}</span>/trade` },
+    { label: "Avg win vs loss", tone: "neu", accent: "blue", split: true,
+      html: `<span class="pos">${money(st.avgWin, { decimals: 0 })}</span> <span class="muted">/</span> <span class="neg">${money(st.avgLoss, { decimals: 0 })}</span>`,
+      meta: `Payoff ratio <span class="mono gold">${st.payoff == null ? "—" : st.payoff.toFixed(2) + " : 1"}</span>` },
+    { label: "Best trade", tone: "gold", accent: "gold", val: st.best.pnl, fmt: v => money(v),
+      meta: `<span class="mono">${esc(st.best.pair)}</span> · ${esc(st.best.setup)} · <span class="mono">${fmtDate(st.best.date, { day: "2-digit", month: "short" })}</span>` }
+  ];
+  const wrap = $("#kpis");
+  wrap.innerHTML = cards.map((c, i) => `
+    <article class="card kpi accent-${c.accent} reveal" style="--d:${i + 1}" aria-label="${esc(c.label)}">
+      <div class="label"><span class="dot ${c.tone}" aria-hidden="true"></span>${esc(c.label)}</div>
+      <div class="value ${c.split ? "split" : c.tone}" data-i="${i}">${c.html || ""}</div>
+      <div class="meta">${c.meta}</div>
+    </article>`).join("");
+  cards.forEach((c, i) => { if (!c.split) countUp($(`.value[data-i="${i}"]`, wrap), c.val, c.fmt); });
+}
+
+let eqState = null;
+function renderEquity(list, startBal, st) {
+  const wrap = $("#equityWrap");
+  const tip = $("#eqTip");
+  $$("svg", wrap).forEach(s => s.remove());
+  const W = Math.max(300, wrap.clientWidth || 700);
+  const H = W < 520 ? 240 : 320;
+  const pad = { l: W < 520 ? 58 : 72, r: 16, t: 16, b: 34 };
+  const pts = [{ x: 0, y: startBal, t: null }];
+  let bal = startBal;
+  list.forEach((t, i) => { bal += t.pnl; pts.push({ x: i + 1, y: bal, t }); });
+  const ys = pts.map(p => p.y);
+  let minY = Math.min(...ys), maxY = Math.max(...ys);
+  const span = maxY - minY || Math.max(1, Math.abs(maxY) * 0.05);
+  minY -= span * 0.12; maxY += span * 0.12;
+  const sx = x => pad.l + (x / Math.max(1, pts.length - 1)) * (W - pad.l - pad.r);
+  const sy = y => pad.t + (1 - (y - minY) / (maxY - minY)) * (H - pad.t - pad.b);
+
+  const gridN = 5;
+  let grid = "";
+  for (let i = 0; i <= gridN; i++) {
+    const v = minY + (maxY - minY) * (i / gridN);
+    const y = sy(v);
+    grid += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-dasharray="${i === 0 ? "" : "3 5"}"/>`;
+    grid += `<text class="axis-label" x="${pad.l - 10}" y="${y + 4}" text-anchor="end">${settings.currency}${Math.round(v).toLocaleString("en-US")}</text>`;
+  }
+  // X labels: up to 6 dates.
+  const ticks = Math.min(W < 520 ? 3 : 6, list.length);
+  for (let i = 0; i < ticks; i++) {
+    const idx = Math.round(1 + (i / Math.max(1, ticks - 1)) * (list.length - 1));
+    const p = pts[idx];
+    if (!p || !p.t) continue;
+    grid += `<text class="axis-label" x="${sx(p.x)}" y="${H - 10}" text-anchor="${i === 0 ? "start" : i === ticks - 1 ? "end" : "middle"}">${fmtDate(p.t.date, { day: "2-digit", month: "short" })}</text>`;
+  }
+  const baseY = sy(startBal);
+  grid += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${baseY}" y2="${baseY}" stroke="var(--gold)" stroke-opacity=".45" stroke-dasharray="2 4"/>`;
+
+  const line = pts.map((p, i) => (i ? "L" : "M") + sx(p.x).toFixed(1) + " " + sy(p.y).toFixed(1)).join(" ");
+  const area = line + ` L ${sx(pts[pts.length - 1].x).toFixed(1)} ${H - pad.b} L ${sx(0).toFixed(1)} ${H - pad.b} Z`;
+  const up = bal >= startBal;
+  const dotR = list.length > 120 ? 2.5 : list.length > 60 ? 3.5 : 4.5;
+  const dots = pts.slice(1).map((p, i) => {
+    const c = p.t.pnl > 0 ? "var(--green)" : p.t.pnl < 0 ? "var(--red)" : "var(--blue)";
+    return `<circle class="eq-dot" data-i="${i + 1}" cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="${dotR}" fill="${c}" style="opacity:0;transition:opacity .3s ${(0.6 + i * (0.9 / list.length)).toFixed(2)}s"></circle>`;
+  }).join("");
+
+  const label = `Equity curve from ${money(startBal, { signed: false })} to ${money(bal, { signed: false })} over ${plural(list.length, "trade")}. Use left and right arrow keys to step through trades.`;
+  wrap.insertAdjacentHTML("afterbegin", `
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}" tabindex="0" focusable="true">
+      <defs>
+        <linearGradient id="eqFill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="${up ? "#2ee59d" : "#ff5c7a"}" stop-opacity=".32"/>
+          <stop offset="100%" stop-color="${up ? "#2ee59d" : "#ff5c7a"}" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="eqStroke" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stop-color="#5aa9ff"/>
+          <stop offset="100%" stop-color="${up ? "#2ee59d" : "#ff5c7a"}"/>
+        </linearGradient>
+      </defs>
+      <g>${grid}</g>
+      <path d="${area}" fill="url(#eqFill)" class="eq-area" style="opacity:0;transition:opacity 1s .5s"/>
+      <path d="${line}" class="eq-line"/>
+      <line class="eq-guide" x1="0" x2="0" y1="${pad.t}" y2="${H - pad.b}" stroke="var(--border-strong)" stroke-dasharray="3 3" style="opacity:0"/>
+      <g>${dots}</g>
+    </svg>`);
+  const svg = $("svg", wrap);
+  const path = $(".eq-line", svg);
+  const len = path.getTotalLength();
+  if (!reduced()) {
+    path.style.strokeDasharray = len;
+    path.style.strokeDashoffset = len;
+    path.getBoundingClientRect();
+    path.style.transition = "stroke-dashoffset 1.6s cubic-bezier(.2,.7,.2,1)";
+  }
+  nextFrame(() => {
+    path.style.strokeDashoffset = 0;
+    $(".eq-area", svg).style.opacity = 1;
+    $$(".eq-dot", svg).forEach(d => d.style.opacity = 1);
+  });
+
+  eqState = { pts, sx, sy, svg, active: null };
+  const show = i => {
+    const p = pts[i];
+    if (!p || !p.t) return;
+    $$(".eq-dot.active", svg).forEach(d => d.classList.remove("active"));
+    const dot = $(`.eq-dot[data-i="${i}"]`, svg);
+    if (dot) dot.classList.add("active");
+    const g = $(".eq-guide", svg);
+    g.setAttribute("x1", sx(p.x)); g.setAttribute("x2", sx(p.x)); g.style.opacity = 1;
+    const t = p.t;
+    tip.innerHTML = `<div class="t">#${i} · ${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></div>
+      <div class="row"><span class="muted">Date</span><span class="mono">${fmtDate(t.date)}</span></div>
+      <div class="row"><span class="muted">Setup</span><span>${esc(t.setup)}</span></div>
+      <div class="row"><span class="muted">P&amp;L</span><span class="mono ${tone(t.pnl)}">${money(t.pnl)}</span></div>
+      <div class="row"><span class="muted">R</span><span class="mono ${tone(rOf(t))}">${fmtR(rOf(t))}</span></div>
+      <div class="row"><span class="muted">Balance</span><span class="mono">${money(p.y, { signed: false })}</span></div>`;
+    const x = sx(p.x), y = sy(p.y);
+    const tw = 190;
+    tip.style.left = Math.min(Math.max(0, x - tw / 2), W - tw) + "px";
+    tip.style.top = Math.max(0, y - 150) + "px";
+    tip.classList.add("show");
+    eqState.active = i;
+  };
+  const hide = () => {
+    tip.classList.remove("show");
+    $$(".eq-dot.active", svg).forEach(d => d.classList.remove("active"));
+    $(".eq-guide", svg).style.opacity = 0;
+  };
+  const nearest = evt => {
+    const rect = svg.getBoundingClientRect();
+    const x = (evt.clientX - rect.left) * (W / rect.width);
+    const frac = (x - pad.l) / (W - pad.l - pad.r);
+    return Math.max(1, Math.min(pts.length - 1, Math.round(frac * (pts.length - 1))));
+  };
+  svg.addEventListener("pointermove", e => show(nearest(e)));
+  svg.addEventListener("pointerleave", hide);
+  svg.addEventListener("blur", hide);
+  svg.addEventListener("keydown", e => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    let i = eqState.active || 0;
+    if (e.key === "ArrowRight") i = Math.min(pts.length - 1, i + 1);
+    if (e.key === "ArrowLeft") i = Math.max(1, i - 1);
+    if (e.key === "Home") i = 1;
+    if (e.key === "End") i = pts.length - 1;
+    show(i);
+  });
+
+  const ret = startBal ? (bal - startBal) / startBal : 0;
+  $("#eqStats").innerHTML = `
+    <div><span>Balance</span><span>${money(bal, { signed: false })}</span></div>
+    <div><span>Return</span><span class="${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span></div>
+    <div><span>Max DD</span><span class="neg">${money(st.maxDD)}</span></div>`;
+}
+
+function renderWinLoss(st) {
+  const C = 2 * Math.PI * 70;
+  const n = st.n || 1;
+  const w = st.wins / n, l = st.losses / n, b = st.be / n;
+  const gap = st.wins && st.losses ? 0.006 : 0;
+  $("#winloss").innerHTML = `
+    <div class="donut" role="img" aria-label="Win rate ${pct(st.winRate)}: ${st.wins} wins, ${st.losses} losses, ${st.be} breakeven">
+      <svg viewBox="0 0 180 180" aria-hidden="true">
+        <circle cx="90" cy="90" r="70" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="18"/>
+        <circle class="arc" id="arcW" cx="90" cy="90" r="70" stroke="var(--green)" stroke-dasharray="0 ${C}" stroke-dashoffset="0"/>
+        <circle class="arc" id="arcL" cx="90" cy="90" r="70" stroke="var(--red)" stroke-dasharray="0 ${C}" stroke-dashoffset="${-w * C}"/>
+        <circle class="arc" id="arcB" cx="90" cy="90" r="70" stroke="var(--blue)" stroke-dasharray="0 ${C}" stroke-dashoffset="${-(w + l) * C}"/>
+      </svg>
+      <div class="center"><span class="big ${st.winRate >= 0.5 ? "pos" : "neg"}" id="donutPct">0%</span><small>Win rate</small></div>
+    </div>
+    <ul class="stat-list">
+      <li><span><i class="swatch" style="background:var(--green)"></i>Wins</span><span class="pos">${st.wins}</span></li>
+      <li><span><i class="swatch" style="background:var(--red)"></i>Losses</span><span class="neg">${st.losses}</span></li>
+      ${st.be ? `<li><span><i class="swatch" style="background:var(--blue)"></i>Breakeven</span><span class="neu">${st.be}</span></li>` : ""}
+      <li><span>Avg win</span><span class="pos">${money(st.avgWin)}</span></li>
+      <li><span>Avg loss</span><span class="neg">${money(st.avgLoss)}</span></li>
+      <li><span>Largest win</span><span class="pos">${st.best && st.best.pnl > 0 ? money(st.best.pnl) : "—"}</span></li>
+      <li><span>Largest loss</span><span class="neg">${st.worst && st.worst.pnl < 0 ? money(st.worst.pnl) : "—"}</span></li>
+      <li><span>Streaks (W / L)</span><span><span class="pos">${st.longestWin}</span> / <span class="neg">${st.longestLoss}</span></span></li>
+    </ul>`;
+  nextFrame(() => {
+    $("#arcW").setAttribute("stroke-dasharray", `${Math.max(0, w * C - gap * C)} ${C}`);
+    $("#arcL").setAttribute("stroke-dasharray", `${Math.max(0, l * C - gap * C)} ${C}`);
+    $("#arcB").setAttribute("stroke-dasharray", `${b * C} ${C}`);
+  });
+  countUp($("#donutPct"), st.winRate * 100, v => v.toFixed(1) + "%");
+}
+
+function barRows(groups, { sub } = {}) {
+  const max = Math.max(1, ...groups.map(g => Math.abs(g.pnl)));
+  return groups.map(g => `
+    <div class="bar-row" role="listitem" aria-label="${esc(g.name)}: ${money(g.pnl)} over ${plural(g.n, "trade")}">
+      <div class="name" title="${esc(g.name)}">${esc(g.name)}${sub ? `<small>${sub(g)}</small>` : ""}</div>
+      <div class="bar-track" aria-hidden="true"><div class="bar-fill ${g.pnl >= 0 ? "pos" : "neg"}" data-w="${(Math.abs(g.pnl) / max * 100).toFixed(1)}"></div></div>
+      <div class="val ${tone(g.pnl)}">${money(g.pnl)}</div>
+    </div>`).join("");
+}
+function animateBars(root) {
+  nextFrame(() => $$(".bar-fill[data-w], .wr-bar i[data-w]", root).forEach((b, i) => {
+    b.style.transitionDelay = (i * 60) + "ms";
+    b.style.width = b.dataset.w + "%";
+  }));
+}
+
+function renderPairs(list) {
+  const g = group(list, "pair").sort((a, b) => b.pnl - a.pnl);
+  const el = $("#pairBars");
+  el.setAttribute("role", "list");
+  el.innerHTML = barRows(g, { sub: x => `${x.n} trades · ${pct(x.winRate, 0)} WR` });
+  animateBars(el);
+}
+
+function renderSetups(list) {
+  const g = group(list, "setup").sort((a, b) => b.pnl - a.pnl);
+  const el = $("#setupGrid");
+  el.innerHTML = g.map((s, i) => `
+    <article class="mini ${s.pnl >= 0 ? "win" : "loss"}" aria-label="${esc(s.name)}: ${plural(s.n, "trade")}, ${money(s.pnl)}">
+      <span class="rank">#${i + 1}</span>
+      <h4>${esc(s.name)}</h4>
+      <div class="big ${tone(s.pnl)}">${money(s.pnl)}</div>
+      <div class="row"><span>Trades</span><b>${s.n}</b></div>
+      <div class="row"><span>Win rate</span><b class="${s.winRate >= 0.5 ? "pos" : "neg"}">${pct(s.winRate, 0)}</b></div>
+      <div class="row"><span>Avg R</span><b class="${tone(s.avgR)}">${fmtR(s.avgR)}</b></div>
+      <div class="wr-bar" aria-hidden="true"><i data-w="${(s.winRate * 100).toFixed(1)}"></i></div>
+    </article>`).join("");
+  animateBars(el);
+}
+
+function renderSessions(list) {
+  const order = settings.sessions;
+  const g = group(list, "session").sort((a, b) => {
+    const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  const C = 2 * Math.PI * 34;
+  const el = $("#sessionGrid");
+  el.innerHTML = g.map(s => `
+    <article class="card session ${s.pnl >= 0 ? "accent-green" : "accent-red"}" aria-label="${esc(s.name)} session">
+      <div class="ring" role="img" aria-label="Win rate ${pct(s.winRate, 0)}">
+        <svg viewBox="0 0 84 84" aria-hidden="true">
+          <circle class="track" cx="42" cy="42" r="34"/>
+          <circle class="prog" cx="42" cy="42" r="34" stroke="${s.winRate >= 0.5 ? "var(--green)" : "var(--red)"}" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-off="${C * (1 - s.winRate)}"/>
+        </svg>
+        <span class="pct ${s.winRate >= 0.5 ? "pos" : "neg"}">${Math.round(s.winRate * 100)}%</span>
+      </div>
+      <div>
+        <h4>${esc(s.name)}</h4>
+        <div class="meta"><span class="mono pos">${s.wins}W</span> – <span class="mono neg">${s.losses}L</span>${s.be ? ` – <span class="mono neu">${s.be}BE</span>` : ""} · ${plural(s.n, "trade")}</div>
+        <div class="meta">Avg R <span class="mono ${tone(s.avgR)}">${fmtR(s.avgR)}</span></div>
+        <div class="pnl ${tone(s.pnl)}">${money(s.pnl)}</div>
+      </div>
+    </article>`).join("");
+  nextFrame(() => $$(".prog", el).forEach(c => c.setAttribute("stroke-dashoffset", c.dataset.off)));
+}
+
+function renderPsych(list) {
+  const withEmo = list.filter(t => t.emotionBefore);
+  const g = group(withEmo, "emotionBefore").sort((a, b) => b.pnl - a.pnl);
+  const followed = list.filter(t => t.followedPlan !== false);
+  const broke = list.filter(t => t.followedPlan === false);
+  const fs = stats(followed), bs = stats(broke);
+  const adherence = list.length ? followed.length / list.length : 0;
+  const mistakes = {};
+  list.forEach(t => (t.mistakes || "").split(",").map(s => s.trim()).filter(Boolean).forEach(m => {
+    mistakes[m] = mistakes[m] || { n: 0, pnl: 0 };
+    mistakes[m].n++; mistakes[m].pnl += t.pnl;
+  }));
+  const topMistakes = Object.entries(mistakes).sort((a, b) => a[1].pnl - b[1].pnl).slice(0, 4);
+  const el = $("#psych");
+  el.innerHTML = `
+    <div class="mini-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:18px">
+      <div class="mini win"><h4>Plan followed</h4><div class="big ${tone(fs.total)}">${money(fs.total)}</div>
+        <div class="row"><span>${plural(fs.n, "trade")}</span><b class="${fs.winRate >= 0.5 ? "pos" : "neg"}">${pct(fs.winRate, 0)} WR</b></div></div>
+      <div class="mini loss"><h4>Plan broken</h4><div class="big ${tone(bs.total)}">${money(bs.total)}</div>
+        <div class="row"><span>${plural(bs.n, "trade")}</span><b class="${bs.winRate >= 0.5 ? "pos" : "neg"}">${bs.n ? pct(bs.winRate, 0) + " WR" : "—"}</b></div></div>
+      <div class="mini"><h4>Discipline</h4><div class="big gold">${pct(adherence, 0)}</div>
+        <div class="row"><span>Plan adherence</span></div></div>
+    </div>
+    <h4 style="margin:0 0 12px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">P&amp;L by emotion before entry</h4>
+    ${g.length ? `<div class="bars" role="list">${barRows(g, { sub: x => `${x.n} · ${pct(x.winRate, 0)} WR` })}</div>` : `<p class="none">Log emotions with your trades to see this breakdown.</p>`}
+    ${topMistakes.length ? `<h4 style="margin:20px 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Costliest mistakes</h4>
+      <ul class="stat-list">${topMistakes.map(([m, v]) => `<li><span>${esc(m)} <span class="muted">×${v.n}</span></span><span class="${tone(v.pnl)}">${money(v.pnl)}</span></li>`).join("")}</ul>` : ""}`;
+  animateBars(el);
+}
+
+function renderCalendar(list) {
+  const months = Array.from(new Set(list.map(t => t.date.slice(0, 7)))).sort();
+  if (!ui.calMonth || !months.includes(ui.calMonth)) ui.calMonth = months[months.length - 1];
+  const [y, m] = ui.calMonth.split("-").map(Number);
+  const first = new Date(y, m - 1, 1);
+  const days = new Date(y, m, 0).getDate();
+  const offset = (first.getDay() + 6) % 7; // Monday first
+  const byDay = {};
+  list.forEach(t => { if (t.date.startsWith(ui.calMonth)) { (byDay[t.date] = byDay[t.date] || []).push(t); } });
+  const monthPnl = sum(Object.values(byDay).flat().map(t => t.pnl));
+  const tradingDays = Object.keys(byDay).length;
+  const greenDays = Object.values(byDay).filter(d => sum(d.map(t => t.pnl)) > 0).length;
+  const todayIso = isoDate(new Date());
+
+  $("#calMonth").textContent = first.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  $("#calSub").innerHTML = `Month <span class="mono ${tone(monthPnl)}">${money(monthPnl)}</span> · <span class="mono">${greenDays}/${tradingDays}</span> green days`;
+  const idx = months.indexOf(ui.calMonth);
+  $("#calPrev").disabled = idx <= 0;
+  $("#calNext").disabled = idx >= months.length - 1;
+
+  let html = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => `<div class="dow" role="columnheader">${d}</div>`).join("");
+  for (let i = 0; i < offset; i++) html += `<div class="day empty" aria-hidden="true"></div>`;
+  for (let d = 1; d <= days; d++) {
+    const iso = `${ui.calMonth}-${String(d).padStart(2, "0")}`;
+    const ts = byDay[iso];
+    const p = ts ? sum(ts.map(t => t.pnl)) : null;
+    const cls = ts ? (p > 0 ? "up" : p < 0 ? "down" : "flat") : "";
+    const lbl = ts ? `${fmtDate(iso)}: ${money(p)} from ${plural(ts.length, "trade")}` : `${fmtDate(iso)}: no trades`;
+    html += `<div class="day ${cls} ${iso === todayIso ? "today" : ""}" role="gridcell" aria-label="${esc(lbl)}" title="${esc(lbl)}">
+      <span class="d">${d}</span>${ts ? `<span class="p ${tone(p)}">${money(p, { decimals: 0 })}</span><span class="n">${plural(ts.length, "trade")}</span>` : ""}</div>`;
+  }
+  $("#calendar").innerHTML = html;
+  saveUi();
+}
+
+/* ======================================================================
+   Insights engine
+   ====================================================================== */
+function renderInsights(list, st) {
+  const out = [];
+  const N = s => `<span class="num">${s}</span>`;
+  const setups = group(list, "setup");
+  const sessions = group(list, "session");
+  const pairs = group(list, "pair");
+  const minN = list.length >= 20 ? 3 : 2;
+
+  // Setups with 0% win rate → cut.
+  setups.filter(s => s.n >= minN && s.wins === 0).sort((a, b) => a.pnl - b.pnl).forEach(s => out.push({
+    icon: "🚫", tone: "bad", tag: "Cut",
+    title: `Stop trading “${s.name}”`,
+    text: `${N(s.n)} trades, ${N("0")} wins. This setup has cost ${N(money(s.pnl))} (${N(fmtR(s.avgR))} average).`,
+    action: `Remove it from your playbook, or paper-trade it until you can show a positive edge over 20+ samples.`
+  }));
+
+  // Low win-rate, negative setups → rework.
+  setups.filter(s => s.n >= minN && s.wins > 0 && s.winRate < 0.4 && s.pnl < 0).sort((a, b) => a.pnl - b.pnl).slice(0, 2).forEach(s => out.push({
+    icon: "⚠️", tone: "warn", tag: "Rework",
+    title: `“${s.name}” is underperforming`,
+    text: `Only ${N(pct(s.winRate, 0))} win rate over ${N(s.n)} trades for ${N(money(s.pnl))}, against ${N(pct(st.winRate, 0))} for the account overall.`,
+    action: `Tighten the entry criteria (add a confirmation trigger), or cut size by half until results recover.`
+  }));
+
+  // Best setup → double down.
+  const bestSetup = setups.filter(s => s.n >= minN && s.pnl > 0).sort((a, b) => b.pnl - a.pnl)[0];
+  if (bestSetup) {
+    const share = st.total > 0 ? bestSetup.pnl / st.total : null;
+    out.push({
+      icon: "🚀", tone: "good", tag: "Double down",
+      title: `“${bestSetup.name}” is your A+ setup`,
+      text: `${N(money(bestSetup.pnl))} from ${N(bestSetup.n)} trades with a ${N(pct(bestSetup.winRate, 0))} win rate and ${N(fmtR(bestSetup.avgR))} average${share != null && share > 0 ? ` — ${N(pct(Math.min(share, 9.99), 0))} of total profit` : ""}.`,
+      action: `Prioritise this setup: build a checklist for it and consider a slightly larger risk allocation (e.g. 1.25×) on textbook examples.`
+    });
+  }
+
+  // Sessions.
+  const sortedSess = sessions.slice().sort((a, b) => b.pnl - a.pnl);
+  const worstSess = sortedSess.filter(s => s.pnl < 0 && s.n >= minN).pop();
+  const bestSess = sortedSess.find(s => s.pnl > 0 && s.n >= minN);
+  if (worstSess) out.push({
+    icon: "🌙", tone: "bad", tag: "Session leak",
+    title: `You're losing money in ${worstSess.name}`,
+    text: `${N(worstSess.wins + "W–" + worstSess.losses + "L")} (${N(pct(worstSess.winRate, 0))}) for ${N(money(worstSess.pnl))} across ${N(worstSess.n)} trades.${bestSess ? ` Compare that with ${bestSess.name} at ${N(money(bestSess.pnl))}.` : ""}`,
+    action: `Stop trading ${worstSess.name} for the next 2 weeks, or restrict it to your best setup only.`
+  });
+  if (bestSess) out.push({
+    icon: "⏰", tone: "good", tag: "Focus",
+    title: `${bestSess.name} is your strongest session`,
+    text: `${N(pct(bestSess.winRate, 0))} win rate and ${N(money(bestSess.pnl))} from ${N(bestSess.n)} trades (${N(fmtR(bestSess.avgR))} avg).`,
+    action: `Make sure you're at the screen, rested and prepared, for the ${bestSess.name} open. Schedule your day around it.`
+  });
+
+  // Pairs.
+  const sortedPairs = pairs.slice().sort((a, b) => b.pnl - a.pnl);
+  const bestPair = sortedPairs.find(p => p.pnl > 0 && p.n >= minN);
+  const worstPair = sortedPairs.filter(p => p.pnl < 0 && p.n >= minN).pop();
+  if (bestPair) out.push({
+    icon: "🎯", tone: "good", tag: "Focus",
+    title: `${bestPair.name} is your best market`,
+    text: `${N(money(bestPair.pnl))} over ${N(bestPair.n)} trades at ${N(pct(bestPair.winRate, 0))} win rate.${worstPair ? ` Meanwhile ${worstPair.name} is at ${N(money(worstPair.pnl))}.` : ""}`,
+    action: `Narrow your watchlist to your top 2–3 pairs${worstPair ? ` and drop ${worstPair.name} until you review what's going wrong there` : ""}.`
+  });
+
+  // Risk management.
+  if (st.wins && st.losses) {
+    const good = st.pf >= 1.5 && (st.payoff || 0) >= 1.2;
+    const ok = st.pf >= 1;
+    out.push({
+      icon: good ? "🛡️" : ok ? "⚖️" : "🩸", tone: good ? "good" : ok ? "warn" : "bad", tag: "Risk",
+      title: good ? "Risk management is solid" : ok ? "Risk management needs tightening" : "Risk management is costing you",
+      text: `Average win ${N(money(st.avgWin))} vs average loss ${N(money(st.avgLoss))} (payoff ${N((st.payoff || 0).toFixed(2) + ":1")}), profit factor ${N(st.pf === Infinity ? "∞" : st.pf.toFixed(2))}, max drawdown ${N(money(st.maxDD))}.`,
+      action: good ? `Keep risk per trade fixed. Don't increase size after a winning streak; let the edge compound.`
+        : (st.payoff || 0) < 1 ? `Your losers are bigger than your winners. Never widen a stop, and aim for a minimum 1.5R target before entering.`
+        : `Let winners run to target more often and cut trades that don't move as expected.`
+    });
+  }
+
+  // Emotions.
+  const emos = group(list.filter(t => t.emotionBefore), "emotionBefore").filter(e => e.n >= 2);
+  const worstEmo = emos.slice().sort((a, b) => a.pnl - b.pnl)[0];
+  const bestEmo = emos.slice().sort((a, b) => b.pnl - a.pnl)[0];
+  if (worstEmo && worstEmo.pnl < 0) out.push({
+    icon: "🧠", tone: "warn", tag: "Psychology",
+    title: `Trading while “${worstEmo.name}” is expensive`,
+    text: `${N(worstEmo.n)} trades entered feeling ${worstEmo.name.toLowerCase()} returned ${N(money(worstEmo.pnl))} at ${N(pct(worstEmo.winRate, 0))} win rate.${bestEmo && bestEmo.pnl > 0 ? ` Trades taken feeling ${bestEmo.name.toLowerCase()} made ${N(money(bestEmo.pnl))}.` : ""}`,
+    action: `Add a pre-trade check: if you feel ${worstEmo.name.toLowerCase()}, step away for 15 minutes before placing an order.`
+  });
+
+  // Plan adherence.
+  const broke = list.filter(t => t.followedPlan === false);
+  if (broke.length >= 2) {
+    const bp = sum(broke.map(t => t.pnl));
+    const fp = sum(list.filter(t => t.followedPlan !== false).map(t => t.pnl));
+    out.push({
+      icon: "📋", tone: bp < 0 ? "bad" : "info", tag: "Discipline",
+      title: bp < 0 ? "Breaking your plan is costing you" : "Plan deviations",
+      text: `${N(broke.length)} trades broke your plan for ${N(money(bp))}. Trades that followed it made ${N(money(fp))}.`,
+      action: `Write your rules on a card next to your screen and tick them off before every entry.`
+    });
+  }
+
+  // Direction bias.
+  const dirs = group(list, "direction");
+  if (dirs.length === 2) {
+    const [a, b] = dirs.slice().sort((x, y) => y.pnl - x.pnl);
+    if (b.pnl < 0 && a.pnl > 0 && b.n >= minN) out.push({
+      icon: "↕️", tone: "info", tag: "Bias",
+      title: `Your ${a.name.toLowerCase()}s outperform your ${b.name.toLowerCase()}s`,
+      text: `${a.name}: ${N(money(a.pnl))} (${N(pct(a.winRate, 0))}). ${b.name}: ${N(money(b.pnl))} (${N(pct(b.winRate, 0))}).`,
+      action: `Require extra confirmation, such as higher-timeframe alignment, before taking ${b.name.toLowerCase()} trades.`
+    });
+  }
+
+  if (st.longestLoss >= 4) out.push({
+    icon: "🧯", tone: "warn", tag: "Drawdown",
+    title: `Losing streaks of up to ${st.longestLoss} trades`,
+    text: `Your longest losing streak is ${N(st.longestLoss)} trades, against a longest winning streak of ${N(st.longestWin)}.`,
+    action: `Set a daily stop: after 2 consecutive losses, stop trading for the day.`
+  });
+
+  if (!out.length) out.push({ icon: "📈", tone: "info", tag: "Keep logging", title: "Not enough data yet", text: `Insights appear once you have at least ${N(minN)} trades per setup, session or pair.`, action: "Keep journaling every trade, including the boring ones." });
+
+  const card = i => `
+    <article class="card insight ${i.tone} accent-${{ good: "green", bad: "red", warn: "gold", info: "blue" }[i.tone]}">
+      <div class="ihead"><div class="emoji" aria-hidden="true">${i.icon}</div><div><div class="tag">${i.tag}</div><h3>${esc(i.title)}</h3></div></div>
+      <p>${i.text}</p>
+      <div class="action"><b>Action:</b> ${i.action}</div>
+    </article>`;
+  $("#insights").innerHTML = out.map(card).join("");
+  // Overview shows the three most urgent: problems first, then strengths.
+  const rank = { bad: 0, warn: 1, good: 2, info: 3 };
+  $("#topInsights").innerHTML = out.slice().sort((a, b) => rank[a.tone] - rank[b.tone]).slice(0, 3).map(card).join("");
+}
+
+/* ======================================================================
+   Trade table
+   ====================================================================== */
+const COLS = [
+  { key: "idx", label: "#" }, { key: "date", label: "Date" }, { key: "pair", label: "Pair" },
+  { key: "session", label: "Session" }, { key: "direction", label: "Direction" }, { key: "setup", label: "Setup" },
+  { key: "r", label: "R multiple" }, { key: "pnl", label: "P&L" }, { key: "result", label: "Result" },
+  { key: "emotionBefore", label: "Emotion" }, { key: "notes", label: "Notes", static: true }, { key: "actions", label: "Actions", static: true }
+];
+
+function renderTable(list) {
+  const indexed = list.map((t, i) => ({ t, idx: i + 1 }));
+  const q = $("#tSearch").value.trim().toLowerCase();
+  const res = $("#tResult").value;
+  let rows = indexed.filter(({ t }) => (!res || resultOf(t) === res)
+    && (!q || [t.pair, t.setup, t.session, t.notes, t.direction, t.emotionBefore, t.emotionAfter, t.mistakes, t.date].join(" ").toLowerCase().includes(q)));
+  const k = ui.sortKey, dir = ui.sortDir === "asc" ? 1 : -1;
+  const val = ({ t, idx }) => k === "idx" ? idx : k === "date" ? t.date + (t.time || "") : k === "r" ? (rOf(t) ?? -Infinity) : k === "result" ? resultOf(t) : (t[k] ?? "");
+  rows.sort((a, b) => { const va = val(a), vb = val(b); return (va > vb ? 1 : va < vb ? -1 : a.idx - b.idx) * dir; });
+
+  $("#tableHead").innerHTML = COLS.map(c => {
+    if (c.static) return `<th scope="col" class="static">${c.label}</th>`;
+    const active = ui.sortKey === c.key;
+    const sortAttr = active ? ` aria-sort="${ui.sortDir === "asc" ? "ascending" : "descending"}"` : "";
+    return `<th scope="col"${sortAttr}><button type="button" data-sort="${c.key}">${c.label}<span class="arrow" aria-hidden="true">${active ? (ui.sortDir === "asc" ? "▲" : "▼") : "↕"}</span></button></th>`;
+  }).join("");
+
+  $("#logCount").textContent = `${plural(rows.length, "trade")} shown${rows.length !== list.length ? ` of ${list.length}` : ""}`;
+  $("#tableBody").innerHTML = rows.length ? rows.map(({ t, idx }) => {
+    const r = rOf(t), result = resultOf(t);
+    return `<tr>
+      <td class="num muted">${idx}</td>
+      <td class="num nowrap">${fmtDate(t.date)}${t.time ? `<div class="muted" style="font-size:11.5px">${esc(t.time)}</div>` : ""}</td>
+      <td class="num"><strong>${esc(t.pair)}</strong></td>
+      <td><span class="chip-tag">${esc(t.session)}</span></td>
+      <td><span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></td>
+      <td class="nowrap">${esc(t.setup)}</td>
+      <td class="num ${tone(r)}">${fmtR(r)}</td>
+      <td class="num ${tone(t.pnl)}"><strong>${money(t.pnl)}</strong></td>
+      <td><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
+      <td class="nowrap">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span title="Plan broken" aria-label="Plan broken">⚠️</span>` : ""}</td>
+      <td class="notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="gold">Mistakes: ${esc(t.mistakes)}</div>` : ""}${t.screenshot ? ` <a href="${esc(t.screenshot)}" target="_blank" rel="noopener noreferrer">Chart ↗</a>` : ""}</td>
+      <td><div class="row-actions">
+        <button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
+        <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" style="color:var(--red)">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="${COLS.length}" class="none" style="text-align:center;padding:30px">No trades to show.</td></tr>`;
+}
+
+/* ======================================================================
+   Trade form
+   ====================================================================== */
+function fillSelect(sel, items, { placeholder, value } = {}) {
+  sel.innerHTML = (placeholder != null ? `<option value="">${esc(placeholder)}</option>` : "") + items.map(i => `<option>${esc(i)}</option>`).join("");
+  if (value != null) {
+    if (value && !items.includes(value)) sel.insertAdjacentHTML("beforeend", `<option>${esc(value)}</option>`);
+    sel.value = value;
+  }
+}
+
+function refreshLists() {
+  const allSessions = Array.from(new Set([...settings.sessions, ...trades.map(t => t.session).filter(Boolean)]));
+  const allSetups = Array.from(new Set([...settings.setups, ...trades.map(t => t.setup).filter(Boolean)]));
+  $("#pairList").innerHTML = settings.pairs.map(p => `<option value="${esc(p)}">`).join("");
+  $("#setupList").innerHTML = settings.setups.map(p => `<option value="${esc(p)}">`).join("");
+  $("#mistakeList").innerHTML = settings.mistakes.map(p => `<option value="${esc(p)}">`).join("");
+  fillSelect($("#tSessionSel"), settings.sessions, { placeholder: "Select session", value: $("#tSessionSel").value });
+  fillSelect($("#tEmoBefore"), settings.emotions, { placeholder: "—", value: $("#tEmoBefore").value });
+  fillSelect($("#tEmoAfter"), settings.emotions, { placeholder: "—", value: $("#tEmoAfter").value });
+  fillSelect($("#fSession"), allSessions, { placeholder: "All sessions", value: ui.session });
+  fillSelect($("#fSetup"), allSetups, { placeholder: "All setups", value: ui.setup });
+}
+
+const F = id => document.getElementById(id);
+function resetForm(keepDate) {
+  const d = F("tDate").value;
+  $("#tradeForm").reset();
+  F("tId").value = "";
+  F("tDate").value = keepDate && d ? d : isoDate(new Date());
+  F("tRisk").value = settings.defaultRisk || "";
+  F("tConfOut").textContent = "3/5";
+  F("formTitle").textContent = "Log a trade";
+  F("formSubmit").textContent = "Save trade";
+  F("formCancel").hidden = true;
+  $("#formErrors").classList.remove("show");
+  $$("[aria-invalid]", $("#tradeForm")).forEach(e => e.removeAttribute("aria-invalid"));
+  refreshLists();
+  updatePreview();
+}
+
+function readForm() {
+  return {
+    id: F("tId").value || uid(),
+    date: F("tDate").value,
+    time: F("tTime").value,
+    pair: F("tPair").value.trim().toUpperCase(),
+    session: F("tSessionSel").value,
+    direction: ($("input[name=tDir]:checked") || {}).value || "Long",
+    setup: F("tSetup").value.trim(),
+    entry: num(F("tEntry").value), stop: num(F("tStop").value), target: num(F("tTarget").value), exit: num(F("tExit").value),
+    size: num(F("tSize").value), risk: num(F("tRisk").value),
+    pnl: num(F("tPnl").value), r: num(F("tR").value), fees: num(F("tFees").value),
+    emotionBefore: F("tEmoBefore").value, emotionAfter: F("tEmoAfter").value,
+    confidence: Number(F("tConf").value),
+    followedPlan: F("tPlan").checked,
+    mistakes: F("tMistakes").value.trim(),
+    notes: F("tNotes").value.trim(),
+    screenshot: F("tShot").value.trim()
+  };
+}
+
+function loadIntoForm(t) {
+  F("tId").value = t.id;
+  F("tDate").value = t.date || "";
+  F("tTime").value = t.time || "";
+  F("tPair").value = t.pair || "";
+  refreshLists();
+  fillSelect(F("tSessionSel"), settings.sessions, { placeholder: "Select session", value: t.session || "" });
+  $$("input[name=tDir]").forEach(r => r.checked = r.value === t.direction);
+  F("tSetup").value = t.setup || "";
+  const setNum = (id, v) => F(id).value = v == null ? "" : v;
+  setNum("tEntry", t.entry); setNum("tStop", t.stop); setNum("tTarget", t.target); setNum("tExit", t.exit);
+  setNum("tSize", t.size); setNum("tRisk", t.risk); setNum("tPnl", t.pnl); setNum("tR", t.r); setNum("tFees", t.fees);
+  fillSelect(F("tEmoBefore"), settings.emotions, { placeholder: "—", value: t.emotionBefore || "" });
+  fillSelect(F("tEmoAfter"), settings.emotions, { placeholder: "—", value: t.emotionAfter || "" });
+  F("tConf").value = t.confidence || 3; F("tConfOut").textContent = (t.confidence || 3) + "/5";
+  F("tPlan").checked = t.followedPlan !== false;
+  F("tMistakes").value = t.mistakes || "";
+  F("tNotes").value = t.notes || "";
+  F("tShot").value = t.screenshot || "";
+  F("formTitle").textContent = "Edit trade";
+  F("formSubmit").textContent = "Update trade";
+  F("formCancel").hidden = false;
+  updatePreview();
+}
+
+function validate(t) {
+  const errs = [];
+  const mark = (id, bad, msg) => { F(id).toggleAttribute("aria-invalid", false); if (bad) { F(id).setAttribute("aria-invalid", "true"); errs.push({ id, msg }); } };
+  mark("tDate", !t.date, "Date is required");
+  mark("tPair", !t.pair, "Pair / instrument is required");
+  mark("tSessionSel", !t.session, "Session is required");
+  mark("tSetup", !t.setup, "Setup is required");
+  mark("tPnl", t.pnl == null, "Net P&L is required (use 0 for breakeven)");
+  mark("tRisk", t.risk != null && t.risk < 0, "Risk can't be negative");
+  return errs;
+}
+
+function updatePreview() {
+  const t = readForm();
+  const r = t.r != null ? t.r : (t.pnl != null && t.risk ? t.pnl / t.risk : null);
+  const planned = t.entry != null && t.stop != null && t.target != null && t.entry !== t.stop ? Math.abs(t.target - t.entry) / Math.abs(t.entry - t.stop) : null;
+  const res = t.pnl == null ? null : t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "BE";
+  F("pvBadge").innerHTML = res ? `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : "be"}">${res === "BE" ? "Breakeven" : res}</span>` : "";
+  F("tR").placeholder = r != null && t.r == null ? "Auto: " + r.toFixed(2) : "";
+  const rows = [
+    ["Instrument", esc(t.pair || "—")],
+    ["Direction", `<span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${t.direction}</span>`],
+    ["P&L", `<span class="${tone(t.pnl)}">${t.pnl == null ? "—" : money(t.pnl)}</span>`],
+    ["R multiple", `<span class="${tone(r)}">${fmtR(r)}</span>`],
+    ["Planned R:R", planned == null ? "—" : `<span class="gold">1 : ${planned.toFixed(2)}</span>`],
+    ["Account after", t.pnl == null ? "—" : money(Number(settings.balance) + sum(trades.filter(x => x.id !== t.id).map(x => x.pnl)) + t.pnl, { signed: false })]
+  ];
+  F("pvBody").innerHTML = rows.map(([a, b]) => `<div class="pv-row"><span class="muted">${a}</span><span>${b}</span></div>`).join("");
+}
+
+function renderRecent() {
+  const recent = sortChrono(trades).slice(-6).reverse();
+  F("recentList").innerHTML = recent.length ? recent.map(t => `<li><span><span class="mono">${fmtDate(t.date, { day: "2-digit", month: "short" })}</span> · <strong class="mono">${esc(t.pair)}</strong> <span class="muted">${esc(t.setup)}</span></span><span class="mono ${tone(t.pnl)}">${money(t.pnl, { decimals: 0 })}</span></li>`).join("")
+    : `<li class="muted">No trades yet.</li>`;
+}
+
+function guessSession(time, date) {
+  if (!time) return "";
+  let [h, m] = time.split(":").map(Number);
+  if (settings.sessionMode === "local") {
+    const d = date ? parseIso(date) : new Date();
+    d.setHours(h, m || 0, 0, 0);
+    h = d.getUTCHours();
+  }
+  const has = n => settings.sessions.find(s => s.toLowerCase().includes(n));
+  if (h >= 12 && h < 21) return has("new york") || has("ny") || "";
+  if (h >= 7 && h < 12) return has("london") || "";
+  return has("asia") || has("tokyo") || has("sydney") || "";
+}
+
+/* ======================================================================
+   Settings: list editors
+   ====================================================================== */
+const LISTS = [
+  { key: "pairs", title: "Pairs / instruments", placeholder: "Add a pair, e.g. AUDUSD", upper: true },
+  { key: "setups", title: "Setups", placeholder: "Add a setup, e.g. FVG Retest" },
+  { key: "sessions", title: "Sessions", placeholder: "Add a session, e.g. London Close" },
+  { key: "emotions", title: "Emotions", placeholder: "Add an emotion, e.g. Overconfident" },
+  { key: "mistakes", title: "Common mistakes", placeholder: "Add a mistake, e.g. Ignored HTF bias" }
+];
+function renderListEditors() {
+  F("listEditors").innerHTML = LISTS.map((l, i) => `
+    <section class="card reveal" style="--d:${i + 3}" aria-labelledby="le-${l.key}">
+      <div class="card-head"><div><h3 id="le-${l.key}">${l.title}</h3><div class="sub">${settings[l.key].length} items · shown in the log form</div></div></div>
+      <ul class="chips" aria-label="${l.title}" style="list-style:none;padding:0">
+        ${settings[l.key].map((v, j) => `<li class="chip">${esc(v)}<button type="button" data-rm="${l.key}" data-j="${j}" aria-label="Remove ${esc(v)}">×</button></li>`).join("") || `<li class="muted">No items</li>`}
+      </ul>
+      <form class="add-row" data-add="${l.key}">
+        <label class="sr-only" for="add-${l.key}">${l.placeholder}</label>
+        <input id="add-${l.key}" type="text" placeholder="${l.placeholder}" autocomplete="off">
+        <button class="btn" type="submit">Add</button>
+      </form>
+    </section>`).join("");
+}
+function renderAccount() {
+  F("sBalance").value = settings.balance;
+  F("sCurrency").value = settings.currency;
+  F("sRisk").value = settings.defaultRisk;
+  F("sSessionMode").value = settings.sessionMode;
+}
+
+/* ======================================================================
+   Import / export
+   ====================================================================== */
+const CSV_FIELDS = ["date", "time", "pair", "session", "direction", "setup", "entry", "stop", "target", "exit", "size", "risk", "pnl", "r", "fees", "emotionBefore", "emotionAfter", "confidence", "followedPlan", "mistakes", "notes", "screenshot"];
+
+function download(name, text, type) {
+  const blob = new Blob([text], { type });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function toCsv(list) {
+  const q = v => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  return [CSV_FIELDS.join(","), ...sortChrono(list).map(t => CSV_FIELDS.map(f => q(t[f])).join(","))].join("\n");
+}
+function parseCsv(text) {
+  const rows = []; let row = [], cell = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else inQ = false; }
+      else cell += c;
+    } else if (c === '"') inQ = true;
+    else if (c === "," || c === ";" || c === "\t") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+
+// Minimal XLSX reader: unzip with DecompressionStream, read the first worksheet.
+async function readXlsx(buf) {
+  const dv = new DataView(buf);
+  let eocd = -1;
+  for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 66000); i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+  if (eocd < 0) throw new Error("Not a valid .xlsx file");
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const files = {};
+  const dec = new TextDecoder();
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const off = dv.getUint32(p + 42, true);
+    const name = dec.decode(new Uint8Array(buf, p + 46, nlen));
+    files[name] = { method, csize, off };
+    p += 46 + nlen + elen + clen;
+  }
+  const read = async name => {
+    const f = files[name];
+    if (!f) return null;
+    const start = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true);
+    const data = new Uint8Array(buf, start, f.csize);
+    if (f.method === 0) return dec.decode(data);
+    if (typeof DecompressionStream === "undefined") throw new Error("Your browser can't unzip .xlsx files — export as CSV instead");
+    const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    return await new Response(stream).text();
+  };
+  const xml = s => new DOMParser().parseFromString(s, "application/xml");
+  const shared = [];
+  const ss = await read("xl/sharedStrings.xml");
+  if (ss) $$("si", xml(ss)).forEach(si => shared.push($$("t", si).map(t => t.textContent).join("")));
+  // Find first sheet via workbook rels; fall back to sheet1.
+  let sheetPath = "xl/worksheets/sheet1.xml";
+  try {
+    const wb = xml(await read("xl/workbook.xml"));
+    const rels = xml(await read("xl/_rels/workbook.xml.rels"));
+    const first = wb.getElementsByTagName("sheet")[0];
+    const rid = first.getAttribute("r:id") || first.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id");
+    const rel = Array.from(rels.getElementsByTagName("Relationship")).find(r => r.getAttribute("Id") === rid);
+    if (rel) { const t = rel.getAttribute("Target").replace(/^\//, ""); sheetPath = t.startsWith("xl/") ? t : "xl/" + t; }
+  } catch (e) { /* fall back */ }
+  const sheetXml = await read(sheetPath) || await read(Object.keys(files).find(n => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)));
+  if (!sheetXml) throw new Error("No worksheet found");
+  const doc = xml(sheetXml);
+  const colIdx = ref => { let n = 0; for (const ch of ref.replace(/\d+/g, "")) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; };
+  const rows = [];
+  Array.from(doc.getElementsByTagName("row")).forEach(r => {
+    const row = [];
+    Array.from(r.getElementsByTagName("c")).forEach(c => {
+      const t = c.getAttribute("t");
+      const v = c.getElementsByTagName("v")[0];
+      let val = "";
+      if (t === "s") val = shared[Number(v && v.textContent)] ?? "";
+      else if (t === "inlineStr") val = Array.from(c.getElementsByTagName("t")).map(x => x.textContent).join("");
+      else if (t === "b") val = v && v.textContent === "1";
+      else if (v) { const n = Number(v.textContent); val = t === "str" || !Number.isFinite(n) ? v.textContent : n; }
+      row[colIdx(c.getAttribute("r"))] = val;
+    });
+    rows.push(Array.from(row, x => x == null ? "" : x));
+  });
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+
+const ALIASES = {
+  date: ["date", "tradedate", "opendate", "entrydate", "day", "datetime", "opentime"],
+  time: ["time", "entrytime", "timeofday"],
+  pair: ["pair", "symbol", "instrument", "ticker", "market", "asset", "currencypair"],
+  session: ["session", "tradingsession", "market session"],
+  direction: ["direction", "side", "type", "position", "longshort", "buysell", "bias"],
+  setup: ["setup", "strategy", "pattern", "model", "playbook", "setuptype"],
+  r: ["r", "rmultiple", "rmult", "realizedr", "rr", "rresult", "rs", "rachieved"],
+  pnl: ["pnl", "pl", "profit", "profitloss", "netpl", "netpnl", "netprofit", "result$", "pnl$", "amount", "gainloss", "return$"],
+  result: ["result", "outcome", "winloss", "wl"],
+  entry: ["entry", "entryprice", "open", "openprice"],
+  stop: ["stop", "sl", "stoploss", "stopprice"],
+  target: ["target", "tp", "takeprofit", "targetprice"],
+  exit: ["exit", "exitprice", "close", "closeprice"],
+  size: ["size", "lots", "lot", "lotsize", "quantity", "qty", "volume", "positionsize", "units"],
+  risk: ["risk", "riskamount", "risk$", "riskusd", "dollarrisk"],
+  fees: ["fees", "commission", "commissions", "fee"],
+  emotionBefore: ["emotion", "emotions", "emotionbefore", "mood", "feeling", "mindset", "preemotion", "pretradeemotion"],
+  emotionAfter: ["emotionafter", "postemotion", "posttradeemotion", "feelingafter"],
+  confidence: ["confidence", "conviction", "rating"],
+  followedPlan: ["followedplan", "plan", "followedrules", "rulesfollowed", "disciplined"],
+  mistakes: ["mistakes", "mistake", "errors"],
+  notes: ["notes", "note", "comment", "comments", "journal", "remarks", "description", "lessons"],
+  screenshot: ["screenshot", "chart", "image", "link", "url"]
+};
+const normKey = s => String(s).toLowerCase().replace(/[^a-z0-9$]/g, "");
+
+function excelDate(v) {
+  if (typeof v === "number" && v > 20000 && v < 80000) {
+    const d = new Date(Math.round((v - 25569) * 86400000));
+    return { date: `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`,
+      time: v % 1 ? `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}` : "" };
+  }
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:[ T](\d{1,2}):(\d{2}))?/);
+  if (m) return { date: `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`, time: m[4] ? `${m[4].padStart(2, "0")}:${m[5]}` : "" };
+  m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})(?:[ T](\d{1,2}):(\d{2}))?/);
+  if (m) {
+    let [a, b] = [Number(m[1]), Number(m[2])];
+    let day = a, mon = b;
+    if (b > 12 && a <= 12) { day = b; mon = a; } // M/D/Y
+    const y = m[3].length === 2 ? "20" + m[3] : m[3];
+    return { date: `${y}-${String(mon).padStart(2, "0")}-${String(day).padStart(2, "0")}`, time: m[4] ? `${m[4].padStart(2, "0")}:${m[5]}` : "" };
+  }
+  const d = new Date(s);
+  if (!isNaN(d)) return { date: isoDate(d), time: "" };
+  return { date: "", time: "" };
+}
+function excelTime(v) {
+  if (typeof v === "number" && v < 1) { const mins = Math.round(v * 1440); return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`; }
+  const m = String(v).match(/(\d{1,2}):(\d{2})/);
+  return m ? `${m[1].padStart(2, "0")}:${m[2]}` : "";
+}
+function parseMoney(v) {
+  if (typeof v === "number") return v;
+  let s = String(v).trim();
+  if (!s) return null;
+  const neg = /^\(.*\)$/.test(s) || /^-|−/.test(s);
+  s = s.replace(/[^0-9.,]/g, "");
+  if (/,\d{1,2}$/.test(s) && !/\./.test(s)) s = s.replace(/\./g, "").replace(",", "."); else s = s.replace(/,/g, "");
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? (neg ? -Math.abs(n) : n) : null;
+}
+function rowsToTrades(rows) {
+  let hi = rows.findIndex(r => r.some(c => ALIASES.pair.includes(normKey(c))) || r.some(c => ALIASES.pnl.includes(normKey(c))));
+  if (hi < 0) hi = 0;
+  const header = rows[hi].map(normKey);
+  const col = {};
+  for (const [field, names] of Object.entries(ALIASES)) {
+    const i = header.findIndex(h => names.includes(h));
+    if (i >= 0) col[field] = i;
+  }
+  if (col.pair == null && col.pnl == null) throw new Error("Couldn't find Pair or P&L columns in the header row");
+  const out = [];
+  for (const r of rows.slice(hi + 1)) {
+    const g = f => col[f] != null ? r[col[f]] : "";
+    const dt = excelDate(g("date"));
+    let pnl = parseMoney(g("pnl"));
+    let rr = parseMoney(g("r"));
+    if (typeof g("r") === "string" && /r$/i.test(g("r").trim())) rr = parseMoney(g("r").replace(/r$/i, ""));
+    const risk = parseMoney(g("risk"));
+    if (pnl == null && rr != null && risk) pnl = rr * risk;
+    if (pnl == null && rr != null) pnl = rr * (Number(settings.defaultRisk) || 100);
+    if (pnl == null) {
+      const res = String(g("result")).toLowerCase();
+      if (!res) continue;
+      pnl = res.startsWith("w") ? 0.01 : res.startsWith("l") ? -0.01 : 0;
+    }
+    if (!dt.date && !g("pair")) continue;
+    const dirRaw = String(g("direction")).trim().toLowerCase();
+    const plan = String(g("followedPlan")).trim().toLowerCase();
+    out.push({
+      id: uid(),
+      date: dt.date || isoDate(new Date()),
+      time: col.time != null ? excelTime(g("time")) : dt.time,
+      pair: String(g("pair")).trim().toUpperCase().replace("/", ""),
+      session: String(g("session")).trim(),
+      direction: /^(s|short|sell)/.test(dirRaw) ? "Short" : "Long",
+      setup: String(g("setup")).trim() || "Unspecified",
+      entry: parseMoney(g("entry")), stop: parseMoney(g("stop")), target: parseMoney(g("target")), exit: parseMoney(g("exit")),
+      size: parseMoney(g("size")), risk, pnl: Math.round(pnl * 100) / 100, r: rr, fees: parseMoney(g("fees")),
+      emotionBefore: String(g("emotionBefore")).trim(), emotionAfter: String(g("emotionAfter")).trim(),
+      confidence: parseMoney(g("confidence")) || null,
+      followedPlan: plan ? !/^(n|no|false|0|x)$/.test(plan) : true,
+      mistakes: String(g("mistakes")).trim(), notes: String(g("notes")).trim(), screenshot: String(g("screenshot")).trim()
+    });
+    const t = out[out.length - 1];
+    if (!t.session) t.session = guessSession(t.time, t.date) || "Unspecified";
+  }
+  return out;
+}
+
+async function importFile(file) {
+  const name = file.name.toLowerCase();
+  let imported;
+  if (name.endsWith(".json")) {
+    const data = JSON.parse(await file.text());
+    const arr = Array.isArray(data) ? data : data.trades;
+    if (!Array.isArray(arr)) throw new Error("JSON must be an array of trades");
+    imported = arr.map(t => Object.assign({}, t, { id: t.id || uid(), pnl: Number(t.pnl) || 0, demo: undefined }));
+    if (data.settings && typeof data.settings === "object") { settings = Object.assign({}, settings, data.settings); saveSettings(); }
+  } else if (name.endsWith(".xlsx")) {
+    imported = rowsToTrades(await readXlsx(await file.arrayBuffer()));
+  } else {
+    imported = rowsToTrades(parseCsv(await file.text()));
+  }
+  if (!imported.length) throw new Error("No trades found in that file");
+  const add = (key, vals) => vals.forEach(v => { if (v && v !== "Unspecified" && !settings[key].includes(v)) settings[key].push(v); });
+  add("pairs", imported.map(t => t.pair));
+  add("setups", imported.map(t => t.setup));
+  add("sessions", imported.map(t => t.session));
+  add("emotions", imported.flatMap(t => [t.emotionBefore, t.emotionAfter]));
+  saveSettings();
+  trades = F("importReplace").checked ? imported : trades.concat(imported);
+  saveTrades();
+  ui.calMonth = "";
+  refreshAll();
+  toast(`Imported ${plural(imported.length, "trade")}`);
+}
+
+/* ======================================================================
+   Tabs
+   ====================================================================== */
+const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "journal", "log", "settings"];
+const TAB_TITLES = { overview: "Performance overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade log" };
+const isAnalytics = name => name in TAB_TITLES;
+const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
+function showTab(name, { focus = false, push = true } = {}) {
+  if (!TABS.includes(name)) name = "overview";
+  const header = F("analyticsHeader");
+  header.hidden = !isAnalytics(name);
+  if (isAnalytics(name)) {
+    F("pageTitle").textContent = TAB_TITLES[name];
+    $$(".reveal", header).forEach(el => { el.style.animation = "none"; el.offsetHeight; el.style.animation = ""; });
+  }
+  TABS.forEach(t => {
+    const tab = F("tab-" + t), panel = F("panel-" + t);
+    const on = t === name;
+    tab.setAttribute("aria-selected", on);
+    tab.tabIndex = on ? 0 : -1;
+    panel.hidden = !on;
+    if (on) $$(".reveal", panel).forEach(el => { el.style.animation = "none"; el.offsetHeight; el.style.animation = ""; });
+  });
+  if (focus) F("tab-" + name).focus();
+  if (push && location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
+  if (isAnalytics(name)) renderDashboard();
+  if (name === "log") { renderRecent(); updatePreview(); }
+  window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
+}
+
+function refreshAll() {
+  refreshLists();
+  renderListEditors();
+  renderAccount();
+  renderRecent();
+  if (isAnalytics(currentTab())) renderDashboard();
+}
+
+/* ======================================================================
+   Events
+   ====================================================================== */
+$$(".tab").forEach(tab => {
+  tab.addEventListener("click", () => showTab(tab.dataset.tab));
+  tab.addEventListener("keydown", e => {
+    const i = TABS.indexOf(tab.dataset.tab);
+    let n = null;
+    if (e.key === "ArrowRight") n = (i + 1) % TABS.length;
+    if (e.key === "ArrowLeft") n = (i - 1 + TABS.length) % TABS.length;
+    if (e.key === "Home") n = 0;
+    if (e.key === "End") n = TABS.length - 1;
+    if (n != null) { e.preventDefault(); showTab(TABS[n], { focus: true }); }
+  });
+});
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-goto]");
+  if (go) { if (go.dataset.goto === "log") resetForm(); showTab(go.dataset.goto); }
+});
+window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { push: false }));
+
+// Filters
+F("fRange").addEventListener("change", e => {
+  ui.range = e.target.value;
+  F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
+  ui.calMonth = ""; saveUi(); renderDashboard();
+});
+F("fFrom").addEventListener("change", e => { ui.from = e.target.value; ui.calMonth = ""; saveUi(); renderDashboard(); });
+F("fTo").addEventListener("change", e => { ui.to = e.target.value; ui.calMonth = ""; saveUi(); renderDashboard(); });
+F("fSession").addEventListener("change", e => { ui.session = e.target.value; saveUi(); renderDashboard(); });
+F("fSetup").addEventListener("change", e => { ui.setup = e.target.value; saveUi(); renderDashboard(); });
+
+// Calendar navigation
+const shiftMonth = d => {
+  const months = Array.from(new Set(filtered().map(t => t.date.slice(0, 7)))).sort();
+  const i = months.indexOf(ui.calMonth) + d;
+  if (months[i]) { ui.calMonth = months[i]; renderCalendar(filtered()); }
+};
+F("calPrev").addEventListener("click", () => shiftMonth(-1));
+F("calNext").addEventListener("click", () => shiftMonth(1));
+
+// Table
+F("tSearch").addEventListener("input", () => renderTable(filtered()));
+F("tResult").addEventListener("change", () => renderTable(filtered()));
+F("tableHead").addEventListener("click", e => {
+  const b = e.target.closest("[data-sort]");
+  if (!b) return;
+  const k = b.dataset.sort;
+  if (ui.sortKey === k) ui.sortDir = ui.sortDir === "asc" ? "desc" : "asc"; else { ui.sortKey = k; ui.sortDir = k === "date" || k === "idx" || k === "pnl" || k === "r" ? "desc" : "asc"; }
+  saveUi();
+  renderTable(filtered());
+  const nb = $(`[data-sort="${k}"]`, F("tableHead"));
+  if (nb) nb.focus();
+});
+F("tableBody").addEventListener("click", e => {
+  const ed = e.target.closest("[data-edit]");
+  const del = e.target.closest("[data-del]");
+  if (ed) {
+    const t = trades.find(x => x.id === ed.dataset.edit);
+    if (t) { showTab("log"); loadIntoForm(t); F("tDate").focus(); }
+  }
+  if (del) {
+    const t = trades.find(x => x.id === del.dataset.del);
+    if (t && confirm(`Delete the ${t.pair} trade from ${fmtDate(t.date)} (${money(t.pnl)})? This can't be undone.`)) {
+      trades = trades.filter(x => x.id !== t.id);
+      saveTrades(); renderDashboard(); renderRecent();
+      toast("Trade deleted");
+    }
+  }
+});
+
+// Form
+F("tradeForm").addEventListener("input", updatePreview);
+F("tConf").addEventListener("input", e => F("tConfOut").textContent = e.target.value + "/5");
+F("tTime").addEventListener("change", e => {
+  const s = guessSession(e.target.value, F("tDate").value);
+  if (s && !F("tSessionSel").value) { F("tSessionSel").value = s; updatePreview(); }
+});
+F("formReset").addEventListener("click", () => resetForm(true));
+F("formCancel").addEventListener("click", () => { resetForm(); showTab("journal"); });
+F("tradeForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const t = readForm();
+  const errs = validate(t);
+  const box = F("formErrors");
+  if (errs.length) {
+    box.innerHTML = `<strong>Please fix ${plural(errs.length, "problem")}:</strong><ul>${errs.map(x => `<li><a href="#${x.id}">${esc(x.msg)}</a></li>`).join("")}</ul>`;
+    box.classList.add("show");
+    box.focus();
+    return;
+  }
+  box.classList.remove("show");
+  if (t.r == null && t.risk) t.r = Math.round((t.pnl / t.risk) * 100) / 100;
+  const idx = trades.findIndex(x => x.id === t.id);
+  if (idx >= 0) trades[idx] = t; else trades.push(t);
+  // Remember new pairs/setups so they show up as suggestions next time.
+  if (!settings.pairs.includes(t.pair)) settings.pairs.push(t.pair);
+  if (!settings.setups.includes(t.setup)) settings.setups.push(t.setup);
+  saveSettings(); saveTrades();
+  const editing = idx >= 0;
+  toast(editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
+  resetForm(true);
+  renderRecent();
+  renderListEditors();
+  if (editing) showTab("journal");
+  else F("tPair").focus();
+});
+F("formErrors").addEventListener("click", e => {
+  const a = e.target.closest("a[href^='#']");
+  if (a) { e.preventDefault(); F(a.getAttribute("href").slice(1)).focus(); }
+});
+
+// Settings
+F("acctForm").addEventListener("submit", e => {
+  e.preventDefault();
+  settings.balance = num(F("sBalance").value) ?? 0;
+  settings.currency = F("sCurrency").value.trim() || "$";
+  settings.defaultRisk = num(F("sRisk").value) ?? 0;
+  settings.sessionMode = F("sSessionMode").value;
+  saveSettings();
+  toast("Account settings saved");
+  refreshAll();
+});
+F("listEditors").addEventListener("click", e => {
+  const b = e.target.closest("[data-rm]");
+  if (!b) return;
+  const key = b.dataset.rm;
+  const v = settings[key][Number(b.dataset.j)];
+  settings[key].splice(Number(b.dataset.j), 1);
+  saveSettings(); renderListEditors(); refreshLists();
+  toast(`Removed “${v}”`);
+  const input = F("add-" + key); if (input) input.focus();
+});
+F("listEditors").addEventListener("submit", e => {
+  const f = e.target.closest("[data-add]");
+  if (!f) return;
+  e.preventDefault();
+  const key = f.dataset.add;
+  const input = $("input", f);
+  const conf = LISTS.find(l => l.key === key);
+  const vals = input.value.split(",").map(s => conf.upper ? s.trim().toUpperCase() : s.trim()).filter(Boolean);
+  const added = vals.filter(v => !settings[key].includes(v));
+  settings[key].push(...added);
+  saveSettings(); renderListEditors(); refreshLists();
+  if (added.length) toast(`Added ${added.join(", ")}`);
+  F("add-" + key).focus();
+});
+F("importFile").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try { await importFile(file); } catch (err) { toast("Import failed: " + err.message); }
+  e.target.value = "";
+});
+F("exportJson").addEventListener("click", () => download(`trading-journal-${isoDate(new Date())}.json`, JSON.stringify({ settings, trades }, null, 2), "application/json"));
+F("exportCsv").addEventListener("click", () => download(`trading-journal-${isoDate(new Date())}.csv`, toCsv(trades), "text/csv"));
+F("loadDemo").addEventListener("click", () => {
+  trades = trades.filter(t => !t.demo).concat(demoTrades());
+  saveTrades(); ui.calMonth = ""; refreshAll(); toast("Demo trades loaded");
+});
+F("clearAll").addEventListener("click", () => {
+  if (!trades.length) return toast("There are no trades to delete");
+  if (confirm(`Delete all ${trades.length} trades? Export a backup first if you want to keep them.`)) {
+    trades = []; saveTrades(); refreshAll(); toast("All trades deleted");
+  }
+});
+F("clearDemo").addEventListener("click", () => {
+  const n = trades.filter(t => t.demo).length;
+  trades = trades.filter(t => !t.demo);
+  saveTrades(); ui.calMonth = ""; renderDashboard(); renderRecent();
+  toast(`Removed ${plural(n, "demo trade")}`);
+});
+
+let resizeTimer;
+let lastW = window.innerWidth;
+window.addEventListener("resize", () => {
+  if (window.innerWidth === lastW) return;
+  lastW = window.innerWidth;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (F("panel-overview").hidden) return;
+    const list = filtered();
+    if (!list.length) return;
+    const st = stats(list);
+    const first = list[0];
+    const prior = sum(trades.filter(t => (t.date + (t.time || "")) < (first.date + (first.time || ""))).map(t => t.pnl));
+    renderEquity(list, Number(settings.balance) + (ui.range === "all" && !ui.session && !ui.setup ? 0 : prior), st);
+  }, 200);
+});
+
+/* ======================================================================
+   Init
+   ====================================================================== */
+if (!Array.isArray(trades)) { trades = demoTrades(); saveTrades(); }
+F("fRange").value = ui.range;
+F("fFrom").value = ui.from; F("fTo").value = ui.to;
+F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
+resetForm();
+renderListEditors();
+renderAccount();
+showTab(location.hash.slice(1) || "overview", { push: false });
+})();
+</script>
+</body>
+</html>
