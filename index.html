@@ -39,17 +39,16 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 [hidden] { display: none !important; }
 body {
   margin: 0;
-  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
-  overflow-x: hidden;
+  position: relative;
 }
 body::before {
   content: "";
@@ -462,6 +461,55 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .toolbar h2 { font-size: 20px; }
 }
 
+/* Phones: lighter rendering and no zoom-on-focus. iOS zooms the page when a field's text is under 16px,
+   and many stacked backdrop blurs can stall scrolling or leave parts of the page blank. */
+@media (max-width: 760px), (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
+  .filters select, .filters input, .table-tools input, .table-tools select { font-size: 16px; }
+  .glow { display: none; }
+  body::before { position: absolute; }
+  .card, .tooltip, header.top { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .card { background: linear-gradient(180deg, #141a2e, #0f1426); }
+  header.top { position: static; background: #0b1020; }
+  .preview { position: static; }
+  dialog::backdrop { backdrop-filter: none; }
+}
+@media (max-width: 760px) {
+  .brand-mark { width: 32px; height: 32px; }
+  .brand h1 { font-size: 17px; }
+  .filters { width: 100%; }
+  .filters label { flex: 1 1 140px; }
+  .filters select, .filters input { width: 100%; }
+  .table-tools { width: 100%; }
+  .table-tools input[type="search"] { flex: 1 1 100%; }
+  thead th { position: static; }
+
+  /* Trade log becomes a list of cards. */
+  .table-scroll { overflow: visible; border: 0; border-radius: 0; }
+  .table-scroll table { min-width: 0; display: block; }
+  .table-scroll thead { display: none; }
+  .table-scroll caption { display: none; }
+  .table-scroll tbody { display: grid; gap: 12px; }
+  .table-scroll tbody tr {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px;
+    padding: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border);
+  }
+  .table-scroll tbody tr:hover { background: var(--surface-2); }
+  .table-scroll tbody td { display: block; padding: 0; border: 0; min-width: 0; max-width: none; white-space: normal; }
+  .table-scroll tbody td::before {
+    content: attr(data-label); display: block; font: 500 10.5px var(--font-sans);
+    color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 2px;
+  }
+  .table-scroll tbody td.c-idx { display: none; }
+  .table-scroll tbody td.notes, .table-scroll tbody td.c-act { grid-column: 1 / -1; }
+  .table-scroll tbody td.c-empty { display: none; }
+  .table-scroll tbody td.c-act::before { display: none; }
+  .table-scroll tbody td.c-act .row-actions { justify-content: flex-end; border-top: 1px dashed var(--border); padding-top: 8px; }
+  .table-scroll tbody td[colspan] { grid-column: 1 / -1; }
+  .table-scroll tbody td[colspan]::before { display: none; }
+}
+@media (min-width: 761px) { .mobile-only { display: none; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; }
   .reveal { opacity: 1; transform: none; }
@@ -699,6 +747,15 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <option value="Win">Wins</option>
               <option value="Loss">Losses</option>
               <option value="BE">Breakeven</option>
+            </select>
+            <label class="sr-only" for="tSort">Sort trades</label>
+            <select id="tSort" class="mobile-only">
+              <option value="date:desc">Newest first</option>
+              <option value="date:asc">Oldest first</option>
+              <option value="pnl:desc">Biggest win first</option>
+              <option value="pnl:asc">Biggest loss first</option>
+              <option value="r:desc">Highest R first</option>
+              <option value="pair:asc">Pair A–Z</option>
             </select>
             <button class="btn sm primary" type="button" data-goto="log">+ New trade</button>
           </div>
@@ -1859,22 +1916,25 @@ function renderTable(list) {
     return `<th scope="col"${sortAttr}><button type="button" data-sort="${c.key}">${c.label}<span class="arrow" aria-hidden="true">${active ? (ui.sortDir === "asc" ? "▲" : "▼") : "↕"}</span></button></th>`;
   }).join("");
 
+  const sortSel = F("tSort");
+  const sv = ui.sortKey + ":" + ui.sortDir;
+  sortSel.value = Array.from(sortSel.options).some(o => o.value === sv) ? sv : "date:desc";
   $("#logCount").textContent = `${plural(rows.length, "trade")} shown${rows.length !== list.length ? ` of ${list.length}` : ""}`;
   $("#tableBody").innerHTML = rows.length ? rows.map(({ t, idx }) => {
     const r = rOf(t), result = resultOf(t);
     return `<tr>
-      <td class="num muted">${idx}</td>
-      <td class="num nowrap">${fmtDate(t.date)}${t.time ? `<div class="muted" style="font-size:11.5px">${esc(t.time)}</div>` : ""}</td>
-      <td class="num"><strong>${esc(t.pair)}</strong></td>
-      <td><span class="chip-tag">${esc(t.session)}</span></td>
-      <td><span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></td>
-      <td class="nowrap">${esc(t.setup)}</td>
-      <td class="num ${tone(r)}">${fmtR(r)}</td>
-      <td class="num ${tone(t.pnl)}"><strong>${money(t.pnl)}</strong></td>
-      <td><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
-      <td class="nowrap">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span title="Plan broken" aria-label="Plan broken">⚠️</span>` : ""}</td>
-      <td class="notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="gold">Mistakes: ${esc(t.mistakes)}</div>` : ""}${t.screenshot ? ` <a href="${esc(t.screenshot)}" target="_blank" rel="noopener noreferrer">Chart ↗</a>` : ""}</td>
-      <td><div class="row-actions">
+      <td class="num muted c-idx" data-label="#">${idx}</td>
+      <td class="num nowrap" data-label="Date">${fmtDate(t.date)}${t.time ? `<div class="muted" style="font-size:11.5px">${esc(t.time)}</div>` : ""}</td>
+      <td class="num" data-label="Pair"><strong>${esc(t.pair)}</strong></td>
+      <td data-label="Session"><span class="chip-tag">${esc(t.session)}</span></td>
+      <td data-label="Direction"><span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></td>
+      <td class="nowrap" data-label="Setup">${esc(t.setup)}</td>
+      <td class="num ${tone(r)}" data-label="R multiple">${fmtR(r)}</td>
+      <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${money(t.pnl)}</strong></td>
+      <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
+      <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span title="Plan broken" aria-label="Plan broken">⚠️</span>` : ""}</td>
+      <td class="notes${t.notes || t.mistakes || t.screenshot ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="gold">Mistakes: ${esc(t.mistakes)}</div>` : ""}${t.screenshot ? ` <a href="${esc(t.screenshot)}" target="_blank" rel="noopener noreferrer">Chart ↗</a>` : ""}</td>
+      <td class="c-act"><div class="row-actions">
         <button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
         <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" style="color:var(--red)">Delete</button>
       </div></td>
@@ -2384,6 +2444,10 @@ F("calNext").addEventListener("click", () => shiftMonth(1));
 // Table
 F("tSearch").addEventListener("input", () => renderTable(filtered()));
 F("tResult").addEventListener("change", () => renderTable(filtered()));
+F("tSort").addEventListener("change", e => {
+  const [k, d] = e.target.value.split(":");
+  ui.sortKey = k; ui.sortDir = d; saveUi(); renderTable(filtered());
+});
 F("tableHead").addEventListener("click", e => {
   const b = e.target.closest("[data-sort]");
   if (!b) return;
