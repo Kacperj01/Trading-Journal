@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Trading Journal</title>
 <meta name="description" content="Trading journal and performance dashboard: log trades, track emotions and sessions, and see analytics.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2622,6 +2623,11 @@ function snapshotHtml() {
   const doc = new DOMParser().parseFromString(PRISTINE, "text/html");
   // Keep only this page's own script; drop anything a viewer injected and any older embedded data.
   doc.querySelectorAll("script").forEach(el => { if (el.id !== "app") el.remove(); });
+  // Declare UTF-8 first thing in the file, or emojis and symbols are garbled when it's opened on its own.
+  doc.querySelectorAll("meta[charset], meta[name=viewport]").forEach(el => el.remove());
+  const vp = doc.createElement("meta"); vp.name = "viewport"; vp.content = "width=device-width,initial-scale=1,viewport-fit=cover";
+  const cs = doc.createElement("meta"); cs.setAttribute("charset", "utf-8");
+  doc.head.prepend(cs, vp);
   const payload = { exportedAt: new Date().toISOString(), settings: clean(settings), trades: realTrades.map(clean) };
   const data = doc.createElement("script");
   data.type = "application/json";
@@ -2643,7 +2649,7 @@ function snapshotHtml() {
     <thead><tr>${["Date", "Pair", "Session", "Direction", "Setup", "Result", "P&L", "R", "Emotion", "Notes"].map(h => `<th style="${cell};color:#8a93a8">${h}</th>`).join("")}</tr></thead>
     <tbody>${rows.replace(/<td/g, `<td style="${cell}"`).replace(/<td style="([^"]*)" style="/g, '<td style="$1;')}</tbody></table></div>`;
   doc.body.insertBefore(section, doc.body.firstChild);
-  return "<!doctype html>\n" + doc.documentElement.outerHTML;
+  return "\uFEFF<!doctype html>\n" + doc.documentElement.outerHTML;
 }
 function exportJournal() {
   if (!exportable()) return;
@@ -2665,7 +2671,7 @@ F("exportXlsx").addEventListener("click", () => {
 F("exportCsv").addEventListener("click", () => {
   if (!exportable()) return;
   const csv = toCsv(realTrades);
-  download(`trading-journal-${isoDate(new Date())}.csv`, csv, "text/csv", { copyText: csv });
+  download(`trading-journal-${isoDate(new Date())}.csv`, "\uFEFF" + csv, "text/csv", { copyText: csv });
 });
 F("exportJson").addEventListener("click", () => {
   if (!exportable()) return;
