@@ -471,6 +471,42 @@ dialog::backdrop { background: rgba(2, 8, 16, 0.72); backdrop-filter: blur(4px);
 .dlg-body { padding: 22px; display: grid; gap: 12px; }
 .dlg-body h3 { margin: 0; font-size: 17px; }
 .dlg-body p { margin: 0; color: var(--text-2); font-size: 14px; }
+/* Quick log on Overview */
+.quick .card-head { margin-bottom: 10px; flex-wrap: nowrap; }
+.quick-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 14px; }
+.quick-grid .q-wide { grid-column: span 3; }
+.q-msg { margin: 10px 0 0; font-size: 13px; color: var(--red); }
+.q-msg:empty { display: none; }
+.quick-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.quick.collapsed #quickForm, .quick.collapsed #qSub { display: none; }
+.quick.collapsed .card-head { margin-bottom: 0; }
+@media (max-width: 1040px) { .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .quick-grid .q-wide { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .quick-grid .q-date, .quick-grid .q-dir { grid-column: 1 / -1; } .quick-actions .btn { flex: 1; justify-content: center; } }
+
+/* Before / after charts */
+.chart-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.chart-pair:empty { display: none; }
+#chartPreview { margin: -8px 0 22px; }
+.chart-fig { margin: 0; display: grid; gap: 8px; min-width: 0; }
+.chart-fig figcaption { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+.chart-frame { border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); overflow: hidden; aspect-ratio: 16 / 10; display: grid; place-items: center; }
+.chart-frame img { width: 100%; height: 100%; object-fit: contain; display: block; background: #0b1424; }
+.chart-frame .none { color: var(--muted); font-size: 13px; padding: 12px; text-align: center; }
+.chart-fig a { font-size: 12.5px; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .chart-pair { grid-template-columns: minmax(0, 1fr); } }
+
+/* Trade detail window */
+.trade-dlg { width: min(880px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
+.trade-dlg .dlg-body { gap: 16px; }
+.td-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.td-head h3 { font-size: 19px; }
+.td-head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.td-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.td-item { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); min-width: 0; }
+.td-item span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 2px; }
+.td-item b { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.td-notes { white-space: pre-line; color: var(--text-2); font-size: 14px; margin: 0; }
+
 /* Home page shown while signed out (hosted app): the journal stays hidden until you sign in. */
 .gated header.top, .gated main, .gated footer { display: none; }
 .home { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 32px 16px 40px; }
@@ -639,6 +675,39 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
     <!-- =================== OVERVIEW =================== -->
     <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-analytics>
+      <section class="card accent-teal quick section reveal" style="--d:1" aria-labelledby="qTitle" id="quickLog">
+        <div class="card-head">
+          <div>
+            <h3 id="qTitle">Log a trade</h3>
+            <div class="sub" id="qSub">The essentials. Add prices, risk and charts with More details.</div>
+          </div>
+          <button class="btn sm ghost" type="button" id="qToggle" aria-expanded="true" aria-controls="quickForm">Hide</button>
+        </div>
+        <form id="quickForm" novalidate>
+          <div class="quick-grid">
+            <div class="field q-date"><label for="qDate">Date</label><input type="date" id="qDate" required></div>
+            <div class="field"><label for="qPair">Pair</label><input type="text" id="qPair" list="pairList" autocomplete="off" placeholder="e.g. XAUUSD" required></div>
+            <div class="field"><label for="qSession">Session</label><select id="qSession" required></select></div>
+            <div class="field q-dir">
+              <span class="lbl" id="qDirLbl">Direction</span>
+              <div class="seg" role="radiogroup" aria-labelledby="qDirLbl">
+                <label class="long-opt"><input type="radio" name="qDir" value="Long" checked> ▲ Long</label>
+                <label class="short-opt"><input type="radio" name="qDir" value="Short"> ▼ Short</label>
+              </div>
+            </div>
+            <div class="field"><label for="qSetup">Setup</label><input type="text" id="qSetup" list="setupList" autocomplete="off" placeholder="e.g. Asia Sweep" required></div>
+            <div class="field"><label for="qPnl">P&amp;L</label><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150 or -100" required></div>
+            <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
+            <div class="field q-wide"><label for="qNotes">Notes</label><input type="text" id="qNotes" placeholder="Why did you take it?"></div>
+          </div>
+          <p id="qMsg" class="q-msg" role="alert"></p>
+          <div class="quick-actions">
+            <button type="button" class="btn ghost" id="qMore">More details</button>
+            <button type="submit" class="btn success">Save trade</button>
+          </div>
+        </form>
+      </section>
+
       <div class="needs-data">
         <!-- 1. KPIs -->
         <section class="kpis" id="kpis" aria-label="Key performance indicators"></section>
@@ -935,11 +1004,23 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
                 <label for="tNotes">Trade notes</label>
                 <textarea id="tNotes" placeholder="Why did you take it? What did you see? What would you do differently?"></textarea>
               </div>
-              <div class="field wide">
-                <label for="tShot">Chart / screenshot link</label>
-                <input type="url" id="tShot" placeholder="https://www.tradingview.com/x/…">
-              </div>
             </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Charts</legend>
+            <div class="fields fields-pair">
+              <div class="field">
+                <label for="tBefore">Before (entry)</label>
+                <input type="url" id="tBefore" inputmode="url" autocapitalize="off" placeholder="https://www.tradingview.com/x/…" aria-describedby="chartHint">
+              </div>
+              <div class="field">
+                <label for="tAfter">After (result)</label>
+                <input type="url" id="tAfter" inputmode="url" autocapitalize="off" placeholder="https://www.tradingview.com/x/…" aria-describedby="chartHint">
+              </div>
+              <span class="hint field wide" id="chartHint">Paste a TradingView snapshot link (Share → Copy link) or any image link.</span>
+            </div>
+            <div class="chart-pair" id="chartPreview"></div>
           </fieldset>
 
           <div class="form-actions">
@@ -1006,6 +1087,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <div id="syncSignedIn" class="stack" hidden>
             <p style="margin:0;font-size:14px">Signed in as <strong id="syncWho"></strong></p>
             <p class="muted" style="margin:0;font-size:13px" id="syncLast"></p>
+            <form id="profileForm" class="stack" novalidate style="border-top:1px solid var(--border);padding-top:12px">
+              <div class="fields fields-pair" style="margin:0">
+                <div class="field"><label for="profName">Full name</label><input type="text" id="profName" autocomplete="name" autocapitalize="words"></div>
+                <div class="field"><label for="profAge">Age</label><input type="number" id="profAge" inputmode="numeric" min="13" max="120" step="1"></div>
+              </div>
+              <div><button class="btn" type="submit">Save profile</button></div>
+            </form>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn primary" type="button" id="syncNow">Sync now</button>
               <button class="btn danger" type="button" id="syncSignOut">Sign out</button>
@@ -1050,10 +1138,12 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <p class="home-slogan">Track every trade. Elevate every decision.</p>
     <form id="homeForm" class="card home-card" novalidate>
       <h1 id="homeTitle">Sign in to ELEV8</h1>
+      <div class="field signup-only" hidden><label for="dlgName">Full name</label><input type="text" id="dlgName" autocomplete="name" autocapitalize="words"></div>
+      <div class="field signup-only" hidden><label for="dlgAge">Age</label><input type="number" id="dlgAge" inputmode="numeric" min="13" max="120" step="1"></div>
       <div class="field"><label for="dlgEmail">Email</label><input type="email" id="dlgEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
       <div class="field"><label for="dlgPassword">Password</label><input type="password" id="dlgPassword" autocomplete="current-password" minlength="6" required></div>
       <p id="dlgMsg" role="status" aria-live="polite"></p>
-      <button class="btn primary" type="submit">Sign in</button>
+      <button class="btn primary" type="submit" id="dlgSubmit">Sign in</button>
       <button class="btn" type="button" id="dlgSignUp">Create account</button>
     </form>
     <ul class="home-points">
@@ -1063,6 +1153,20 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     </ul>
   </div>
 </section>
+
+<dialog id="tradeDlg" class="trade-dlg" aria-labelledby="tdTitle">
+  <div class="dlg-body">
+    <div class="td-head">
+      <div><h3 id="tdTitle"></h3><div class="sub" id="tdSub"></div></div>
+      <button class="btn sm ghost" type="button" id="tdClose" aria-label="Close">✕</button>
+    </div>
+    <div id="tdBody"></div>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="tdEdit">Edit trade</button>
+      <button class="btn primary" type="button" id="tdDone">Done</button>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="exportDlg" aria-labelledby="exportTitle">
   <form method="dialog" class="dlg-body">
@@ -1126,7 +1230,7 @@ let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 let trades = [];
 
-const ui = Object.assign({ tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
@@ -1228,12 +1332,17 @@ async function sbAuth(path, body) {
 function sbSaveSession(s) {
   if (s && s.access_token) {
     s.expires_at = s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
-    sb.session = { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at, user: { id: s.user.id, email: s.user.email } };
+    const meta = s.user.user_metadata || {};
+    sb.session = { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at,
+      user: { id: s.user.id, email: s.user.email, name: meta.full_name || "", age: meta.age || null } };
     sb.lastEmail = s.user.email;
     store.set("tj.sb.email.v1", s.user.email);
   } else sb.session = null;
   store.set(KEY_SB_SESSION, sb.session);
 }
+let homeMode = "signin";
+const firstName = () => (sb.session && sb.session.user.name || "").trim().split(/\s+/)[0] || "";
+
 async function sbToken() {
   if (sb.session.expires_at - 60 < Date.now() / 1000) await sbRefresh();
   return sb.session.access_token;
@@ -1333,6 +1442,10 @@ function sbRender() {
   const on = !!sb.session;
   F("syncSignedOut").hidden = on;
   F("syncSignedIn").hidden = !on;
+  if (on && document.activeElement !== F("profName") && document.activeElement !== F("profAge")) {
+    F("profName").value = sb.session.user.name || "";
+    F("profAge").value = sb.session.user.age || "";
+  }
   if (on) {
     F("syncWho").textContent = sb.session.user.email;
     F("syncLast").textContent = sb.lastSync ? "Last synced " + new Date(sb.lastSync).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "Not synced yet";
@@ -1377,6 +1490,7 @@ async function sbStart() {
 // Sign-in window shown when the app opens and this device isn't signed in.
 function showHome(note) {
   if (!SB || inViewer()) return;
+  if (homeMode !== "signin") setHomeMode("signin");
   F("dlgMsg").textContent = note || "";
   if (!F("dlgEmail").value && sb.lastEmail) F("dlgEmail").value = sb.lastEmail;
   document.documentElement.classList.add("gated");
@@ -1391,16 +1505,55 @@ function hideHome() {
   showTab(ui.tab || "overview");
 }
 
+async function saveProfile() {
+  const name = F("profName").value.trim().replace(/\s+/g, " "), ageRaw = F("profAge").value, age = ageRaw === "" ? null : Number(ageRaw);
+  if (!name) return toast("Enter your full name");
+  if (age != null && (!Number.isInteger(age) || age < 13 || age > 120)) return toast("Enter your age as a whole number (13 or over)");
+  try {
+    const res = await fetch(SB.url + "/auth/v1/user", { method: "PUT", headers: { apikey: SB.key, Authorization: "Bearer " + await sbToken(), "Content-Type": "application/json" }, body: JSON.stringify({ data: { full_name: name, age } }) });
+    const user = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(user.msg || user.message || "Couldn't save your profile");
+    sb.session.user.name = name; sb.session.user.age = age;
+    store.set(KEY_SB_SESSION, sb.session);
+    toast(`Profile saved. Hi, ${firstName()}!`);
+    if (currentTab() === "overview") F("pageTitle").textContent = `Welcome back, ${firstName()}`;
+  } catch (e) {
+    toast(e instanceof TypeError ? "Couldn't reach the sync service. Try again when you're online." : e.message);
+  }
+}
+
+// The home page form switches between signing in and creating an account.
+function setHomeMode(mode) {
+  homeMode = mode;
+  const up = mode === "signup";
+  $$(".signup-only", F("homeForm")).forEach(el => el.hidden = !up);
+  F("homeTitle").textContent = up ? "Create your ELEV8 account" : "Sign in to ELEV8";
+  F("dlgSubmit").textContent = up ? "Create account" : "Sign in";
+  F("dlgSignUp").textContent = up ? "I already have an account" : "Create account";
+  F("dlgPassword").setAttribute("autocomplete", up ? "new-password" : "current-password");
+  F("dlgMsg").textContent = "";
+  F(up ? "dlgName" : (F("dlgEmail").value ? "dlgPassword" : "dlgEmail")).focus();
+}
+
 async function sbSignIn(signUp, from = "card") {
   const ids = from === "dialog" ? ["dlgEmail", "dlgPassword", "dlgMsg"] : ["syncEmail", "syncPassword", "syncMsg"];
   const email = F(ids[0]).value.trim(), password = F(ids[1]).value;
   const msg = F(ids[2]);
+  let profile = null;
+  if (signUp && from === "dialog") {
+    const name = F("dlgName").value.trim().replace(/\s+/g, " "), age = Number(F("dlgAge").value);
+    if (!name) { msg.textContent = "Enter your full name."; F("dlgName").focus(); return; }
+    if (!Number.isInteger(age) || age < 13 || age > 120) { msg.textContent = "Enter your age as a whole number (13 or over)."; F("dlgAge").focus(); return; }
+    profile = { full_name: name, age };
+  }
   if (!email || password.length < 6) { msg.textContent = "Enter your email and a password of at least 6 characters."; return; }
   msg.textContent = signUp ? "Creating your account…" : "Signing in…";
   try {
     const back = encodeURIComponent(location.origin + location.pathname);
-    const res = signUp ? await sbAuth("signup?redirect_to=" + back, { email, password }) : await sbAuth("token?grant_type=password", { email, password });
+    const res = signUp ? await sbAuth("signup?redirect_to=" + back, Object.assign({ email, password }, profile ? { data: profile } : {}))
+      : await sbAuth("token?grant_type=password", { email, password });
     if (!res.access_token) {
+      if (from === "dialog") setHomeMode("signin");
       msg.textContent = "Account created. Open the confirmation email we sent to " + email + ", then come back here and sign in.";
       return;
     }
@@ -1408,7 +1561,8 @@ async function sbSignIn(signUp, from = "card") {
     msg.textContent = "";
     F(ids[1]).value = "";
     hideHome();
-    toast("Signed in. Syncing your trades…");
+    const first = firstName();
+    toast(signUp ? `Welcome to ELEV8${first ? ", " + first : ""}!` : `Welcome back${first ? ", " + first : ""}!`);
     sbStart();
   } catch (e) {
     msg.textContent = e instanceof TypeError ? "Couldn't reach the sync service. Check your connection and try again." : e.message;
@@ -1551,6 +1705,24 @@ function isoDate(d) { const z = n => String(n).padStart(2, "0"); return d.getFul
 function parseIso(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
 function fmtDate(s, opts = { day: "2-digit", month: "short", year: "numeric" }) { return s ? parseIso(s).toLocaleDateString("en-GB", opts) : "—"; }
 
+// Charts: a TradingView snapshot link (tradingview.com/x/ID) shows as its picture; other image links show directly.
+const safeLink = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
+const beforeChart = t => safeLink(t.chartBefore);
+const afterChart = t => safeLink(t.chartAfter || t.screenshot);
+function chartImage(url) {
+  const m = String(url || "").match(/tradingview\.com\/x\/([A-Za-z0-9]+)/i);
+  if (m) return `https://s3.tradingview.com/snapshots/${m[1][0].toLowerCase()}/${m[1]}.png`;
+  return /\.(png|jpe?g|webp|gif)(\?|#|$)/i.test(url) ? url : null;
+}
+function chartFigure(label, url) {
+  const link = safeLink(url);
+  const img = link ? chartImage(link) : null;
+  const frame = !link ? `<div class="none">No ${label.toLowerCase()} chart</div>`
+    : img ? `<img src="${esc(img)}" alt="${esc(label)} chart" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'none',textContent:'Preview unavailable. Open the link below.'}))">`
+    : `<div class="none">Open the link below to view this chart.</div>`;
+  return `<figure class="chart-fig"><figcaption>${esc(label)}</figcaption><div class="chart-frame">${frame}</div>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open ${esc(label.toLowerCase())} chart ↗</a>` : ""}</figure>`;
+}
+
 function resultOf(t) { return t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "BE"; }
 function rOf(t) {
   if (t.r != null && Number.isFinite(t.r)) return t.r;
@@ -1684,7 +1856,8 @@ function renderDashboard() {
   $("#rangeLabel").textContent = lbl + " · " + plural(list.length, "trade");
 
   const empty = list.length === 0;
-  $("#dashEmpty").hidden = !empty;
+  // On Overview the quick log already invites the first trade, so skip the empty-journal card there.
+  $("#dashEmpty").hidden = !empty || (!hasAny && !persist.loading && currentTab() === "overview");
   $$(".needs-data").forEach(el => el.hidden = empty);
   $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : hasAny ? "No trades in this view" : "Your journal is empty";
   $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
@@ -2234,8 +2407,9 @@ function renderTable(list) {
       <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${money(t.pnl)}</strong></td>
       <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
       <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span title="Plan broken" aria-label="Plan broken">⚠️</span>` : ""}</td>
-      <td class="notes${t.notes || t.mistakes || t.screenshot || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${t.screenshot ? ` <a href="${esc(t.screenshot)}" target="_blank" rel="noopener noreferrer">Chart ↗</a>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
+      <td class="notes${t.notes || t.mistakes || beforeChart(t) || afterChart(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
+        <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">View</button>
         <button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
         <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" style="color:var(--red)">Delete</button>
       </div></td>
@@ -2263,6 +2437,8 @@ function refreshLists() {
   fillSelect($("#tSessionSel"), settings.sessions, { placeholder: "Select session", value: $("#tSessionSel").value });
   fillSelect($("#tEmoBefore"), settings.emotions, { placeholder: "—", value: $("#tEmoBefore").value });
   fillSelect($("#tEmoAfter"), settings.emotions, { placeholder: "—", value: $("#tEmoAfter").value });
+  fillSelect($("#qSession"), settings.sessions, { placeholder: "Select", value: $("#qSession").value });
+  fillSelect($("#qEmo"), settings.emotions, { placeholder: "—", value: $("#qEmo").value });
   fillSelect($("#fSession"), allSessions, { placeholder: "All sessions", value: ui.session });
   fillSelect($("#fSetup"), allSetups, { placeholder: "All setups", value: ui.setup });
 }
@@ -2313,7 +2489,9 @@ function readForm() {
     followedPlan: F("tPlan").checked,
     mistakes: F("tMistakes").value.trim(),
     notes: F("tNotes").value.trim(),
-    screenshot: F("tShot").value.trim()
+    chartBefore: safeLink(F("tBefore").value),
+    chartAfter: safeLink(F("tAfter").value),
+    screenshot: ""
   };
 }
 
@@ -2335,7 +2513,8 @@ function loadIntoForm(t) {
   F("tPlan").checked = t.followedPlan !== false;
   F("tMistakes").value = t.mistakes || "";
   F("tNotes").value = t.notes || "";
-  F("tShot").value = t.screenshot || "";
+  F("tBefore").value = beforeChart(t);
+  F("tAfter").value = afterChart(t);
   F("formTitle").textContent = "Edit trade";
   F("formSubmit").textContent = "Update trade";
   F("formCancel").hidden = false;
@@ -2354,7 +2533,16 @@ function validate(t) {
   return errs;
 }
 
+let chartPreviewKey = "";
+function updateChartPreview() {
+  const b = safeLink(F("tBefore").value), a = safeLink(F("tAfter").value);
+  const key = b + "|" + a;
+  if (key === chartPreviewKey) return;
+  chartPreviewKey = key;
+  F("chartPreview").innerHTML = b || a ? chartFigure("Before", b) + chartFigure("After", a) : "";
+}
 function updatePreview() {
+  updateChartPreview();
   const t = readForm();
   const r = t.r != null ? t.r : (t.pnl != null && t.risk ? t.pnl / t.risk : null);
   const planned = t.entry != null && t.stop != null && t.target != null && t.entry !== t.stop ? Math.abs(t.target - t.entry) / Math.abs(t.entry - t.stop) : null;
@@ -2479,7 +2667,7 @@ const SHEET_COLS = [
   ["Entry", t => t.entry], ["Stop", t => t.stop], ["Target", t => t.target], ["Exit", t => t.exit], ["Size", t => t.size], ["Fees", t => t.fees],
   ["Emotion before", t => t.emotionBefore || ""], ["Emotion after", t => t.emotionAfter || ""], ["Confidence", t => t.confidence],
   ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Mistakes", t => t.mistakes || ""], ["Notes", t => t.notes || ""],
-  ["Chart", t => t.screenshot || ""], ["Source", t => t.sourceUrl || ""]
+  ["Before chart", t => beforeChart(t)], ["After chart", t => afterChart(t)], ["Source", t => t.sourceUrl || ""]
 ];
 function sheetRows(list) {
   return [SHEET_COLS.map(c => c[0]), ...sortChrono(list).map(t => SHEET_COLS.map(c => { const v = c[1](t); return v == null ? "" : v; }))];
@@ -2645,7 +2833,8 @@ const ALIASES = {
   followedPlan: ["followedplan", "plan", "followedrules", "rulesfollowed", "disciplined"],
   mistakes: ["mistakes", "mistake", "errors"],
   notes: ["notes", "note", "comment", "comments", "journal", "remarks", "description", "lessons"],
-  screenshot: ["screenshot", "chart", "image", "link", "url"]
+  chartBefore: ["beforechart", "chartbefore", "before", "entrychart", "setupchart"],
+  chartAfter: ["afterchart", "chartafter", "after", "exitchart", "resultchart", "chart", "screenshot", "image", "link", "url"]
 };
 const normKey = s => String(s).toLowerCase().replace(/[^a-z0-9$]/g, "");
 
@@ -2726,7 +2915,8 @@ function rowsToTrades(rows) {
       emotionBefore: String(g("emotionBefore")).trim(), emotionAfter: String(g("emotionAfter")).trim(),
       confidence: parseMoney(g("confidence")) || null,
       followedPlan: plan ? !/^(n|no|false|0|x)$/.test(plan) : true,
-      mistakes: String(g("mistakes")).trim(), notes: String(g("notes")).trim(), screenshot: String(g("screenshot")).trim()
+      mistakes: String(g("mistakes")).trim(), notes: String(g("notes")).trim(),
+      chartBefore: safeLink(g("chartBefore")), chartAfter: safeLink(g("chartAfter")), screenshot: ""
     });
     const t = out[out.length - 1];
     if (!t.session) t.session = guessSession(t.time, t.date) || "Unspecified";
@@ -2784,7 +2974,7 @@ function showTab(name, { focus = false, push = true } = {}) {
   const header = F("analyticsHeader");
   header.hidden = !isAnalytics(name);
   if (isAnalytics(name)) {
-    F("pageTitle").textContent = TAB_TITLES[name];
+    F("pageTitle").textContent = name === "overview" && SB && firstName() ? `Welcome back, ${firstName()}` : TAB_TITLES[name];
     $$(".reveal", header).forEach(el => { el.style.animation = "none"; el.offsetHeight; el.style.animation = ""; });
   }
   TABS.forEach(t => {
@@ -2877,6 +3067,8 @@ F("tableHead").addEventListener("click", e => {
   if (nb) nb.focus();
 });
 F("tableBody").addEventListener("click", e => {
+  const vw = e.target.closest("[data-view]");
+  if (vw) { const t = trades.find(x => x.id === vw.dataset.view); if (t) openTrade(t); return; }
   const ed = e.target.closest("[data-edit]");
   const del = e.target.closest("[data-del]");
   if ((ed || del) && persist.loading && trades === cachedTrades) return toast("Still syncing your journal. Try again in a moment.");
@@ -2922,9 +3114,17 @@ F("tradeForm").addEventListener("submit", e => {
     return;
   }
   box.classList.remove("show");
-  if (t.r == null && t.risk) t.r = Math.round((t.pnl / t.risk) * 100) / 100;
-  if (persist.readOnly) return toast("You don't have permission to save changes to this journal");
   const editing = trades.some(x => x.id === t.id);
+  if (!commitTrade(t)) return;
+  toast(editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
+  resetForm(true);
+  if (editing) showTab("journal");
+  else F("tPair").focus();
+});
+// Save a trade from either form. Returns false if this journal is read-only.
+function commitTrade(t) {
+  if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return false; }
+  if (t.r == null && t.risk) t.r = Math.round((t.pnl / t.risk) * 100) / 100;
   putTrade(t);
   syncView();
   // Remember new pairs/setups so they show up as suggestions next time.
@@ -2932,13 +3132,104 @@ F("tradeForm").addEventListener("submit", e => {
   if (newPair) settings.pairs.push(t.pair);
   if (newSetup) settings.setups.push(t.setup);
   if (newPair || newSetup) saveSettings();
-  toast(editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
-  resetForm(true);
   renderRecent();
   renderListEditors();
-  if (editing) showTab("journal");
-  else F("tPair").focus();
+  return true;
+}
+
+/* ---------- Quick log (Overview) ---------- */
+function quickTrade() {
+  const pnl = num(F("qPnl").value), risk = num(settings.defaultRisk) || null;
+  return {
+    id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value,
+    direction: ($("input[name=qDir]:checked") || {}).value || "Long", setup: F("qSetup").value.trim(),
+    entry: null, stop: null, target: null, exit: null, size: null, risk, pnl, r: null, fees: null,
+    emotionBefore: F("qEmo").value, emotionAfter: "", confidence: null, followedPlan: true, mistakes: "",
+    notes: F("qNotes").value.trim(), chartBefore: "", chartAfter: "", screenshot: ""
+  };
+}
+function resetQuick() {
+  const date = F("qDate").value;
+  F("quickForm").reset();
+  F("qDate").value = date || isoDate(new Date());
+  $$("[aria-invalid]", F("quickForm")).forEach(el => el.removeAttribute("aria-invalid"));
+  F("qMsg").textContent = "";
+  refreshLists();
+}
+function setQuickOpen(open) {
+  F("quickLog").classList.toggle("collapsed", !open);
+  F("qToggle").textContent = open ? "Hide" : "Show";
+  F("qToggle").setAttribute("aria-expanded", open);
+}
+F("quickForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const t = quickTrade();
+  const missing = [["qDate", !t.date, "date"], ["qPair", !t.pair, "pair"], ["qSession", !t.session, "session"], ["qSetup", !t.setup, "setup"], ["qPnl", t.pnl == null, "P&L"]];
+  missing.forEach(([id, bad]) => bad ? F(id).setAttribute("aria-invalid", "true") : F(id).removeAttribute("aria-invalid"));
+  const bad = missing.filter(m => m[1]);
+  if (bad.length) { F("qMsg").textContent = "Add the " + bad.map(m => m[2]).join(", ") + "."; F(bad[0][0]).focus(); return; }
+  if (!commitTrade(t)) return;
+  toast(`Trade saved: ${t.pair} ${money(t.pnl)}`);
+  resetQuick();
+  renderDashboard();
+  F("qPair").focus();
 });
+F("qMore").addEventListener("click", () => {
+  // Carry what's typed into the full form.
+  const q = quickTrade();
+  resetForm(true);
+  loadIntoForm(Object.assign(q, { id: "", time: "", risk: num(settings.defaultRisk) }));
+  F("tId").value = "";
+  F("formTitle").textContent = "Log a trade";
+  F("formSubmit").textContent = "Save trade";
+  F("formCancel").hidden = true;
+  if (!q.date) F("tDate").value = isoDate(new Date());
+  store.set(KEY_DRAFT, Object.assign(readForm(), { _editing: false }));
+  resetQuick();
+  showTab("log");
+  F("tPair").focus();
+});
+F("qToggle").addEventListener("click", () => {
+  ui.quickOpen = F("quickLog").classList.contains("collapsed");
+  saveUi();
+  setQuickOpen(ui.quickOpen);
+});
+
+/* ---------- Trade detail window ---------- */
+let viewing = null;
+function openTrade(t) {
+  viewing = t;
+  const r = rOf(t), res = resultOf(t);
+  F("tdTitle").innerHTML = `${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span>`;
+  F("tdSub").textContent = [fmtDate(t.date) + (t.time ? " " + t.time : ""), t.session, t.setup].filter(Boolean).join(" · ");
+  const item = (label, value, cls = "") => value === "" || value == null ? "" : `<div class="td-item"><span>${label}</span><b class="${cls}">${value}</b></div>`;
+  const price = v => v == null ? "" : `<span class="mono">${esc(v)}</span>`;
+  F("tdBody").innerHTML = `
+    <div class="chart-pair">${chartFigure("Before", beforeChart(t))}${chartFigure("After", afterChart(t))}</div>
+    <div class="td-grid" style="margin-top:16px">
+      ${item("Result", `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : "be"}">${res === "BE" ? "Breakeven" : res}</span>`)}
+      ${item("P&amp;L", `<span class="mono">${money(t.pnl)}</span>`, tone(t.pnl))}
+      ${item("R multiple", `<span class="mono">${fmtR(r)}</span>`, tone(r))}
+      ${item("Entry", price(t.entry))}${item("Stop loss", price(t.stop))}${item("Take profit", price(t.target))}${item("Exit", price(t.exit))}
+      ${item("Size", price(t.size))}${t.risk ? item("Risk", `<span class="mono">${money(t.risk, { signed: false })}</span>`) : ""}
+      ${item("Emotion before", esc(t.emotionBefore || ""))}${item("Emotion after", esc(t.emotionAfter || ""))}
+      ${t.confidence ? item("Confidence", esc(t.confidence) + "/5") : ""}
+      ${item("Followed plan", t.followedPlan === false ? "No" : "Yes", t.followedPlan === false ? "neg" : "")}
+      ${item("Mistakes", esc(t.mistakes || ""), "warn-text")}
+    </div>
+    ${t.notes ? `<p class="td-notes" style="margin-top:14px">${esc(t.notes)}</p>` : ""}
+    ${t.sourceUrl ? `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open in Notion ↗</a></p>` : ""}`;
+  const dlg = F("tradeDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  F("tdDone").focus();
+}
+F("tdClose").addEventListener("click", () => F("tradeDlg").close());
+F("tdDone").addEventListener("click", () => F("tradeDlg").close());
+F("tdEdit").addEventListener("click", () => {
+  F("tradeDlg").close();
+  if (viewing) { showTab("log"); loadIntoForm(viewing); F("tDate").focus(); }
+});
+
 F("formErrors").addEventListener("click", e => {
   const a = e.target.closest("a[href^='#']");
   if (a) { e.preventDefault(); F(a.getAttribute("href").slice(1)).focus(); }
@@ -3093,6 +3384,8 @@ F("fRange").value = ui.range;
 F("fFrom").value = ui.from; F("fTo").value = ui.to;
 F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
 resetForm(false, true);
+F("qDate").value = isoDate(new Date());
+setQuickOpen(ui.quickOpen !== false);
 renderListEditors();
 renderAccount();
 // Reopen where the journal was left: same tab, same scroll position, same unsaved form.
@@ -3138,8 +3431,9 @@ if (SB) {
   });
   F("syncChip").style.cursor = "pointer";
   F("syncChip").addEventListener("click", () => { if (sb.session) showTab("settings"); else showHome(); });
-  F("homeForm").addEventListener("submit", e => { e.preventDefault(); sbSignIn(false, "dialog"); });
-  F("dlgSignUp").addEventListener("click", () => sbSignIn(true, "dialog"));
+  F("homeForm").addEventListener("submit", e => { e.preventDefault(); sbSignIn(homeMode === "signup", "dialog"); });
+  F("dlgSignUp").addEventListener("click", () => setHomeMode(homeMode === "signup" ? "signin" : "signup"));
+  F("profileForm").addEventListener("submit", e => { e.preventDefault(); saveProfile(); });
 }
 
 // Offline support, only for the hosted app (its page links a web app manifest).
