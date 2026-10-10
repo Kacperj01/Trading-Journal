@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "96009bed40";</script>
+<script>window.ELEV8_BUILD = "b3ff0d048b";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -595,6 +595,26 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .side-link.danger:hover { background: var(--red-soft); }
 .bug-dlg { width: min(480px, calc(100vw - 32px)); }
 .bug-dlg textarea { min-height: 0; }
+/* Trading accounts */
+.acct-dlg { width: min(540px, calc(100vw - 32px)); }
+.acct-dlg:not(.is-prop) .prop-only { display: none; }
+.acct-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+@media (max-width: 520px) { .acct-grid { grid-template-columns: 1fr; } }
+.seg.acct-type label:has(input:checked) { background: var(--blue-soft); color: var(--text); }
+.acct-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.acct-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+.acct-main { flex: 1; min-width: 0; display: grid; gap: 3px; font-size: 13px; color: var(--muted); }
+.acct-main b { font-size: 15px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct-btns { display: flex; gap: 6px; width: 100%; justify-content: flex-end; margin-top: -2px; }
+.acct-badge { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; white-space: nowrap; align-self: flex-start; margin-top: 2px; }
+.acct-badge.live { background: var(--green-soft); color: var(--green); }
+.acct-badge.demo { background: var(--surface-hover); color: var(--text-2); }
+.acct-badge.prop { background: var(--accent-soft); color: var(--accent); }
+.acct-empty { padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); color: var(--muted); font-size: 13.5px; }
+.acct-unassigned { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--warn-soft); font-size: 13.5px; }
+.acct-unassigned p { margin: 0 0 8px; }
+.acct-assign { display: flex; gap: 8px; flex-wrap: wrap; }
+.acct-assign select { flex: 1; min-width: 160px; }
 .seg-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
 .seg-tabs button { appearance: none; border: 0; background: transparent; color: var(--text-2); font: 500 13.5px var(--font-sans); padding: 7px 12px; border-radius: 9px; cursor: pointer; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
 .seg-tabs button:hover { color: var(--text); background: var(--surface); }
@@ -845,6 +865,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <label>Setup
             <select id="fSetup"><option value="">All setups</option></select>
           </label>
+          <label id="fAccountWrap" hidden>Account
+            <select id="fAccount"><option value="">All accounts</option></select>
+          </label>
         </div>
       </div>
 
@@ -880,6 +903,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="field"><label for="qSetup">Setup</label><input type="text" id="qSetup" list="setupList" autocomplete="off" placeholder="e.g. Asia Sweep" required></div>
             <div class="field"><label for="qPnl">P&amp;L</label><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150 or -100" required></div>
             <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
+            <div class="field" id="qAccountWrap" hidden><label for="qAccount">Account</label><select id="qAccount"></select></div>
             <div class="field q-wide"><label for="qNotes">Notes</label><input type="text" id="qNotes" placeholder="Why did you take it?"></div>
           </div>
           <p id="qMsg" class="q-msg" role="alert"></p>
@@ -1114,6 +1138,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
                 <label for="tSessionSel">Session <span class="req" aria-hidden="true">*</span></label>
                 <select id="tSessionSel" required aria-required="true"></select>
               </div>
+              <div class="field" id="tAccountWrap" hidden>
+                <label for="tAccount">Account</label>
+                <select id="tAccount"></select>
+              </div>
               <div class="field">
                 <span class="lbl" id="dirLbl">Direction <span class="req" aria-hidden="true">*</span></span>
                 <div class="seg" role="radiogroup" aria-labelledby="dirLbl">
@@ -1249,10 +1277,26 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
 
       <div class="settings-grid section">
+        <section class="card accent-teal reveal" style="--d:1" aria-labelledby="tradeAcctTitle">
+          <div class="card-head">
+            <div><h3 id="tradeAcctTitle">Trading accounts</h3><div class="sub">Live, demo and prop firm accounts you trade</div></div>
+            <button class="btn sm primary" type="button" id="acctAdd">+ Add account</button>
+          </div>
+          <ul class="acct-list" id="acctList"></ul>
+          <div class="acct-unassigned" id="acctUnassigned" hidden>
+            <p id="acctUnassignedText"></p>
+            <div class="acct-assign">
+              <label class="sr-only" for="acctAssignSel">Account to link them to</label>
+              <select id="acctAssignSel"></select>
+              <button class="btn sm" type="button" id="acctAssignBtn">Link trades</button>
+            </div>
+          </div>
+        </section>
+
         <section class="card accent-blue reveal" style="--d:1" aria-labelledby="acctTitle">
-          <div class="card-head"><h3 id="acctTitle">Account</h3></div>
+          <div class="card-head"><h3 id="acctTitle">Preferences</h3></div>
           <form class="stack" id="acctForm">
-            <div class="field"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal"></div>
+            <div class="field"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint" hidden>Worked out from your trading account sizes</span></div>
             <div class="field"><label for="sCurrency">Currency symbol</label><input type="text" id="sCurrency" maxlength="4"></div>
             <div class="field"><label for="sRisk">Default risk per trade</label><input type="number" step="any" id="sRisk" inputmode="decimal"></div>
             <div class="field">
@@ -1262,7 +1306,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
                 <option value="local">My local time</option>
               </select>
             </div>
-            <div><button class="btn primary" type="submit">Save account</button></div>
+            <div><button class="btn primary" type="submit">Save preferences</button></div>
           </form>
         </section>
 
@@ -1366,6 +1410,42 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </form>
 </dialog>
 
+<dialog id="acctDlg" class="acct-dlg" aria-labelledby="acctDlgTitle" aria-describedby="acctDlgIntro">
+  <form id="acctDlgForm" class="dlg-body" novalidate>
+    <h3 id="acctDlgTitle">Register your trading account</h3>
+    <p id="acctDlgIntro"></p>
+    <input type="hidden" id="aId">
+    <div class="field">
+      <span class="lbl" id="aTypeLbl">Account type</span>
+      <div class="seg acct-type" role="radiogroup" aria-labelledby="aTypeLbl">
+        <label><input type="radio" name="aType" value="Live" checked> Live</label>
+        <label><input type="radio" name="aType" value="Demo"> Demo</label>
+        <label><input type="radio" name="aType" value="Prop firm"> Prop firm</label>
+      </div>
+    </div>
+    <div class="acct-grid">
+      <div class="field prop-only"><label for="aFirm">Prop firm</label><input type="text" id="aFirm" list="firmList" autocomplete="off" placeholder="e.g. FTMO"></div>
+      <div class="field prop-only"><label for="aPhase">Stage</label>
+        <select id="aPhase"><option>Challenge</option><option>Verification</option><option>Funded</option></select>
+      </div>
+      <div class="field"><label for="aSize">Account size</label><input type="number" id="aSize" inputmode="decimal" min="0" step="any" placeholder="e.g. 10000"></div>
+      <div class="field"><label for="aBroker">Broker<span class="prop-only"> (optional)</span></label><input type="text" id="aBroker" list="brokerList" autocomplete="off" placeholder="e.g. IC Markets"></div>
+      <div class="field"><label for="aPlatform">Platform</label>
+        <select id="aPlatform"><option value="">Select</option><option>MetaTrader 4</option><option>MetaTrader 5</option><option>cTrader</option><option>TradingView</option><option>DXtrade</option><option>Match-Trader</option><option>NinjaTrader</option><option>Tradovate</option><option>Other</option></select>
+      </div>
+      <div class="field"><label for="aName">Nickname (optional)</label><input type="text" id="aName" maxlength="40" autocomplete="off"></div>
+    </div>
+    <label class="toggle" id="aAssignWrap" hidden><input type="checkbox" id="aAssign"> <span id="aAssignText"></span></label>
+    <datalist id="firmList"><option value="FTMO"><option value="FundedNext"><option value="The5ers"><option value="Funding Pips"><option value="E8 Markets"><option value="Alpha Capital"><option value="FundingTraders"><option value="Blue Guardian"><option value="Maven Trading"><option value="Topstep"><option value="Apex Trader Funding"><option value="Take Profit Trader"></datalist>
+    <datalist id="brokerList"><option value="IC Markets"><option value="Pepperstone"><option value="OANDA"><option value="IG"><option value="FXCM"><option value="Exness"><option value="XM"><option value="FP Markets"><option value="Vantage"><option value="Eightcap"><option value="BlackBull Markets"><option value="Interactive Brokers"><option value="Plus500"></datalist>
+    <p id="aMsg" class="q-msg" role="alert"></p>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="aCancel">Cancel</button>
+      <button class="btn primary" type="submit" id="aSubmit">Save account</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="tradeDlg" class="trade-dlg" aria-labelledby="tdTitle">
   <div class="dlg-body">
     <div class="td-head">
@@ -1435,14 +1515,16 @@ const DEFAULT_SETTINGS = {
   setups: ["Asia Sweep", "PDH/PDL Sweep", "Supply/Demand Zone", "Break & Retest", "Breakout"],
   sessions: ["Asia", "London", "New York", "Overlap"],
   emotions: ["Confident", "Unsure", "Neutral", "Stressed", "FOMO", "Proud", "Disappointed", "Lesson learned", "Angry"],
-  mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"]
+  mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"],
+  accounts: [],     // trading accounts: { id, type: Live | Demo | Prop firm, size, broker, firm, phase, platform, name }
+  lastAccount: ""   // account picked for the last trade; new trades start on it
 };
 
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 let trades = [];
 
-const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", account: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
@@ -1550,7 +1632,7 @@ function sbSaveSession(s) {
       user: { id: s.user.id, email: s.user.email, name: meta.full_name || "", age: meta.age || null } };
     sb.lastEmail = s.user.email;
     store.set("tj.sb.email.v1", s.user.email);
-  } else sb.session = null;
+  } else { sb.session = null; sb.synced = false; }
   store.set(KEY_SB_SESSION, sb.session);
 }
 let homeMode = "signin";
@@ -1591,7 +1673,12 @@ async function sbSync() {
       if (prevUser) {
         // A different account was used on this device before: don't copy its trades into this one.
         realTrades = []; saveLocal(); store.set(KEY_SB_OUTBOX, []);
+        settings.accounts = []; settings.lastAccount = ""; store.set(KEY_SETTINGS, settings);
       } else {
+        // Keep the account's own settings (e.g. trading accounts registered on another device),
+        // adding this device's pairs and setups, rather than replacing them with this device's copy.
+        const remote = await sbRest("GET", "journal_settings?select=data");
+        if (remote && remote[0]) { settings = Object.assign({}, DEFAULT_SETTINGS, remote[0].data); learnLists(realTrades); store.set(KEY_SETTINGS, settings); }
         const box = store.get(KEY_SB_OUTBOX, []);
         realTrades.forEach(t => { if (!box.some(e => e.id === t.id)) box.push({ op: "put", id: t.id }); });
         box.push({ op: "settings" });
@@ -1634,11 +1721,12 @@ async function sbSync() {
       const next = Object.assign({}, DEFAULT_SETTINGS, st[0].data);
       if (JSON.stringify(next) !== JSON.stringify(settings)) { settings = next; store.set(KEY_SETTINGS, settings); settingsChanged = true; }
     }
-    sb.lastSync = Date.now(); sb.offline = false;
+    sb.lastSync = Date.now(); sb.offline = false; sb.synced = true;
     setSync("cloud", "Synced · " + sb.session.user.email);
     if (settingsChanged) { refreshLists(); renderListEditors(); renderAccount(); }
     if (changed || settingsChanged) { syncView(); onDataChanged(); }
     sbRender();
+    maybeAskAccount();
   } catch (e) {
     if (!sb.session) { /* signed out during sync */ }
     else if (e instanceof TypeError || !navigator.onLine) { sb.offline = true; setSync("local", "Offline · changes will sync"); }
@@ -1814,11 +1902,13 @@ async function connectCloud() {
       onDataChanged();
     }, err => { setSync("err", "Sync stopped. Reload to reconnect"); });
     persist.db.doc(persist.base + "/settings").onSnapshot(snap => {
-      if (!snap.exists) return;
+      persist.settingsSeen = true;
+      if (!snap.exists) { maybeAskAccount(); return; }
       settings = Object.assign({}, DEFAULT_SETTINGS, snap.data());
       store.set(KEY_SETTINGS, settings);
       refreshLists(); renderListEditors(); renderAccount();
       if (isAnalytics(currentTab())) renderDashboard();
+      maybeAskAccount();
     }, () => {});
   } catch (e) {
     finishLoading("local");
@@ -1873,7 +1963,9 @@ function onDataChanged() {
     renderRecent();
     if (isAnalytics(currentTab())) renderDashboard();
     if (currentTab() === "log") updatePreview();
+    renderAccounts();
     window.scrollTo(0, y);
+    maybeAskAccount();
   }, 60);
 }
 
@@ -1994,7 +2086,37 @@ function filtered() {
   const [from, to] = rangeBounds();
   return sortChrono(trades).filter(t => t.date >= from && t.date <= to
     && (!ui.session || t.session === ui.session)
-    && (!ui.setup || t.setup === ui.setup));
+    && (!ui.setup || t.setup === ui.setup)
+    && inAccount(t));
+}
+
+/* ---------- Trading accounts ---------- */
+const accounts = () => Array.isArray(settings.accounts) ? settings.accounts : [];
+const acctById = id => (id && accounts().find(a => a.id === id)) || null;
+const inAccount = t => !ui.account || t.account === ui.account;
+const unassignedTrades = () => realTrades.filter(t => !acctById(t.account));
+const defaultAccount = () => (acctById(settings.lastAccount) || accounts()[0] || {}).id || "";
+const shortSize = n => !(n > 0) ? "" : n >= 1e6 ? +(n / 1e6).toFixed(2) + "M" : n >= 1000 ? +(n / 1000).toFixed(1) + "K" : String(n);
+function acctLabel(a) {
+  if (!a) return "";
+  if (a.name) return a.name;
+  return a.type === "Prop firm"
+    ? [a.firm || "Prop firm", shortSize(a.size), a.phase].filter(Boolean).join(" ")
+    : [a.broker || a.type, shortSize(a.size), a.type].filter(Boolean).join(" ");
+}
+// Balance before any trades: the account's size when one account is in view, every account's size added up
+// for all accounts, or the starting balance from Preferences when no sizes are set.
+function startingBalance(accountId) {
+  const one = acctById(accountId);
+  if (one) return Number(one.size) > 0 ? Number(one.size) : Number(settings.balance);
+  const sizes = accounts().map(a => Number(a.size)).filter(n => n > 0);
+  return sizes.length ? sum(sizes) : Number(settings.balance);
+}
+// Balance just before the first trade in view: the starting balance plus earlier P&L in the same account(s).
+function balanceBefore(list) {
+  const first = list[0];
+  const prior = sum(trades.filter(t => inAccount(t) && (t.date + (t.time || "")) < (first.date + (first.time || ""))).map(t => t.pnl));
+  return startingBalance(ui.account) + (ui.range === "all" && !ui.session && !ui.setup ? 0 : prior);
 }
 
 function group(list, key) {
@@ -2070,6 +2192,7 @@ function renderDashboard() {
   if (ui.range !== "all") lbl += " · " + (from.startsWith("0000") ? "start" : fmtDate(from)) + " → " + (to.startsWith("9999") ? "today" : fmtDate(to));
   if (ui.session) lbl += " · " + ui.session;
   if (ui.setup) lbl += " · " + ui.setup;
+  if (acctById(ui.account)) lbl += " · " + acctLabel(acctById(ui.account));
   $("#rangeLabel").textContent = lbl + " · " + plural(list.length, "trade");
 
   const empty = list.length === 0;
@@ -2083,10 +2206,7 @@ function renderDashboard() {
   if (empty) return;
 
   const st = stats(list);
-  // Balance before the first trade in view = starting balance + all earlier P&L.
-  const first = list[0];
-  const prior = sum(trades.filter(t => (t.date + (t.time || "")) < (first.date + (first.time || ""))).map(t => t.pnl));
-  const startBal = Number(settings.balance) + (ui.range === "all" && !ui.session && !ui.setup ? 0 : prior);
+  const startBal = balanceBefore(list);
 
   renderKpis(st, startBal);
   renderEquity(list, startBal, st);
@@ -2785,6 +2905,20 @@ function refreshLists() {
   fillSelect($("#qEmo"), settings.emotions, { placeholder: "—", value: $("#qEmo").value });
   fillSelect($("#fSession"), allSessions, { placeholder: "All sessions", value: ui.session });
   fillSelect($("#fSetup"), allSetups, { placeholder: "All setups", value: ui.setup });
+  // Accounts: the filter appears once there are two; the trade forms keep their choice while it still exists.
+  const accts = accounts();
+  if (ui.account && !acctById(ui.account)) { ui.account = ""; saveUi(); }
+  const opts = accts.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+  F("fAccountWrap").hidden = accts.length < 2;
+  F("fAccount").innerHTML = `<option value="">All accounts</option>` + opts;
+  F("fAccount").value = ui.account;
+  for (const [id, extra] of [["tAccount", `<option value="">No account</option>`], ["qAccount", ""]]) {
+    const sel = F(id), cur = sel.value, had = Array.from(sel.options).some(o => o.value === cur);
+    sel.innerHTML = opts + (accts.length ? extra : "");
+    sel.value = had && Array.from(sel.options).some(o => o.value === cur) ? cur : defaultAccount();
+  }
+  F("tAccountWrap").hidden = !accts.length;
+  F("qAccountWrap").hidden = accts.length < 2;
 }
 
 const F = id => document.getElementById(id);
@@ -2806,6 +2940,7 @@ function resetForm(keepDate, keepDraft) {
   F("tId").value = "";
   F("tDate").value = keepDate && d ? d : isoDate(new Date());
   F("tRisk").value = settings.defaultRisk || "";
+  F("tAccount").value = defaultAccount();
   F("tConfOut").textContent = "3/5";
   F("formTitle").textContent = "Log a trade";
   F("formSubmit").textContent = "Save trade";
@@ -2823,6 +2958,7 @@ function readForm() {
     time: F("tTime").value,
     pair: F("tPair").value.trim().toUpperCase(),
     session: F("tSessionSel").value,
+    account: F("tAccount").value,
     direction: ($("input[name=tDir]:checked") || {}).value || "Long",
     setup: F("tSetup").value.trim(),
     entry: num(F("tEntry").value), stop: num(F("tStop").value), target: num(F("tTarget").value), exit: num(F("tExit").value),
@@ -2846,6 +2982,7 @@ function loadIntoForm(t) {
   F("tPair").value = t.pair || "";
   refreshLists();
   fillSelect(F("tSessionSel"), settings.sessions, { placeholder: "Select session", value: t.session || "" });
+  F("tAccount").value = acctById(t.account) ? t.account : t.id ? "" : defaultAccount();
   $$("input[name=tDir]").forEach(r => r.checked = r.value === t.direction);
   F("tSetup").value = t.setup || "";
   const setNum = (id, v) => F(id).value = v == null ? "" : v;
@@ -2899,7 +3036,7 @@ function updatePreview() {
     ["P&L", `<span class="${tone(t.pnl)}">${t.pnl == null ? "—" : money(t.pnl)}</span>`],
     ["R multiple", `<span class="${tone(r)}">${fmtR(r)}</span>`],
     ["Planned R:R", planned == null ? "—" : `<span class="hl">1 : ${planned.toFixed(2)}</span>`],
-    ["Account after", t.pnl == null ? "—" : money(Number(settings.balance) + sum(trades.filter(x => x.id !== t.id).map(x => x.pnl)) + t.pnl, { signed: false })]
+    ["Account after", t.pnl == null ? "—" : money(startingBalance(t.account) + sum(trades.filter(x => x.id !== t.id && (!acctById(t.account) || x.account === t.account)).map(x => x.pnl)) + t.pnl, { signed: false })]
   ];
   F("pvBody").innerHTML = rows.map(([a, b]) => `<div class="pv-row"><span class="muted">${a}</span><span>${b}</span></div>`).join("");
 }
@@ -2950,6 +3087,7 @@ function renderListEditors() {
 }
 function renderAccount() {
   F("sBalance").value = settings.balance;
+  renderAccounts();
   F("sCurrency").value = settings.currency;
   F("sRisk").value = settings.defaultRisk;
   F("sSessionMode").value = settings.sessionMode;
@@ -3005,7 +3143,7 @@ function showExportText(name, text) {
 
 // Spreadsheet export: readable headers, chronological, one row per trade. Re-importable.
 const SHEET_COLS = [
-  ["Date", t => t.date], ["Time", t => t.time || ""], ["Pair", t => t.pair], ["Session", t => t.session],
+  ["Date", t => t.date], ["Time", t => t.time || ""], ["Account", t => acctLabel(acctById(t.account))], ["Pair", t => t.pair], ["Session", t => t.session],
   ["Direction", t => t.direction], ["Setup", t => t.setup], ["Result", t => resultOf(t) === "BE" ? "Breakeven" : resultOf(t)],
   ["P&L", t => t.pnl], ["R", t => { const r = rOf(t); return r == null ? "" : Math.round(r * 100) / 100; }], ["Risk", t => t.risk],
   ["Entry", t => t.entry], ["Stop", t => t.stop], ["Target", t => t.target], ["Exit", t => t.exit], ["Size", t => t.size], ["Fees", t => t.fees],
@@ -3383,6 +3521,7 @@ F("fFrom").addEventListener("change", e => { ui.from = e.target.value; ui.calMon
 F("fTo").addEventListener("change", e => { ui.to = e.target.value; ui.calMonth = ""; saveUi(); renderDashboard(); });
 F("fSession").addEventListener("change", e => { ui.session = e.target.value; saveUi(); renderDashboard(); });
 F("fSetup").addEventListener("change", e => { ui.setup = e.target.value; saveUi(); renderDashboard(); });
+F("fAccount").addEventListener("change", e => { ui.account = e.target.value; saveUi(); renderDashboard(); });
 
 // Calendar navigation
 const shiftMonth = d => {
@@ -3481,7 +3620,10 @@ function commitTrade(t) {
   const newPair = !settings.pairs.includes(t.pair), newSetup = !settings.setups.includes(t.setup);
   if (newPair) settings.pairs.push(t.pair);
   if (newSetup) settings.setups.push(t.setup);
-  if (newPair || newSetup) saveSettings();
+  // New trades start on the account used last.
+  const newAcct = !!acctById(t.account) && settings.lastAccount !== t.account;
+  if (newAcct) settings.lastAccount = t.account;
+  if (newPair || newSetup || newAcct) saveSettings();
   renderRecent();
   renderListEditors();
   return true;
@@ -3491,7 +3633,7 @@ function commitTrade(t) {
 function quickTrade() {
   const pnl = num(F("qPnl").value), risk = num(settings.defaultRisk) || null;
   return {
-    id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value,
+    id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value, account: F("qAccount").value,
     direction: ($("input[name=qDir]:checked") || {}).value || "Long", setup: F("qSetup").value.trim(),
     entry: null, stop: null, target: null, exit: null, size: null, risk, pnl, r: null, fees: null,
     emotionBefore: F("qEmo").value, emotionAfter: "", confidence: null, followedPlan: true, mistakes: "",
@@ -3505,6 +3647,7 @@ function resetQuick() {
   $$("[aria-invalid]", F("quickForm")).forEach(el => el.removeAttribute("aria-invalid"));
   F("qMsg").textContent = "";
   refreshLists();
+  F("qAccount").value = defaultAccount();
 }
 function setQuickOpen(open) {
   F("quickLog").classList.toggle("collapsed", !open);
@@ -3557,6 +3700,7 @@ function openTrade(t) {
   F("tdBody").innerHTML = `
     <div class="chart-pair">${chartFigure("Before", beforeChart(t))}${chartFigure("After", afterChart(t))}</div>
     <div class="td-grid" style="margin-top:16px">
+      ${item("Account", esc(acctLabel(acctById(t.account))))}
       ${item("Result", `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : "be"}">${res === "BE" ? "Breakeven" : res}</span>`)}
       ${item("P&amp;L", `<span class="mono">${money(t.pnl)}</span>`, tone(t.pnl))}
       ${item("R multiple", `<span class="mono">${fmtR(r)}</span>`, tone(r))}
@@ -3574,6 +3718,140 @@ function openTrade(t) {
   F("tdDone").focus();
 }
 F("tdClose").addEventListener("click", () => F("tradeDlg").close());
+
+/* ---------- Trading accounts: register, edit, remove ---------- */
+function renderAccounts() {
+  const list = accounts();
+  F("acctList").innerHTML = list.length ? list.map(a => {
+    const n = realTrades.filter(t => t.account === a.id).length;
+    const where = a.type === "Prop firm" ? [a.firm, a.phase, a.broker] : [a.broker];
+    const meta = [...where, a.platform, Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
+    const cls = a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : "live";
+    return `<li class="acct-item">
+      <span class="acct-badge ${cls}">${esc(a.type)}</span>
+      <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(meta)}</span><span>${plural(n, "trade")}</span></div>
+      <div class="acct-btns"><button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
+    </li>`;
+  }).join("") : `<li class="acct-empty">No trading accounts yet. Add the live, demo or prop firm account you trade.</li>`;
+  const loose = list.length ? unassignedTrades() : [];
+  F("acctUnassigned").hidden = !loose.length;
+  if (loose.length) {
+    F("acctUnassignedText").textContent = `${plural(loose.length, "trade")} ${loose.length === 1 ? "isn't" : "aren't"} linked to an account.`;
+    const cur = F("acctAssignSel").value;
+    F("acctAssignSel").innerHTML = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+    F("acctAssignSel").value = acctById(cur) ? cur : defaultAccount();
+  }
+  const sized = list.some(a => Number(a.size) > 0);
+  F("sBalance").disabled = sized;
+  F("sBalanceHint").hidden = !sized;
+  if (sized) F("sBalance").value = startingBalance("");
+}
+
+function linkTrades(list, accountId) {
+  list.forEach(t => putTrade(Object.assign({}, t, { account: accountId })));
+  syncView();
+}
+
+let acctFirst = false;
+function setAcctType(type) {
+  $$("input[name=aType]").forEach(r => r.checked = r.value === type);
+  F("acctDlg").classList.toggle("is-prop", type === "Prop firm");
+  F("aBroker").placeholder = type === "Prop firm" ? "e.g. the firm's broker" : "e.g. IC Markets";
+}
+const acctType = () => ($("input[name=aType]:checked") || {}).value || "Live";
+function openAccountDlg(a, first) {
+  acctFirst = !!first;
+  F("acctDlgForm").reset();
+  F("aId").value = a ? a.id : "";
+  setAcctType(a ? a.type : "Live");
+  if (a) {
+    F("aSize").value = a.size ?? ""; F("aBroker").value = a.broker || ""; F("aFirm").value = a.firm || "";
+    F("aPhase").value = a.phase || "Challenge"; F("aPlatform").value = a.platform || ""; F("aName").value = a.name || "";
+  }
+  F("acctDlgTitle").textContent = first ? "Register your trading account" : a ? "Edit account" : "Add a trading account";
+  F("acctDlgIntro").textContent = first
+    ? "Tell us which account you trade so your balance and stats match it. You can add more accounts later in Settings."
+    : a ? "Changes apply to every trade linked to this account." : "Add another live, demo or prop firm account.";
+  F("aCancel").hidden = first;
+  F("aSubmit").textContent = first ? "Register account" : "Save account";
+  const loose = a ? [] : unassignedTrades();
+  F("aAssignWrap").hidden = !loose.length;
+  F("aAssign").checked = !accounts().length;
+  F("aAssignText").textContent = `Link my ${plural(loose.length, "existing trade")} to this account`;
+  F("aSize").placeholder = "e.g. " + settings.currency + "10,000";
+  F("aMsg").textContent = "";
+  $$("[aria-invalid]", F("acctDlgForm")).forEach(el => el.removeAttribute("aria-invalid"));
+  const dlg = F("acctDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  (first ? $("input[name=aType]:checked") : F("aSize")).focus();
+}
+const clearAcctErrors = () => { F("aMsg").textContent = ""; $$("[aria-invalid]", F("acctDlgForm")).forEach(el => el.removeAttribute("aria-invalid")); };
+$$("input[name=aType]").forEach(r => r.addEventListener("change", () => { setAcctType(acctType()); clearAcctErrors(); }));
+F("acctDlgForm").addEventListener("input", e => { if (e.target.name !== "aType") e.target.removeAttribute("aria-invalid"); });
+F("aCancel").addEventListener("click", () => F("acctDlg").close());
+// Registering the first account isn't optional, so Escape doesn't close it.
+F("acctDlg").addEventListener("cancel", e => { if (acctFirst) e.preventDefault(); });
+F("acctDlgForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return; }
+  const type = acctType(), prop = type === "Prop firm";
+  const size = num(F("aSize").value), broker = F("aBroker").value.trim(), firm = F("aFirm").value.trim();
+  const checks = [["aFirm", prop && !firm, "prop firm"], ["aSize", !(size > 0), "account size"], ["aBroker", !prop && !broker, "broker"]];
+  checks.forEach(([id, bad]) => bad ? F(id).setAttribute("aria-invalid", "true") : F(id).removeAttribute("aria-invalid"));
+  const bad = checks.filter(c => c[1]);
+  if (bad.length) { F("aMsg").textContent = "Add the " + bad.map(c => c[2]).join(", ") + "."; F(bad[0][0]).focus(); return; }
+  const id = F("aId").value || uid();
+  const acct = { id, type, size, broker, firm: prop ? firm : "", phase: prop ? F("aPhase").value : "", platform: F("aPlatform").value, name: F("aName").value.trim() };
+  const list = accounts().slice(), i = list.findIndex(a => a.id === id);
+  if (i >= 0) list[i] = acct; else list.push(acct);
+  const loose = !F("aAssignWrap").hidden && F("aAssign").checked ? unassignedTrades() : [];
+  settings.accounts = list;
+  if (!acctById(settings.lastAccount)) settings.lastAccount = id;
+  saveSettings();
+  if (loose.length) linkTrades(loose, id);
+  F("acctDlg").close();
+  toast(i >= 0 ? "Account updated" : acctFirst ? `${acctLabel(acct)} registered` : `${acctLabel(acct)} added`);
+  acctFirst = false;
+  refreshAll();
+  onDataChanged();
+});
+F("acctAdd").addEventListener("click", () => openAccountDlg(null, false));
+F("acctList").addEventListener("click", async e => {
+  const edit = e.target.closest("[data-acct-edit]"), del = e.target.closest("[data-acct-del]");
+  if (edit) openAccountDlg(acctById(edit.dataset.acctEdit), false);
+  if (!del) return;
+  const a = acctById(del.dataset.acctDel);
+  if (!a) return;
+  const linked = realTrades.filter(t => t.account === a.id);
+  const ok = await askConfirm(linked.length
+    ? `${acctLabel(a)} will be removed. Its ${plural(linked.length, "trade")} stay in your journal, just not linked to an account.`
+    : `${acctLabel(a)} will be removed.`, { title: "Remove account?", ok: "Remove" });
+  if (!ok) return;
+  settings.accounts = accounts().filter(x => x.id !== a.id);
+  if (settings.lastAccount === a.id) settings.lastAccount = (accounts()[0] || {}).id || "";
+  saveSettings();
+  if (linked.length) linkTrades(linked, "");
+  toast("Account removed");
+  refreshAll();
+  onDataChanged();
+});
+F("acctAssignBtn").addEventListener("click", () => {
+  const id = F("acctAssignSel").value, loose = unassignedTrades();
+  if (!acctById(id) || !loose.length) return;
+  linkTrades(loose, id);
+  toast(`Linked ${plural(loose.length, "trade")} to ${acctLabel(acctById(id))}`);
+  refreshAll();
+  onDataChanged();
+});
+
+// Ask for a trading account once the journal (and its synced settings) has loaded and none is registered.
+function maybeAskAccount() {
+  if (accounts().length || persist.loading || persist.readOnly || F("acctDlg").open) return;
+  if (document.documentElement.classList.contains("gated") || document.querySelector("dialog[open]")) return;
+  if (SB && !inViewer() && !(sb.session && sb.synced)) return;
+  if (persist.mode === "cloud" && !persist.settingsSeen) return;
+  openAccountDlg(null, true);
+}
 
 /* ---------- Report a bug: a pre-filled GitHub issue (no trades or email included) ---------- */
 const BUG_REPO = "https://github.com/Kacperj01/Trading-Journal/issues/new";
@@ -3660,12 +3938,12 @@ F("formErrors").addEventListener("click", e => {
 // Settings
 F("acctForm").addEventListener("submit", e => {
   e.preventDefault();
-  settings.balance = num(F("sBalance").value) ?? 0;
+  if (!F("sBalance").disabled) settings.balance = num(F("sBalance").value) ?? 0;
   settings.currency = F("sCurrency").value.trim() || "$";
   settings.defaultRisk = num(F("sRisk").value) ?? 0;
   settings.sessionMode = F("sSessionMode").value;
   saveSettings();
-  toast("Account settings saved");
+  toast("Preferences saved");
   refreshAll();
 });
 F("listEditors").addEventListener("click", e => {
@@ -3780,9 +4058,7 @@ window.addEventListener("resize", () => {
     const list = filtered();
     if (!list.length) return;
     const st = stats(list);
-    const first = list[0];
-    const prior = sum(trades.filter(t => (t.date + (t.time || "")) < (first.date + (first.time || ""))).map(t => t.pnl));
-    renderEquity(list, Number(settings.balance) + (ui.range === "all" && !ui.session && !ui.setup ? 0 : prior), st);
+    renderEquity(list, balanceBefore(list), st);
   }, 200);
 });
 
@@ -3847,6 +4123,8 @@ async function signOutFlow() {
     if (!ok) return;
     sbSaveSession(null);
     realTrades = []; saveLocal(); syncView();
+    // The next person to sign in here shouldn't see this account's trading accounts.
+    settings.accounts = []; settings.lastAccount = ""; store.set(KEY_SETTINGS, settings); ui.account = ""; saveUi();
     store.set(KEY_SB_OUTBOX, []);
     try { localStorage.removeItem(KEY_SB_USER); localStorage.removeItem(KEY_DRAFT); } catch (e) { /* ignore */ }
     resetForm(false, true);
