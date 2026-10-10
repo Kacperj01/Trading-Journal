@@ -2735,6 +2735,8 @@ async function importFile(file) {
 const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "journal", "log", "settings"];
 const TAB_TITLES = { overview: "Performance overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade log" };
 const isAnalytics = name => name in TAB_TITLES;
+// Browser tab titles, e.g. "Calendar - ELEV8".
+const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade Log", log: "Log Trade", settings: "Settings" };
 const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
 function showTab(name, { focus = false, push = true } = {}) {
   if (!TABS.includes(name)) name = "overview";
@@ -2756,6 +2758,7 @@ function showTab(name, { focus = false, push = true } = {}) {
   if (push && location.hash !== "#" + name) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* sandboxed */ } }
   if (isAnalytics(name)) renderDashboard();
   if (name === "log") { renderRecent(); updatePreview(); }
+  document.title = TAB_NAMES[name] + " - ELEV8";
   if (ui.tab !== name) { ui.tab = name; ui.scrollY = 0; saveUi(); }
   if (!restoring) window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
 }
