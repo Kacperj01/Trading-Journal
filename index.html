@@ -529,6 +529,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <p><span id="syncChip" class="sync" title="Where your trades are saved">Loading…</span></p>
       </div>
     </div>
+    <button class="btn sm" type="button" id="exportJournalTop" title="Save a copy of your journal, with all your trades, as a file">⬇ Export journal</button>
   </div>
   <div class="container">
     <nav class="tabs" role="tablist" aria-label="Main sections">
@@ -942,11 +943,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <section class="card accent-green reveal" style="--d:2" aria-labelledby="dataTitle">
           <div class="card-head"><h3 id="dataTitle">Import &amp; export</h3></div>
           <div class="stack">
+            <p class="muted" style="margin:0;font-size:13.5px"><strong style="color:var(--text)">Export journal</strong> saves a copy of this whole journal with your trades built in. Open it in any browser, no account needed. The Share or Download option in claude.ai saves the page without your trades, so use this instead.</p>
             <p class="muted" style="margin:0;font-size:13.5px">Import an Excel (.xlsx), CSV or JSON file. Columns are matched by name, such as Date, Pair, Session, Direction, Setup, R, P&amp;L, Emotion and Notes.</p>
             <label class="toggle"><input type="checkbox" id="importReplace"> Replace existing trades instead of adding</label>
             <label class="btn primary file-label">⬆ Import file<input type="file" id="importFile" accept=".xlsx,.csv,.json,.txt" aria-label="Import trades from file"></label>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn primary" type="button" id="exportXlsx">⬇ Export Excel</button>
+              <button class="btn primary" type="button" id="exportJournal">⬇ Export journal (with data)</button>
+              <button class="btn" type="button" id="exportXlsx">⬇ Export Excel</button>
               <button class="btn" type="button" id="exportCsv">⬇ Export CSV</button>
               <button class="btn" type="button" id="exportJson">⬇ Export JSON</button>
             </div>
@@ -992,9 +995,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </form>
 </dialog>
 
-<script>
+<script id="app">
 (() => {
 "use strict";
+
+// The page as it was before any rendering. "Export journal" saves this with the trades embedded,
+// so the downloaded file works on its own, anywhere.
+const PRISTINE = "<!doctype html><html lang=\"en\"><head>" + document.head.innerHTML + "</head><body>" + document.body.innerHTML + "</body></html>";
 
 /* ======================================================================
    Storage & state
@@ -2611,11 +2618,45 @@ F("importFile").addEventListener("change", async e => {
   try { await importFile(file); } catch (err) { toast("Import failed: " + err.message); }
   e.target.value = "";
 });
+function snapshotHtml() {
+  const doc = new DOMParser().parseFromString(PRISTINE, "text/html");
+  // Keep only this page's own script; drop anything a viewer injected and any older embedded data.
+  doc.querySelectorAll("script").forEach(el => { if (el.id !== "app") el.remove(); });
+  const payload = { exportedAt: new Date().toISOString(), settings: clean(settings), trades: realTrades.map(clean) };
+  const data = doc.createElement("script");
+  data.type = "application/json";
+  data.id = "embedded-data";
+  data.textContent = JSON.stringify(payload).replace(/</g, "\\u003c");
+  doc.getElementById("app").before(data);
+
+  // A plain, pre-rendered copy of the trades so the file is readable even where scripts don't run
+  // (for example a quick preview in the iPhone Files app). The live page removes it on load.
+  const st = stats(sortChrono(realTrades));
+  const rows = sortChrono(realTrades).map(t => `<tr><td>${esc(t.date)}</td><td>${esc(t.pair)}</td><td>${esc(t.session)}</td><td>${esc(t.direction)}</td><td>${esc(t.setup)}</td><td>${esc(resultOf(t) === "BE" ? "Breakeven" : resultOf(t))}</td><td style="text-align:right;color:${t.pnl > 0 ? "#2ee59d" : t.pnl < 0 ? "#ff5c7a" : "#5aa9ff"}">${esc(money(t.pnl))}</td><td>${esc(fmtR(rOf(t)))}</td><td>${esc(t.emotionBefore || "")}</td><td style="white-space:pre-line">${esc(t.notes || "")}</td></tr>`).join("");
+  const cell = "padding:6px 8px;border-bottom:1px solid #263049;text-align:left;vertical-align:top";
+  const section = doc.createElement("section");
+  section.id = "static-snapshot";
+  section.setAttribute("style", "background:#0a0e1a;color:#e8ecf5;font:14px system-ui,sans-serif;padding:16px");
+  section.innerHTML = `<h2 style="margin:0 0 4px">Trading Journal: ${realTrades.length} trades</h2>
+    <p style="margin:0 0 12px;color:#8a93a8">Exported ${esc(new Date().toLocaleString("en-GB"))} · Total ${esc(money(st.total))} · Win rate ${esc(pct(st.winRate))} · Profit factor ${st.pf === Infinity ? "∞" : st.pf.toFixed(2)}</p>
+    <div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:900px;font-size:13px">
+    <thead><tr>${["Date", "Pair", "Session", "Direction", "Setup", "Result", "P&L", "R", "Emotion", "Notes"].map(h => `<th style="${cell};color:#8a93a8">${h}</th>`).join("")}</tr></thead>
+    <tbody>${rows.replace(/<td/g, `<td style="${cell}"`).replace(/<td style="([^"]*)" style="/g, '<td style="$1;')}</tbody></table></div>`;
+  doc.body.insertBefore(section, doc.body.firstChild);
+  return "<!doctype html>\n" + doc.documentElement.outerHTML;
+}
+function exportJournal() {
+  if (!exportable()) return;
+  download(`trading-journal-${isoDate(new Date())}.html`, snapshotHtml(), "text/html");
+}
+
 function exportable() {
   if (persist.loading) { toast("Your journal is still loading. Try again in a moment."); return false; }
   if (!realTrades.length) { toast("There are no saved trades to export yet"); return false; }
   return true;
 }
+F("exportJournal").addEventListener("click", exportJournal);
+F("exportJournalTop").addEventListener("click", exportJournal);
 F("exportXlsx").addEventListener("click", () => {
   if (!exportable()) return;
   const bytes = toXlsx(realTrades);
@@ -2664,6 +2705,16 @@ window.addEventListener("resize", () => {
    Init
    ====================================================================== */
 document.documentElement.lang = "en";
+const staticCopy = document.getElementById("static-snapshot");
+if (staticCopy) staticCopy.remove();
+const embedded = document.getElementById("embedded-data");
+if (embedded && !inViewer()) {
+  try {
+    const snap = JSON.parse(embedded.textContent);
+    if (!realTrades.length && Array.isArray(snap.trades)) { realTrades = snap.trades.map(t => Object.assign({}, t, { id: safeId(t.id) })); saveLocal(); }
+    if (snap.settings && !store.get(KEY_SETTINGS, null)) { settings = Object.assign({}, DEFAULT_SETTINGS, snap.settings); store.set(KEY_SETTINGS, settings); }
+  } catch (e) { /* ignore a damaged snapshot */ }
+}
 syncView();
 setSync("", "Connecting…");
 F("fRange").value = ui.range;
