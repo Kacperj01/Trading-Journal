@@ -9,3 +9,5 @@ A self-contained trading journal and performance dashboard. Open `index.html` in
 - Settings lets you edit the account balance, currency, default risk and the dropdown lists (pairs, setups, sessions, emotions, mistakes).
 - Import `.xlsx`, `.csv` or `.json` files (columns are matched by name). Export to JSON or CSV.
 - When published as a claude.ai artifact, trades sync privately to your account across devices; opened as a local file, they are saved in the browser. Export a backup regularly.
+
+`data/notion-q4-2026.json` holds the 22 trades from the Notion database "Trading Journal Q4 2026" (1–9 Oct 2026), converted to the journal's format. Import it from Settings when using the page locally. Setups, mistakes and plan adherence were inferred from each trade's notes, because the Notion database has no columns for them.

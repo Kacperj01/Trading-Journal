@@ -363,7 +363,7 @@ tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-
 tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
 tbody tr:last-child td { border-bottom: 0; }
 td.num { white-space: nowrap; }
-td.notes { min-width: 240px; max-width: 360px; color: var(--text-2); }
+td.notes { min-width: 240px; max-width: 360px; color: var(--text-2); white-space: pre-line; }
 td.nowrap { white-space: nowrap; }
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; }
 .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -502,6 +502,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   }
   .table-scroll tbody td.c-idx { display: none; }
   .table-scroll tbody td.notes, .table-scroll tbody td.c-act { grid-column: 1 / -1; }
+  .table-scroll tbody td.notes { white-space: pre-line; }
   .table-scroll tbody td.c-empty { display: none; }
   .table-scroll tbody td.c-act::before { display: none; }
   .table-scroll tbody td.c-act .row-actions { justify-content: flex-end; border-top: 1px dashed var(--border); padding-top: 8px; }
@@ -576,15 +577,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <label>Setup
             <select id="fSetup"><option value="">All setups</option></select>
           </label>
-        </div>
-      </div>
-
-      <div id="demoBanner" class="banner reveal" style="--d:1" hidden>
-        <p><strong>These are example trades and aren't saved.</strong> They disappear when you log your first trade or import your spreadsheet (XLSX/CSV) in Settings.</p>
-        <div class="actions">
-          <button class="btn sm" type="button" data-goto="log">Log a trade</button>
-          <button class="btn sm" type="button" data-goto="settings">Import file</button>
-          <button class="btn sm danger" type="button" id="clearDemo">Hide examples</button>
         </div>
       </div>
 
@@ -958,7 +950,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <button class="btn" type="button" id="exportCsv">⬇ Export CSV</button>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px">
-              <button class="btn" type="button" id="loadDemo">Show example trades</button>
               <button class="btn danger" type="button" id="clearAll">Delete all trades</button>
             </div>
           </div>
@@ -1008,31 +999,39 @@ const DEFAULT_SETTINGS = {
   currency: "$",
   defaultRisk: 100,
   sessionMode: "utc",
-  pairs: ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "GBPJPY", "NAS100", "US30", "BTCUSD"],
-  setups: ["Liquidity Sweep", "Order Block", "Breakout", "Pullback", "Reversal", "News Fade"],
-  sessions: ["Asia", "London", "New York"],
-  emotions: ["Calm", "Confident", "Focused", "Neutral", "Anxious", "Impatient", "FOMO", "Greedy", "Revenge", "Frustrated", "Tired"],
-  mistakes: ["Entered early", "Moved stop loss", "Closed too early", "Oversized position", "No confirmation", "Chased entry", "Traded news"]
+  pairs: ["XAUUSD", "GBPUSD", "GBPJPY", "US30", "NAS100", "EURUSD", "USDJPY"],
+  setups: ["Asia Sweep", "PDH/PDL Sweep", "Supply/Demand Zone", "Break & Retest", "Breakout"],
+  sessions: ["Asia", "London", "New York", "Overlap"],
+  emotions: ["Confident", "Unsure", "Neutral", "Stressed", "FOMO", "Proud", "Disappointed", "Lesson learned", "Angry"],
+  mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"]
 };
 
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
-// realTrades are the user's saved trades; demoCache holds example trades that are never saved.
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
-let demoCache = null;
 let trades = [];
 
-const ui = Object.assign({ hideDemo: false, range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
-const persist = { mode: "local", db: null, base: null, queue: Promise.resolve(), readOnly: false };
+const persist = { mode: "local", db: null, base: null, queue: Promise.resolve(), readOnly: false, loading: true };
+// Add pairs, setups, sessions and emotions seen in trades to the dropdown lists. Returns true if anything changed.
+function learnLists(list) {
+  let changed = false;
+  const add = (key, vals) => vals.forEach(v => { if (v && v !== "Unspecified" && !settings[key].includes(v)) { settings[key].push(v); changed = true; } });
+  add("pairs", list.map(t => t.pair));
+  add("setups", list.map(t => t.setup));
+  add("sessions", list.map(t => t.session));
+  add("emotions", list.flatMap(t => [t.emotionBefore, t.emotionAfter]));
+  add("mistakes", list.flatMap(t => String(t.mistakes || "").split(",").map(x => x.trim())));
+  return changed;
+}
 const SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS);
 const clean = o => JSON.parse(JSON.stringify(o, (k, v) => (k === "demo" ? undefined : v)));
 const safeId = id => /^[A-Za-z0-9_-]{1,100}$/.test(String(id || "")) ? String(id) : uid();
 
 function syncView() {
-  if (realTrades.length || ui.hideDemo) trades = realTrades;
-  else trades = demoCache || (demoCache = demoTrades());
+  trades = realTrades;
 }
 function setSync(mode, text) {
   const chip = F("syncChip");
@@ -1083,11 +1082,11 @@ function saveSettings() {
 }
 
 async function connectCloud() {
-  if (!window.claude || typeof window.claude.use !== "function") { setSync("local", "Saved in this browser"); return; }
+  if (!window.claude || typeof window.claude.use !== "function") { finishLoading("local"); return; }
   try {
     const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
     const id = user ? await user.id() : null;
-    if (!db || !id) { setSync("local", "Saved in this browser"); return; }
+    if (!db || !id) { finishLoading("local"); return; }
     persist.db = db;
     persist.base = "data/users/" + id;
     let firstTrades = true;
@@ -1102,6 +1101,8 @@ async function connectCloud() {
         const extra = realTrades.filter(t => !known.has(t.id));
         realTrades = incoming.concat(extra);
         extra.forEach(t => { const body = clean(t); enqueue(() => tradesCol().doc(t.id).set(body)); });
+        persist.loading = false;
+        applyImports().catch(() => {});
       } else {
         realTrades = incoming;
       }
@@ -1116,8 +1117,43 @@ async function connectCloud() {
       if (isAnalytics(currentTab())) renderDashboard();
     }, () => {});
   } catch (e) {
-    setSync("local", "Saved in this browser");
+    finishLoading("local");
   }
+}
+
+function finishLoading(mode) {
+  if (mode === "local") setSync("local", "Saved in this browser");
+  persist.loading = false;
+  syncView();
+  onDataChanged();
+}
+
+/* Trade sets placed in the shared "imports" collection (e.g. a Notion export) are copied
+   into the viewer's own journal once. A marker document records which sets were applied,
+   so deleting an imported trade later doesn't bring it back. */
+async function applyImports() {
+  const db = persist.db;
+  const marker = db.doc(persist.base + "/imports");
+  const [m, sets] = await Promise.all([marker.get(), db.collection("imports").get()]);
+  const done = (m.exists && Array.isArray(m.data().applied)) ? m.data().applied.slice() : [];
+  const pending = sets.docs.filter(d => !done.includes(d.id));
+  if (!pending.length) return;
+  let added = 0;
+  const all = [];
+  for (const set of pending) {
+    const list = (set.data().trades || []).filter(t => t && t.date && t.pnl != null);
+    const have = new Set(realTrades.map(t => t.id));
+    list.forEach(t => {
+      const trade = Object.assign({}, t, { id: safeId(t.id), pnl: Number(t.pnl) || 0 });
+      all.push(trade);
+      if (!have.has(trade.id)) { putTrade(trade); added++; }
+    });
+    done.push(set.id);
+  }
+  if (learnLists(all)) saveSettings();
+  enqueue(() => marker.set({ applied: done }));
+  syncView(); ui.calMonth = ""; onDataChanged();
+  if (added) toast(`Added ${plural(added, "trade")} from ${pending.map(p => p.data().name || p.id).join(", ")}`);
 }
 
 let dataTimer;
@@ -1202,84 +1238,6 @@ function countUp(el, to, fmt, ms = 1100) {
 
 // Two frames so the initial width/offset is painted before transitioning.
 const nextFrame = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
-
-/* ======================================================================
-   Demo data (seeded, deterministic)
-   ====================================================================== */
-function demoTrades() {
-  let seed = 20260701;
-  const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-  const weighted = obj => { const entries = Object.entries(obj); let x = rnd() * sum(entries.map(e => e[1])); for (const [k, w] of entries) { if ((x -= w) <= 0) return k; } return entries[0][0]; };
-  const pick = a => a[Math.floor(rnd() * a.length)];
-
-  const setupP = { "Liquidity Sweep": 0.7, "Order Block": 0.6, "Breakout": 0.5, "Pullback": 0.46, "Reversal": 0.28, "News Fade": 0 };
-  const setupW = { "Liquidity Sweep": 9, "Order Block": 8, "Breakout": 7, "Pullback": 7, "Reversal": 5, "News Fade": 5 };
-  const sessAdj = { "London": 0.12, "New York": 0.02, "Asia": -0.3 };
-  const sessW = { "London": 9, "New York": 8, "Asia": 3 };
-  const pairW = { "EURUSD": 8, "GBPUSD": 7, "XAUUSD": 7, "USDJPY": 5, "GBPJPY": 4, "NAS100": 4 };
-  const pairAdj = { "EURUSD": 0.06, "GBPUSD": 0.02, "XAUUSD": 0.1, "USDJPY": -0.02, "GBPJPY": -0.18, "NAS100": -0.05 };
-  const base = { EURUSD: [1.0850, 5, 0.0018], GBPUSD: [1.2700, 5, 0.0022], USDJPY: [148.20, 3, 0.25], XAUUSD: [2410, 2, 6], GBPJPY: [189.4, 3, 0.35], NAS100: [19850, 1, 45] };
-  const hours = { "Asia": [1, 5], "London": [7, 10], "New York": [13, 16] };
-  const winNotes = ["Clean sweep of Asian highs, waited for displacement and took the retest.", "Textbook setup, held to target without interfering.", "Patient entry on the 15m confirmation, partials at 1R, rest to TP.", "Followed HTF bias; trailed stop behind structure.", "Strong momentum after open, scaled out into liquidity."];
-  const lossNotes = ["Entered before confirmation, got stopped by a wick.", "Fought the higher-timeframe trend. Should have waited.", "Spread widened around news, stop hit.", "Chop in the range, no follow-through after entry.", "Took it out of boredom, setup wasn't fully formed."];
-  const beNotes = ["Moved to breakeven at 1R, price reversed.", "Scratched the trade, momentum died."];
-
-  const out = [];
-  const d = new Date(2026, 6, 1);
-  const end = new Date(2026, 9, 9);
-  while (d <= end) {
-    const dow = d.getDay();
-    if (dow !== 0 && dow !== 6 && rnd() < 0.62) {
-      const count = rnd() < 0.25 ? 2 : 1;
-      for (let i = 0; i < count; i++) {
-        const session = weighted(sessW);
-        let setup = weighted(setupW);
-        const pair = weighted(pairW);
-        const p = Math.max(0, Math.min(0.95, setupP[setup] + sessAdj[session] + pairAdj[pair]));
-        const roll = rnd();
-        let r;
-        if (setup === "News Fade") r = rnd() < 0.3 ? -0.5 : -1;
-        else if (roll < p) r = Math.round((1.1 + rnd() * 2.3) * 10) / 10;
-        else if (roll < p + 0.06) r = 0;
-        else r = rnd() < 0.18 ? -0.5 : -1;
-        const risk = 100;
-        const pnl = Math.round(r * risk * 100) / 100;
-        const dir = rnd() < 0.55 ? "Long" : "Short";
-        const [bp, dec, dist] = base[pair];
-        const entry = bp * (1 + (rnd() - 0.5) * 0.03);
-        const sgn = dir === "Long" ? 1 : -1;
-        const stop = entry - sgn * dist;
-        const target = entry + sgn * dist * 2.5;
-        const exit = entry + sgn * dist * r;
-        const [h0, h1] = hours[session];
-        const hh = h0 + Math.floor(rnd() * (h1 - h0 + 1));
-        const mm = Math.floor(rnd() * 12) * 5;
-        const win = r > 0;
-        const emoBefore = win ? pick(["Calm", "Confident", "Focused", "Calm", "Neutral"]) : pick(["FOMO", "Anxious", "Impatient", "Revenge", "Neutral", "Tired", "Calm"]);
-        const emoAfter = win ? pick(["Confident", "Calm", "Focused"]) : r === 0 ? "Neutral" : pick(["Frustrated", "Anxious", "Calm", "Neutral"]);
-        const followed = win ? rnd() < 0.88 : rnd() < 0.45;
-        out.push({
-          id: uid() + i,
-          date: isoDate(d),
-          time: String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0"),
-          pair, session, direction: dir, setup,
-          entry: +entry.toFixed(dec), stop: +stop.toFixed(dec), target: +target.toFixed(dec), exit: +exit.toFixed(dec),
-          size: pair === "XAUUSD" || pair === "NAS100" ? +(0.1 + rnd() * 0.4).toFixed(2) : +(0.3 + rnd() * 1.2).toFixed(2),
-          risk, pnl, r, fees: null,
-          emotionBefore: emoBefore, emotionAfter: emoAfter,
-          confidence: win ? 3 + Math.floor(rnd() * 3) : 1 + Math.floor(rnd() * 4),
-          followedPlan: followed,
-          mistakes: followed ? "" : pick(["Entered early", "Moved stop loss", "No confirmation", "Chased entry", "Oversized position"]),
-          notes: r > 0 ? pick(winNotes) : r === 0 ? pick(beNotes) : (setup === "News Fade" ? "Faded the news spike, price kept running. This setup isn't working." : pick(lossNotes)),
-          screenshot: "",
-          demo: true
-        });
-      }
-    }
-    d.setDate(d.getDate() + 1);
-  }
-  return out;
-}
 
 /* ======================================================================
    Analytics
@@ -1373,7 +1331,6 @@ function stats(list) {
 function renderDashboard() {
   const list = filtered();
   const hasAny = trades.length > 0;
-  $("#demoBanner").hidden = !trades.some(t => t.demo);
 
   const [from, to] = rangeBounds();
   const labels = { all: "All time", month: "This month", "30": "Last 30 days", "90": "Last 90 days", ytd: "Year to date", custom: "Custom range" };
@@ -1386,7 +1343,8 @@ function renderDashboard() {
   const empty = list.length === 0;
   $("#dashEmpty").hidden = !empty;
   $$(".needs-data").forEach(el => el.hidden = empty);
-  $("#dashEmptyText").textContent = hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade to start seeing analytics.";
+  $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : hasAny ? "No trades in this view" : "Your journal is empty";
+  $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   renderTable(list);
   if (empty) return;
@@ -1933,7 +1891,7 @@ function renderTable(list) {
       <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${money(t.pnl)}</strong></td>
       <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
       <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span title="Plan broken" aria-label="Plan broken">⚠️</span>` : ""}</td>
-      <td class="notes${t.notes || t.mistakes || t.screenshot ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="gold">Mistakes: ${esc(t.mistakes)}</div>` : ""}${t.screenshot ? ` <a href="${esc(t.screenshot)}" target="_blank" rel="noopener noreferrer">Chart ↗</a>` : ""}</td>
+      <td class="notes${t.notes || t.mistakes || t.screenshot || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="gold">Mistakes: ${esc(t.mistakes)}</div>` : ""}${t.screenshot ? ` <a href="${esc(t.screenshot)}" target="_blank" rel="noopener noreferrer">Chart ↗</a>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
         <button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
         <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" style="color:var(--red)">Delete</button>
@@ -2344,11 +2302,7 @@ async function importFile(file) {
     imported = rowsToTrades(parseCsv(await file.text()));
   }
   if (!imported.length) throw new Error("No trades found in that file");
-  const add = (key, vals) => vals.forEach(v => { if (v && v !== "Unspecified" && !settings[key].includes(v)) settings[key].push(v); });
-  add("pairs", imported.map(t => t.pair));
-  add("setups", imported.map(t => t.setup));
-  add("sessions", imported.map(t => t.session));
-  add("emotions", imported.flatMap(t => [t.emotionBefore, t.emotionAfter]));
+  learnLists(imported);
   if (F("importReplace").checked && realTrades.length) {
     const ok = await askConfirm(`Replace your ${plural(realTrades.length, "saved trade")} with the ${imported.length} in this file? Your current trades will be deleted.`, { title: "Replace all trades?", ok: "Replace" });
     if (!ok) return;
@@ -2470,8 +2424,7 @@ F("tableBody").addEventListener("click", e => {
     if (!t) return;
     askConfirm(`Delete the ${t.pair} trade from ${fmtDate(t.date)} (${money(t.pnl)})? This can't be undone.`, { title: "Delete trade?" }).then(ok => {
       if (!ok) return;
-      if (t.demo) demoCache = demoCache.filter(x => x.id !== t.id);
-      else removeTrade(t.id);
+      removeTrade(t.id);
       syncView(); renderDashboard(); renderRecent();
       toast("Trade deleted");
     });
@@ -2502,8 +2455,6 @@ F("tradeForm").addEventListener("submit", e => {
   if (t.r == null && t.risk) t.r = Math.round((t.pnl / t.risk) * 100) / 100;
   if (persist.readOnly) return toast("You don't have permission to save changes to this journal");
   const editing = trades.some(x => x.id === t.id);
-  // Editing an example trade saves it as a new real trade.
-  if (demoCache && demoCache.some(x => x.id === t.id)) t.id = uid();
   putTrade(t);
   syncView();
   // Remember new pairs/setups so they show up as suggestions next time.
@@ -2572,24 +2523,13 @@ F("exportCsv").addEventListener("click", () => {
   if (!realTrades.length) return toast("There are no saved trades to export yet");
   download(`trading-journal-${isoDate(new Date())}.csv`, toCsv(realTrades), "text/csv");
 });
-F("loadDemo").addEventListener("click", () => {
-  if (realTrades.length) return toast("Example trades only show while your journal is empty");
-  ui.hideDemo = false; demoCache = null; saveUi(); syncView();
-  ui.calMonth = ""; refreshAll(); toast("Example trades shown. They aren't saved.");
-});
 F("clearAll").addEventListener("click", async () => {
   if (!realTrades.length) return toast("There are no saved trades to delete");
   const ok = await askConfirm(`Delete all ${plural(realTrades.length, "saved trade")}? Export a backup first if you want to keep them.`, { title: "Delete all trades?", ok: "Delete all" });
   if (!ok) return;
   realTrades.slice().forEach(t => removeTrade(t.id));
-  ui.hideDemo = true; saveUi(); syncView(); refreshAll(); toast("All trades deleted");
+  syncView(); refreshAll(); toast("All trades deleted");
 });
-F("clearDemo").addEventListener("click", () => {
-  ui.hideDemo = true; saveUi(); syncView();
-  ui.calMonth = ""; renderDashboard(); renderRecent();
-  toast("Example trades removed");
-});
-
 let resizeTimer;
 let lastW = window.innerWidth;
 window.addEventListener("resize", () => {
