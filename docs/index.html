@@ -485,7 +485,6 @@ dialog::backdrop { background: rgba(2, 8, 16, 0.72); backdrop-filter: blur(4px);
 .home-points { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 10px; width: 100%; text-align: left; }
 .home-points li { display: flex; gap: 12px; align-items: center; font-size: 14px; color: var(--text-2); }
 .home-points span { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
-.home-foot { margin: 0; font-size: 12.5px; color: var(--muted); }
 .dlg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .btn.danger-solid { background: var(--red); border-color: transparent; color: #1a0208; font-weight: 600; }
 .sync { display: inline-flex; align-items: center; gap: 6px; }
@@ -991,7 +990,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         </section>
 
         <section class="card accent-teal reveal" style="--d:2" aria-labelledby="syncTitle" id="syncCard" hidden>
-          <div class="card-head"><div><h3 id="syncTitle">Sync</h3><div class="sub">Keep your trades the same on your iPhone and MacBook</div></div></div>
+          <div class="card-head"><div><h3 id="syncTitle">Sync</h3><div class="sub">Keep your trades the same on all your devices</div></div></div>
           <div id="syncSignedOut" class="stack">
             <p class="muted" style="margin:0;font-size:13.5px">Sign in with the same email on each device. Trades on this device are added to your account the first time you sign in.</p>
             <form id="syncForm" class="stack" novalidate>
@@ -1060,9 +1059,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <ul class="home-points">
       <li><span aria-hidden="true">✍️</span>Log every trade with session, setup and emotions</li>
       <li><span aria-hidden="true">📈</span>See your edge in P&amp;L, win rate and insights</li>
-      <li><span aria-hidden="true">🔄</span>Synced across your iPhone and MacBook</li>
+      <li><span aria-hidden="true">🔄</span>Synced across all your devices</li>
     </ul>
-    <p class="home-foot">Your journal is private to your account.</p>
   </div>
 </section>
 
