@@ -8,4 +8,4 @@ A self-contained trading journal and performance dashboard. Open `index.html` in
 - Every analytics tab respects the shared Period, Session and Setup filters.
 - Settings lets you edit the account balance, currency, default risk and the dropdown lists (pairs, setups, sessions, emotions, mistakes).
 - Import `.xlsx`, `.csv` or `.json` files (columns are matched by name). Export to JSON or CSV.
-- Data is stored in your browser's localStorage. Export a backup regularly.
+- When published as a claude.ai artifact, trades sync privately to your account across devices; opened as a local file, they are saved in the browser. Export a backup regularly.

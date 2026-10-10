@@ -1,9 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark">
 <title>Trading Journal</title>
 <meta name="description" content="Trading journal and performance dashboard: log trades, track emotions and sessions, and see analytics.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +5,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
+  color-scheme: dark;
   --bg: #0a0e1a;
   --bg-2: #0d1222;
   --surface: rgba(255, 255, 255, 0.045);
@@ -102,7 +97,7 @@ a { color: var(--blue); }
 /* ---------- Layout ---------- */
 .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 24px; position: relative; }
 header.top {
-  position: sticky; top: 0; z-index: 40;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40;
   background: rgba(10, 14, 26, 0.72);
   backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border-bottom: 1px solid var(--border);
@@ -440,6 +435,21 @@ legend { font-size: 13px; font-weight: 600; color: var(--blue); text-transform: 
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+dialog {
+  border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 0; max-width: min(440px, calc(100vw - 32px));
+  background: #10162b; color: var(--text); box-shadow: var(--shadow);
+}
+dialog::backdrop { background: rgba(4, 7, 15, 0.7); backdrop-filter: blur(4px); }
+.dlg-body { padding: 22px; display: grid; gap: 12px; }
+.dlg-body h3 { margin: 0; font-size: 17px; }
+.dlg-body p { margin: 0; color: var(--text-2); font-size: 14px; }
+.dlg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+.btn.danger-solid { background: var(--red); border-color: transparent; color: #1a0208; font-weight: 600; }
+.sync { display: inline-flex; align-items: center; gap: 6px; }
+.sync::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.sync.cloud::before { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.sync.local::before { background: var(--gold); }
+.sync.err::before { background: var(--red); }
 footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20px 0 30px; }
 
 @media (max-width: 640px) {
@@ -457,8 +467,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .reveal { opacity: 1; transform: none; }
 }
 </style>
-</head>
-<body>
 <a class="skip-link" href="#main">Skip to content</a>
 
 <header class="top">
@@ -469,7 +477,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
       <div>
         <h1>Trading Journal</h1>
-        <p>Performance dashboard &amp; trade log</p>
+        <p><span id="syncChip" class="sync" title="Where your trades are saved">Loading…</span></p>
       </div>
     </div>
   </div>
@@ -524,11 +532,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
 
       <div id="demoBanner" class="banner reveal" style="--d:1" hidden>
-        <p><strong>You're viewing demo data.</strong> Log your own trades, or import your spreadsheet (XLSX/CSV) in Settings.</p>
+        <p><strong>These are example trades and aren't saved.</strong> They disappear when you log your first trade or import your spreadsheet (XLSX/CSV) in Settings.</p>
         <div class="actions">
           <button class="btn sm" type="button" data-goto="log">Log a trade</button>
           <button class="btn sm" type="button" data-goto="settings">Import file</button>
-          <button class="btn sm danger" type="button" id="clearDemo">Remove demo trades</button>
+          <button class="btn sm danger" type="button" id="clearDemo">Hide examples</button>
         </div>
       </div>
 
@@ -860,7 +868,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="toolbar reveal" style="--d:0">
         <div>
           <h2>Settings</h2>
-          <p class="lead">Customise your account, dropdown lists and data. Everything is saved in this browser.</p>
+          <p class="lead">Customise your account, dropdown lists and data.</p>
         </div>
       </div>
 
@@ -893,7 +901,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <button class="btn" type="button" id="exportCsv">⬇ Export CSV</button>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px">
-              <button class="btn" type="button" id="loadDemo">Load demo data</button>
+              <button class="btn" type="button" id="loadDemo">Show example trades</button>
               <button class="btn danger" type="button" id="clearAll">Delete all trades</button>
             </div>
           </div>
@@ -906,10 +914,21 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 </main>
 
 <footer>
-  <div class="container">Data is stored locally in your browser. Export a backup regularly.</div>
+  <div class="container">Your journal is private to you. Export a backup from Settings regularly.</div>
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="confirmDlg" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">
+  <form method="dialog" class="dlg-body">
+    <h3 id="confirmTitle">Are you sure?</h3>
+    <p id="confirmMsg"></p>
+    <div class="dlg-actions">
+      <button class="btn" value="cancel" id="confirmCancel">Cancel</button>
+      <button class="btn danger-solid" value="ok" id="confirmOk">Delete</button>
+    </div>
+  </form>
+</dialog>
 
 <script>
 (() => {
@@ -940,12 +959,134 @@ const DEFAULT_SETTINGS = {
 };
 
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
-let trades = store.get(KEY_TRADES, null);
+// realTrades are the user's saved trades; demoCache holds example trades that are never saved.
+let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
+let demoCache = null;
+let trades = [];
 
-const ui = Object.assign({ range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ hideDemo: false, range: "all", from: "", to: "", session: "", setup: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
-function saveTrades() { if (!store.set(KEY_TRADES, trades)) toast("Couldn't save — browser storage is unavailable"); }
-function saveSettings() { store.set(KEY_SETTINGS, settings); }
+/* Persistence: the viewer's private account store when available (syncs across devices),
+   otherwise this browser's localStorage. */
+const persist = { mode: "local", db: null, base: null, queue: Promise.resolve(), readOnly: false };
+const SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS);
+const clean = o => JSON.parse(JSON.stringify(o, (k, v) => (k === "demo" ? undefined : v)));
+const safeId = id => /^[A-Za-z0-9_-]{1,100}$/.test(String(id || "")) ? String(id) : uid();
+
+function syncView() {
+  if (realTrades.length || ui.hideDemo) trades = realTrades;
+  else trades = demoCache || (demoCache = demoTrades());
+}
+function setSync(mode, text) {
+  const chip = F("syncChip");
+  chip.className = "sync " + mode;
+  chip.textContent = text;
+}
+function dbFail(e) {
+  const code = e && e.code;
+  if (code === "quota_exceeded") toast("Storage is full. Delete some trades, then try again.");
+  else if (code === "invalid_argument" && persist.mode === "cloud") { persist.readOnly = true; setSync("err", "Read-only: you can't save changes here"); toast("You don't have permission to save changes to this journal"); }
+  else toast("Couldn't save. Check your connection and try again.");
+}
+// Writes go one at a time, in order.
+function enqueue(fn) {
+  persist.queue = persist.queue.then(async () => {
+    try { await fn(); }
+    catch (e) {
+      if (e && e.code === "unavailable") {
+        await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+        try { await fn(); } catch (e2) { dbFail(e2); }
+      } else dbFail(e);
+    }
+  });
+  return persist.queue;
+}
+const tradesCol = () => persist.db.doc(persist.base + "/journal").collection("trades");
+function saveLocal() { if (!store.set(KEY_TRADES, realTrades)) toast("Couldn't save: browser storage is unavailable"); }
+
+function putTrade(t) {
+  t.id = safeId(t.id);
+  const i = realTrades.findIndex(x => x.id === t.id);
+  if (i >= 0) realTrades[i] = t; else realTrades.push(t);
+  if (persist.mode === "cloud") { const body = clean(t); enqueue(() => tradesCol().doc(t.id).set(body)); }
+  else saveLocal();
+}
+function removeTrade(id) {
+  realTrades = realTrades.filter(x => x.id !== id);
+  if (persist.mode === "cloud") enqueue(() => tradesCol().doc(id).delete());
+  else saveLocal();
+}
+function saveSettings() {
+  store.set(KEY_SETTINGS, settings);
+  if (persist.mode === "cloud") {
+    const body = {};
+    SETTINGS_KEYS.forEach(k => body[k] = settings[k]);
+    enqueue(() => persist.db.doc(persist.base + "/settings").set(clean(body)));
+  }
+}
+
+async function connectCloud() {
+  if (!window.claude || typeof window.claude.use !== "function") { setSync("local", "Saved in this browser"); return; }
+  try {
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    const id = user ? await user.id() : null;
+    if (!db || !id) { setSync("local", "Saved in this browser"); return; }
+    persist.db = db;
+    persist.base = "data/users/" + id;
+    let firstTrades = true;
+    tradesCol().onSnapshot(snap => {
+      const incoming = snap.docs.map(d => Object.assign({}, d.data(), { id: d.id }));
+      if (firstTrades) {
+        firstTrades = false;
+        persist.mode = "cloud";
+        setSync("cloud", "Synced to your account");
+        // Carry over anything saved in this browser before cloud sync was available.
+        const known = new Set(incoming.map(t => t.id));
+        const extra = realTrades.filter(t => !known.has(t.id));
+        realTrades = incoming.concat(extra);
+        extra.forEach(t => { const body = clean(t); enqueue(() => tradesCol().doc(t.id).set(body)); });
+      } else {
+        realTrades = incoming;
+      }
+      syncView();
+      onDataChanged();
+    }, err => { setSync("err", "Sync stopped. Reload to reconnect"); });
+    persist.db.doc(persist.base + "/settings").onSnapshot(snap => {
+      if (!snap.exists) return;
+      settings = Object.assign({}, DEFAULT_SETTINGS, snap.data());
+      store.set(KEY_SETTINGS, settings);
+      refreshLists(); renderListEditors(); renderAccount();
+      if (isAnalytics(currentTab())) renderDashboard();
+    }, () => {});
+  } catch (e) {
+    setSync("local", "Saved in this browser");
+  }
+}
+
+let dataTimer;
+function onDataChanged() {
+  clearTimeout(dataTimer);
+  dataTimer = setTimeout(() => {
+    refreshLists();
+    renderRecent();
+    if (isAnalytics(currentTab())) renderDashboard();
+    if (currentTab() === "log") updatePreview();
+  }, 60);
+}
+
+function askConfirm(message, { title = "Are you sure?", ok = "Delete" } = {}) {
+  const dlg = F("confirmDlg");
+  F("confirmTitle").textContent = title;
+  F("confirmMsg").textContent = message;
+  F("confirmOk").textContent = ok;
+  return new Promise(resolve => {
+    const done = () => { dlg.removeEventListener("close", done); resolve(dlg.returnValue === "ok"); };
+    dlg.returnValue = "";
+    dlg.addEventListener("close", done);
+    if (typeof dlg.showModal === "function") { dlg.showModal(); F("confirmCancel").focus(); }
+    else resolve(window.confirm(message));
+  });
+}
 function saveUi() { store.set(KEY_UI, ui); }
 
 /* ======================================================================
@@ -1914,7 +2055,15 @@ function renderAccount() {
    ====================================================================== */
 const CSV_FIELDS = ["date", "time", "pair", "session", "direction", "setup", "entry", "stop", "target", "exit", "size", "risk", "pnl", "r", "fees", "emotionBefore", "emotionAfter", "confidence", "followedPlan", "mistakes", "notes", "screenshot"];
 
-function download(name, text, type) {
+async function download(name, text, type) {
+  try {
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl) {
+      try { await dl.save({ filename: name, data: text }); toast("Exported " + name); }
+      catch (e) { if (e && e.code !== "declined") toast("Export isn't available here"); }
+      return;
+    }
+  } catch (e) { /* fall through to a plain browser download */ }
   const blob = new Blob([text], { type });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -2127,7 +2276,7 @@ async function importFile(file) {
     const data = JSON.parse(await file.text());
     const arr = Array.isArray(data) ? data : data.trades;
     if (!Array.isArray(arr)) throw new Error("JSON must be an array of trades");
-    imported = arr.map(t => Object.assign({}, t, { id: t.id || uid(), pnl: Number(t.pnl) || 0, demo: undefined }));
+    imported = arr.map(t => Object.assign({}, t, { id: safeId(t.id), pnl: Number(t.pnl) || 0, demo: undefined }));
     if (data.settings && typeof data.settings === "object") { settings = Object.assign({}, settings, data.settings); saveSettings(); }
   } else if (name.endsWith(".xlsx")) {
     imported = rowsToTrades(await readXlsx(await file.arrayBuffer()));
@@ -2140,9 +2289,14 @@ async function importFile(file) {
   add("setups", imported.map(t => t.setup));
   add("sessions", imported.map(t => t.session));
   add("emotions", imported.flatMap(t => [t.emotionBefore, t.emotionAfter]));
+  if (F("importReplace").checked && realTrades.length) {
+    const ok = await askConfirm(`Replace your ${plural(realTrades.length, "saved trade")} with the ${imported.length} in this file? Your current trades will be deleted.`, { title: "Replace all trades?", ok: "Replace" });
+    if (!ok) return;
+    realTrades.slice().forEach(t => removeTrade(t.id));
+  }
   saveSettings();
-  trades = F("importReplace").checked ? imported : trades.concat(imported);
-  saveTrades();
+  imported.forEach(putTrade);
+  syncView();
   ui.calMonth = "";
   refreshAll();
   toast(`Imported ${plural(imported.length, "trade")}`);
@@ -2172,7 +2326,7 @@ function showTab(name, { focus = false, push = true } = {}) {
     if (on) $$(".reveal", panel).forEach(el => { el.style.animation = "none"; el.offsetHeight; el.style.animation = ""; });
   });
   if (focus) F("tab-" + name).focus();
-  if (push && location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
+  if (push && location.hash !== "#" + name) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* sandboxed */ } }
   if (isAnalytics(name)) renderDashboard();
   if (name === "log") { renderRecent(); updatePreview(); }
   window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
@@ -2249,11 +2403,14 @@ F("tableBody").addEventListener("click", e => {
   }
   if (del) {
     const t = trades.find(x => x.id === del.dataset.del);
-    if (t && confirm(`Delete the ${t.pair} trade from ${fmtDate(t.date)} (${money(t.pnl)})? This can't be undone.`)) {
-      trades = trades.filter(x => x.id !== t.id);
-      saveTrades(); renderDashboard(); renderRecent();
+    if (!t) return;
+    askConfirm(`Delete the ${t.pair} trade from ${fmtDate(t.date)} (${money(t.pnl)})? This can't be undone.`, { title: "Delete trade?" }).then(ok => {
+      if (!ok) return;
+      if (t.demo) demoCache = demoCache.filter(x => x.id !== t.id);
+      else removeTrade(t.id);
+      syncView(); renderDashboard(); renderRecent();
       toast("Trade deleted");
-    }
+    });
   }
 });
 
@@ -2279,13 +2436,17 @@ F("tradeForm").addEventListener("submit", e => {
   }
   box.classList.remove("show");
   if (t.r == null && t.risk) t.r = Math.round((t.pnl / t.risk) * 100) / 100;
-  const idx = trades.findIndex(x => x.id === t.id);
-  if (idx >= 0) trades[idx] = t; else trades.push(t);
+  if (persist.readOnly) return toast("You don't have permission to save changes to this journal");
+  const editing = trades.some(x => x.id === t.id);
+  // Editing an example trade saves it as a new real trade.
+  if (demoCache && demoCache.some(x => x.id === t.id)) t.id = uid();
+  putTrade(t);
+  syncView();
   // Remember new pairs/setups so they show up as suggestions next time.
-  if (!settings.pairs.includes(t.pair)) settings.pairs.push(t.pair);
-  if (!settings.setups.includes(t.setup)) settings.setups.push(t.setup);
-  saveSettings(); saveTrades();
-  const editing = idx >= 0;
+  const newPair = !settings.pairs.includes(t.pair), newSetup = !settings.setups.includes(t.setup);
+  if (newPair) settings.pairs.push(t.pair);
+  if (newSetup) settings.setups.push(t.setup);
+  if (newPair || newSetup) saveSettings();
   toast(editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
   resetForm(true);
   renderRecent();
@@ -2339,23 +2500,30 @@ F("importFile").addEventListener("change", async e => {
   try { await importFile(file); } catch (err) { toast("Import failed: " + err.message); }
   e.target.value = "";
 });
-F("exportJson").addEventListener("click", () => download(`trading-journal-${isoDate(new Date())}.json`, JSON.stringify({ settings, trades }, null, 2), "application/json"));
-F("exportCsv").addEventListener("click", () => download(`trading-journal-${isoDate(new Date())}.csv`, toCsv(trades), "text/csv"));
-F("loadDemo").addEventListener("click", () => {
-  trades = trades.filter(t => !t.demo).concat(demoTrades());
-  saveTrades(); ui.calMonth = ""; refreshAll(); toast("Demo trades loaded");
+F("exportJson").addEventListener("click", () => {
+  if (!realTrades.length) return toast("There are no saved trades to export yet");
+  download(`trading-journal-${isoDate(new Date())}.json`, JSON.stringify({ settings, trades: realTrades.map(clean) }, null, 2), "application/json");
 });
-F("clearAll").addEventListener("click", () => {
-  if (!trades.length) return toast("There are no trades to delete");
-  if (confirm(`Delete all ${trades.length} trades? Export a backup first if you want to keep them.`)) {
-    trades = []; saveTrades(); refreshAll(); toast("All trades deleted");
-  }
+F("exportCsv").addEventListener("click", () => {
+  if (!realTrades.length) return toast("There are no saved trades to export yet");
+  download(`trading-journal-${isoDate(new Date())}.csv`, toCsv(realTrades), "text/csv");
+});
+F("loadDemo").addEventListener("click", () => {
+  if (realTrades.length) return toast("Example trades only show while your journal is empty");
+  ui.hideDemo = false; demoCache = null; saveUi(); syncView();
+  ui.calMonth = ""; refreshAll(); toast("Example trades shown. They aren't saved.");
+});
+F("clearAll").addEventListener("click", async () => {
+  if (!realTrades.length) return toast("There are no saved trades to delete");
+  const ok = await askConfirm(`Delete all ${plural(realTrades.length, "saved trade")}? Export a backup first if you want to keep them.`, { title: "Delete all trades?", ok: "Delete all" });
+  if (!ok) return;
+  realTrades.slice().forEach(t => removeTrade(t.id));
+  ui.hideDemo = true; saveUi(); syncView(); refreshAll(); toast("All trades deleted");
 });
 F("clearDemo").addEventListener("click", () => {
-  const n = trades.filter(t => t.demo).length;
-  trades = trades.filter(t => !t.demo);
-  saveTrades(); ui.calMonth = ""; renderDashboard(); renderRecent();
-  toast(`Removed ${plural(n, "demo trade")}`);
+  ui.hideDemo = true; saveUi(); syncView();
+  ui.calMonth = ""; renderDashboard(); renderRecent();
+  toast("Example trades removed");
 });
 
 let resizeTimer;
@@ -2378,7 +2546,9 @@ window.addEventListener("resize", () => {
 /* ======================================================================
    Init
    ====================================================================== */
-if (!Array.isArray(trades)) { trades = demoTrades(); saveTrades(); }
+document.documentElement.lang = "en";
+syncView();
+setSync("", "Connecting…");
 F("fRange").value = ui.range;
 F("fFrom").value = ui.from; F("fTo").value = ui.to;
 F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
@@ -2386,7 +2556,6 @@ resetForm();
 renderListEditors();
 renderAccount();
 showTab(location.hash.slice(1) || "overview", { push: false });
+connectCloud();
 })();
 </script>
-</body>
-</html>
