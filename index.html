@@ -498,7 +498,7 @@ dialog::backdrop { background: rgba(2, 8, 16, 0.72); backdrop-filter: blur(4px);
 .wk-trade > span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
 .wk-trade b { font: 600 16px var(--font-mono); }
 .wk-trade small { font-size: 12.5px; color: var(--text-2); }
-.week-strip { all: unset; box-sizing: border-box; display: flex; width: 100%; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; cursor: pointer; padding: 14px 20px; }
+.week-strip { appearance: none; font: inherit; color: inherit; text-align: left; box-sizing: border-box; display: flex; width: 100%; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; cursor: pointer; padding: 14px 20px; }
 .week-strip:hover { background: var(--surface); }
 .week-strip:focus-visible { outline: 2px solid var(--focus); }
 .week-strip .ws-l { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 14px; color: var(--text-2); }
@@ -567,17 +567,16 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); padding: 14px 14px 6px; }
 .tabs .tab span[aria-hidden] { width: 22px; text-align: center; }
 @media (min-width: 1041px) {
-  header.top { position: fixed; top: 0; left: 0; bottom: 0; width: 252px; z-index: 40; border-bottom: 0; border-right: 1px solid var(--border);
+  header.top { position: fixed; top: 0; left: 0; bottom: 0; width: 244px; z-index: 40; border-bottom: 0; border-right: 1px solid var(--border);
     background: linear-gradient(180deg, rgba(10, 26, 45, 0.94), rgba(6, 17, 31, 0.97)); padding: 20px 0 84px; overflow-y: auto; }
   header.top .container { padding: 0 14px; max-width: none; }
   .top-inner { flex-direction: column; align-items: flex-start; gap: 0; min-height: 0; padding: 0 14px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-  #exportJournalTop { position: fixed; left: 14px; bottom: 20px; width: 224px; justify-content: center; }
+  #exportJournalTop { position: fixed; left: 14px; bottom: 20px; width: 216px; justify-content: center; }
   .tabs { flex-direction: column; background: transparent; border: 0; padding: 0; gap: 2px; overflow: visible; margin: 0; scroll-snap-type: none; }
   .tabs .tab { justify-content: flex-start; flex: none; padding: 11px 14px; font-size: 14.5px; border-radius: 10px; }
   .tabs .tab[aria-selected="true"] { box-shadow: inset 3px 0 0 var(--brand-2), inset 0 0 0 1px rgba(47, 208, 200, 0.25); }
   .nav-label { display: block; }
-  main, footer { margin-left: 252px; }
-  main .container { max-width: 1180px; }
+  main, footer { margin-left: 244px; }
 }
 @media (max-width: 1040px) {
   .menu-btn { display: inline-flex; margin-left: auto; font-size: 20px; padding: 6px 12px; }
@@ -596,6 +595,66 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .scrim { position: fixed; inset: 0; z-index: 39; background: rgba(2, 8, 16, 0.6); }
 }
 @media (prefers-reduced-motion: reduce) { .tabs, .tabs.open { transition: none; } }
+
+/* Wide screens with the sidebar: use the full width and step the type up a size. */
+@media (min-width: 1041px) {
+  main .container { max-width: 1560px; padding: 0 36px; }
+  /* Sidebar header: logo beside the wordmark, sync status on its own row below. */
+  .brand { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 14px; width: 100%; margin: 0; }
+  .brand > div { display: contents; }
+  .brand-logo { height: 46px; }
+  .brand .wordmark { font-size: 22px; }
+  .brand .sub-title { letter-spacing: 2px; white-space: nowrap; font-size: 10px; }
+  .brand p { grid-column: 1 / -1; margin: 0; min-width: 0; }
+  .brand .sync { display: block; max-width: 100%; padding: 7px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand .sync::before { display: inline-block; margin-right: 7px; vertical-align: 1px; }
+  body { font-size: 16px; }
+  .toolbar h2 { font-size: 28px; }
+  .toolbar .lead { font-size: 14.5px; }
+  .card { padding: 24px; }
+  .card h3 { font-size: 17px; }
+  .card-head .sub { font-size: 13.5px; }
+  .section-head h2 { font-size: 20px; }
+  .section-head p { font-size: 14px; }
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .kpi { padding: 22px; gap: 8px; }
+  .kpi .label { font-size: 13px; }
+  .kpi .value { font-size: 32px; }
+  .kpi .value.split { font-size: 26px; }
+  .kpi .meta { font-size: 14px; }
+  .kpi .meta .mono { font-size: 13.5px; }
+  .grid-main { grid-template-columns: minmax(0, 1.7fr) minmax(380px, 1fr); }
+  .eq-stats span:last-child { font-size: 16px; }
+  .axis-label { font-size: 12px; }
+  .stat-list li { font-size: 14.5px; padding: 9px 0; }
+  .donut-layout { grid-template-columns: 190px 1fr; }
+  .bar-row .name { font-size: 14px; }
+  .bar-row .name small { font-size: 12px; }
+  .bar-row .val { font-size: 14.5px; }
+  .bar-track { height: 14px; }
+  .mini h4 { font-size: 15.5px; }
+  .mini .big { font-size: 24px; }
+  .mini .row { font-size: 13.5px; }
+  .session h4 { font-size: 17px; }
+  .session .meta { font-size: 14px; }
+  .session .pnl { font-size: 21px; }
+  .insight h3 { font-size: 17px; }
+  .insight p, .insight .action { font-size: 14.5px; }
+  table { font-size: 14.5px; }
+  thead th { font-size: 12px; }
+  .day { min-height: 84px; font-size: 13px; }
+  .day .p { font-size: 14px; }
+  .wk-verdict { font-size: 16.5px; }
+  .wk-tile b { font-size: 23px; }
+  .wk-tile small { font-size: 12.5px; }
+  .wk-box ul, .wk-box ol { font-size: 15px; }
+  .wk-days { height: 140px; }
+  .week-strip .ws-l { font-size: 15px; }
+  .field label, .field .lbl { font-size: 14px; }
+  input, select, textarea { font-size: 15px; }
+}
+@media (min-width: 1680px) { .kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
 /* Phones: lighter rendering and no zoom-on-focus. iOS zooms the page when a field's text is under 16px,
    and many stacked backdrop blurs can stall scrolling or leave parts of the page blank. */
@@ -1335,6 +1394,7 @@ function setSync(mode, text) {
   const chip = F("syncChip");
   chip.className = "sync " + mode;
   chip.textContent = text;
+  chip.title = text;
 }
 function dbFail(e) {
   const code = e && e.code;
@@ -2009,7 +2069,7 @@ function renderEquity(list, startBal, st) {
   const tip = $("#eqTip");
   $$("svg", wrap).forEach(s => s.remove());
   const W = Math.max(300, wrap.clientWidth || 700);
-  const H = W < 520 ? 240 : 320;
+  const H = W < 520 ? 240 : W >= 820 ? 380 : 320;
   const pad = { l: W < 520 ? 58 : 72, r: 16, t: 16, b: 34 };
   const pts = [{ x: 0, y: startBal, t: null }];
   let bal = startBal;
