@@ -471,6 +471,11 @@ dialog::backdrop { background: rgba(2, 8, 16, 0.72); backdrop-filter: blur(4px);
 .dlg-body { padding: 22px; display: grid; gap: 12px; }
 .dlg-body h3 { margin: 0; font-size: 17px; }
 .dlg-body p { margin: 0; color: var(--text-2); font-size: 14px; }
+.sync-dlg { width: min(400px, calc(100vw - 32px)); }
+.sync-dlg .dlg-body { gap: 12px; }
+.sync-dlg-logo { height: 56px; width: auto; justify-self: center; filter: drop-shadow(0 4px 14px rgba(37, 192, 192, 0.25)); }
+.sync-dlg h3 { text-align: center; font-size: 20px; }
+.sync-dlg #syncDlgSub { text-align: center; }
 .dlg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .btn.danger-solid { background: var(--red); border-color: transparent; color: #1a0208; font-weight: 600; }
 .sync { display: inline-flex; align-items: center; gap: 6px; }
@@ -1030,6 +1035,20 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<dialog id="syncDlg" class="sync-dlg" aria-labelledby="syncDlgTitle" aria-describedby="syncDlgSub">
+  <form id="syncDlgForm" class="dlg-body" novalidate>
+    <img class="sync-dlg-logo" id="syncDlgLogo" alt="">
+    <h3 id="syncDlgTitle">Sign in to sync</h3>
+    <p id="syncDlgSub">Keep your trades the same on your iPhone and MacBook. Use the same email on each device.</p>
+    <div class="field"><label for="dlgEmail">Email</label><input type="email" id="dlgEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
+    <div class="field"><label for="dlgPassword">Password</label><input type="password" id="dlgPassword" autocomplete="current-password" minlength="6" required></div>
+    <p id="dlgMsg" role="status" aria-live="polite" style="margin:0;font-size:13px;color:var(--text-2)"></p>
+    <button class="btn primary" type="submit" style="justify-content:center">Sign in</button>
+    <button class="btn" type="button" id="dlgSignUp" style="justify-content:center">Create account</button>
+    <button class="btn ghost" type="button" id="dlgLater" style="justify-content:center">Not now</button>
+  </form>
+</dialog>
+
 <dialog id="exportDlg" aria-labelledby="exportTitle">
   <form method="dialog" class="dlg-body">
     <h3 id="exportTitle">Copy your export</h3>
@@ -1206,7 +1225,8 @@ async function sbRefresh() {
   try { sbSaveSession(await sbAuth("token?grant_type=refresh_token", { refresh_token: sb.session.refresh_token })); }
   catch (e) {
     if (e instanceof TypeError) throw e; // offline: keep the session and try later
-    sbSaveSession(null); sbRender(); setSync("err", "Signed out. Sign in again in Settings to sync");
+    sbSaveSession(null); sbRender(); setSync("err", "Signed out. Sign in again to sync");
+    openSyncDialog("Your sign-in expired. Sign in again to keep syncing.");
     throw e;
   }
 }
@@ -1326,7 +1346,12 @@ async function sbStart() {
   if (!SB || inViewer()) return;
   await sbFromLink();
   sbRender();
-  if (!sb.session) { setSync("local", "Saved on this device · sign in to sync"); return; }
+  if (!sb.session) {
+    setSync("local", "Saved on this device · sign in to sync");
+    // Ask first thing on open, once the journal has drawn behind it.
+    setTimeout(() => { if (!sb.session) openSyncDialog(); }, 350);
+    return;
+  }
   setSync("", "Syncing…");
   sbSync();
   if (sb.listening) return;
@@ -1335,9 +1360,22 @@ async function sbStart() {
   window.addEventListener("online", () => sbSync());
   setInterval(() => { if (document.visibilityState === "visible") sbSync(); }, 30000);
 }
-async function sbSignIn(signUp) {
-  const email = F("syncEmail").value.trim(), password = F("syncPassword").value;
-  const msg = F("syncMsg");
+// Sign-in window shown when the app opens and this device isn't signed in.
+function openSyncDialog(note) {
+  const dlg = F("syncDlg");
+  if (!SB || inViewer() || dlg.open) return;
+  F("syncDlgLogo").src = $(".brand-logo").src;
+  F("dlgMsg").textContent = note || "";
+  if (!F("dlgEmail").value && F("syncEmail").value) F("dlgEmail").value = F("syncEmail").value;
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  setTimeout(() => F(F("dlgEmail").value ? "dlgPassword" : "dlgEmail").focus(), 50);
+}
+function closeSyncDialog() { const dlg = F("syncDlg"); if (dlg.open) dlg.close(); }
+
+async function sbSignIn(signUp, from = "card") {
+  const ids = from === "dialog" ? ["dlgEmail", "dlgPassword", "dlgMsg"] : ["syncEmail", "syncPassword", "syncMsg"];
+  const email = F(ids[0]).value.trim(), password = F(ids[1]).value;
+  const msg = F(ids[2]);
   if (!email || password.length < 6) { msg.textContent = "Enter your email and a password of at least 6 characters."; return; }
   msg.textContent = signUp ? "Creating your account…" : "Signing in…";
   try {
@@ -1349,7 +1387,8 @@ async function sbSignIn(signUp) {
     }
     sbSaveSession(res);
     msg.textContent = "";
-    F("syncPassword").value = "";
+    F(ids[1]).value = "";
+    closeSyncDialog();
     toast("Signed in. Syncing your trades…");
     sbStart();
   } catch (e) {
@@ -3065,7 +3104,10 @@ if (SB) {
     setSync("local", "Saved on this device · sign in to sync");
   });
   F("syncChip").style.cursor = "pointer";
-  F("syncChip").addEventListener("click", () => showTab("settings"));
+  F("syncChip").addEventListener("click", () => { if (sb.session) showTab("settings"); else openSyncDialog(); });
+  F("syncDlgForm").addEventListener("submit", e => { e.preventDefault(); sbSignIn(false, "dialog"); });
+  F("dlgSignUp").addEventListener("click", () => sbSignIn(true, "dialog"));
+  F("dlgLater").addEventListener("click", closeSyncDialog);
 }
 
 // Offline support, only for the hosted app (its page links a web app manifest).
