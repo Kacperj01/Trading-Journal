@@ -946,8 +946,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <label class="toggle"><input type="checkbox" id="importReplace"> Replace existing trades instead of adding</label>
             <label class="btn primary file-label">⬆ Import file<input type="file" id="importFile" accept=".xlsx,.csv,.json,.txt" aria-label="Import trades from file"></label>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn" type="button" id="exportJson">⬇ Export JSON</button>
+              <button class="btn primary" type="button" id="exportXlsx">⬇ Export Excel</button>
               <button class="btn" type="button" id="exportCsv">⬇ Export CSV</button>
+              <button class="btn" type="button" id="exportJson">⬇ Export JSON</button>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px">
               <button class="btn danger" type="button" id="clearAll">Delete all trades</button>
@@ -966,6 +967,19 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="exportDlg" aria-labelledby="exportTitle">
+  <form method="dialog" class="dlg-body">
+    <h3 id="exportTitle">Copy your export</h3>
+    <p id="exportMsg">Saving files isn't available in this view. Copy the data below and paste it into a file or a spreadsheet.</p>
+    <label class="sr-only" for="exportText">Exported data</label>
+    <textarea id="exportText" readonly rows="10" style="font-family:var(--font-mono);font-size:12px;min-height:200px"></textarea>
+    <div class="dlg-actions">
+      <button class="btn" value="close">Close</button>
+      <button class="btn primary" type="button" id="exportCopy">Copy</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="confirmDlg" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">
   <form method="dialog" class="dlg-body">
@@ -2071,18 +2085,26 @@ function renderAccount() {
 /* ======================================================================
    Import / export
    ====================================================================== */
-const CSV_FIELDS = ["date", "time", "pair", "session", "direction", "setup", "entry", "stop", "target", "exit", "size", "risk", "pnl", "r", "fees", "emotionBefore", "emotionAfter", "confidence", "followedPlan", "mistakes", "notes", "screenshot"];
 
-async function download(name, text, type) {
-  try {
-    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
-    if (dl) {
-      try { await dl.save({ filename: name, data: text }); toast("Exported " + name); }
-      catch (e) { if (e && e.code !== "declined") toast("Export isn't available here"); }
-      return;
+/* Exports. Inside claude.ai the page is sandboxed: a plain download link is inert there (and on
+   iPhone can produce an empty file), so files go through the downloads capability. When that
+   isn't available, text exports open in a dialog to copy instead. */
+const inViewer = () => !!(window.claude && typeof window.claude.use === "function");
+async function download(name, data, type, { copyText } = {}) {
+  let dl = null;
+  if (inViewer()) { try { dl = await window.claude.use("downloads"); } catch (e) { dl = null; } }
+  if (dl) {
+    try { await dl.save({ filename: name, data }); toast(`Exported ${plural(realTrades.length, "trade")} to ${name}`); return; }
+    catch (e) {
+      if (e && (e.code === "declined" || e.code === "rate_limited")) return;
     }
-  } catch (e) { /* fall through to a plain browser download */ }
-  const blob = new Blob([text], { type });
+  }
+  if (inViewer()) {
+    if (copyText != null) showExportText(name, copyText);
+    else toast("Saving files isn't available here. Use Export CSV to copy your trades instead.");
+    return;
+  }
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = name;
@@ -2090,9 +2112,83 @@ async function download(name, text, type) {
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
+function showExportText(name, text) {
+  F("exportTitle").textContent = "Copy " + name;
+  F("exportText").value = text;
+  const dlg = F("exportDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  F("exportText").focus(); F("exportText").select();
+}
+
+// Spreadsheet export: readable headers, chronological, one row per trade. Re-importable.
+const SHEET_COLS = [
+  ["Date", t => t.date], ["Time", t => t.time || ""], ["Pair", t => t.pair], ["Session", t => t.session],
+  ["Direction", t => t.direction], ["Setup", t => t.setup], ["Result", t => resultOf(t) === "BE" ? "Breakeven" : resultOf(t)],
+  ["P&L", t => t.pnl], ["R", t => { const r = rOf(t); return r == null ? "" : Math.round(r * 100) / 100; }], ["Risk", t => t.risk],
+  ["Entry", t => t.entry], ["Stop", t => t.stop], ["Target", t => t.target], ["Exit", t => t.exit], ["Size", t => t.size], ["Fees", t => t.fees],
+  ["Emotion before", t => t.emotionBefore || ""], ["Emotion after", t => t.emotionAfter || ""], ["Confidence", t => t.confidence],
+  ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Mistakes", t => t.mistakes || ""], ["Notes", t => t.notes || ""],
+  ["Chart", t => t.screenshot || ""], ["Source", t => t.sourceUrl || ""]
+];
+function sheetRows(list) {
+  return [SHEET_COLS.map(c => c[0]), ...sortChrono(list).map(t => SHEET_COLS.map(c => { const v = c[1](t); return v == null ? "" : v; }))];
+}
+
+// Minimal .xlsx writer: one sheet, inline strings, stored (uncompressed) zip.
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) {
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+  for (const [name, text] of files) {
+    const nameB = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true); local.setUint16(4, 20, true); local.setUint16(6, 0x0800, true);
+    local.setUint32(14, crc, true); local.setUint32(18, data.length, true); local.setUint32(22, data.length, true);
+    local.setUint16(26, nameB.length, true);
+    parts.push(new Uint8Array(local.buffer), nameB, data);
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true); cen.setUint16(4, 20, true); cen.setUint16(6, 20, true); cen.setUint16(8, 0x0800, true);
+    cen.setUint32(16, crc, true); cen.setUint32(20, data.length, true); cen.setUint32(24, data.length, true);
+    cen.setUint16(28, nameB.length, true); cen.setUint32(42, offset, true);
+    central.push(new Uint8Array(cen.buffer), nameB);
+    offset += 30 + nameB.length + data.length;
+  }
+  const cenSize = central.reduce((a, b) => a + b.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cenSize, true); end.setUint32(16, offset, true);
+  const all = [...parts, ...central, new Uint8Array(end.buffer)];
+  const out = new Uint8Array(all.reduce((a, b) => a + b.length, 0));
+  let p = 0; all.forEach(b => { out.set(b, p); p += b.length; });
+  return out;
+}
+function toXlsx(list) {
+  const x = v => String(v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
+  const col = i => { let s = ""; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  const rows = sheetRows(list);
+  const body = rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) => {
+    const ref = col(ci) + (ri + 1), st = ri === 0 ? ' s="1"' : "";
+    if (typeof v === "number" && Number.isFinite(v)) return `<c r="${ref}"${st}><v>${v}</v></c>`;
+    if (v === "") return "";
+    return `<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${x(v)}</t></is></c>`;
+  }).join("") + "</row>").join("");
+  const widths = SHEET_COLS.map((c, i) => `<col min="${i + 1}" max="${i + 1}" width="${c[0] === "Notes" ? 70 : c[0] === "Chart" || c[0] === "Source" ? 40 : 14}" customWidth="1"/>`).join("");
+  const last = col(SHEET_COLS.length - 1) + rows.length;
+  return zipStore([
+    ["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+    ["_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ["xl/workbook.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Trades" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+    ["xl/_rels/workbook.xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+    ["xl/styles.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="2"><xf/><xf fontId="1" applyFont="1"/></cellXfs></styleSheet>'],
+    ["xl/worksheets/sheet1.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths}</cols><sheetData>${body}</sheetData><autoFilter ref="A1:${last}"/></worksheet>`]
+  ]);
+}
+
 function toCsv(list) {
   const q = v => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  return [CSV_FIELDS.join(","), ...sortChrono(list).map(t => CSV_FIELDS.map(f => q(t[f])).join(","))].join("\n");
+  return sheetRows(list).map(r => r.map(q).join(",")).join("\n");
 }
 function parseCsv(text) {
   const rows = []; let row = [], cell = "", inQ = false;
@@ -2515,13 +2611,30 @@ F("importFile").addEventListener("change", async e => {
   try { await importFile(file); } catch (err) { toast("Import failed: " + err.message); }
   e.target.value = "";
 });
-F("exportJson").addEventListener("click", () => {
-  if (!realTrades.length) return toast("There are no saved trades to export yet");
-  download(`trading-journal-${isoDate(new Date())}.json`, JSON.stringify({ settings, trades: realTrades.map(clean) }, null, 2), "application/json");
+function exportable() {
+  if (persist.loading) { toast("Your journal is still loading. Try again in a moment."); return false; }
+  if (!realTrades.length) { toast("There are no saved trades to export yet"); return false; }
+  return true;
+}
+F("exportXlsx").addEventListener("click", () => {
+  if (!exportable()) return;
+  const bytes = toXlsx(realTrades);
+  download(`trading-journal-${isoDate(new Date())}.xlsx`, new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 });
 F("exportCsv").addEventListener("click", () => {
-  if (!realTrades.length) return toast("There are no saved trades to export yet");
-  download(`trading-journal-${isoDate(new Date())}.csv`, toCsv(realTrades), "text/csv");
+  if (!exportable()) return;
+  const csv = toCsv(realTrades);
+  download(`trading-journal-${isoDate(new Date())}.csv`, csv, "text/csv", { copyText: csv });
+});
+F("exportJson").addEventListener("click", () => {
+  if (!exportable()) return;
+  const json = JSON.stringify({ settings, trades: realTrades.map(clean) }, null, 2);
+  download(`trading-journal-${isoDate(new Date())}.json`, json, "application/json", { copyText: json });
+});
+F("exportCopy").addEventListener("click", async () => {
+  const ta = F("exportText");
+  try { await navigator.clipboard.writeText(ta.value); toast("Copied to clipboard"); }
+  catch (e) { ta.focus(); ta.select(); toast("Press Copy on your keyboard or long-press to copy the selected text"); }
 });
 F("clearAll").addEventListener("click", async () => {
   if (!realTrades.length) return toast("There are no saved trades to delete");
