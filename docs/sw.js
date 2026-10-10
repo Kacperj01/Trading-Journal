@@ -1,5 +1,5 @@
 // Offline support for the Trading Journal app. The version changes whenever the page does.
-const CACHE = "journal-f584a0bd09";
+const CACHE = "journal-88abdf62b8";
 const FONTS = "journal-fonts";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png"];
 
@@ -15,7 +15,8 @@ self.addEventListener("fetch", e => {
   const url = new URL(req.url);
   // The page: try the network for the latest version, fall back to the saved copy offline.
   if (req.mode === "navigate") {
-    e.respondWith(fetch(req).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); return res; })
+    // Bypass the HTTP cache (GitHub Pages caches pages for 10 minutes) so updates show on the next open.
+    e.respondWith(fetch(req, { cache: "no-store" }).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); return res; })
       .catch(() => caches.match("./index.html")));
     return;
   }

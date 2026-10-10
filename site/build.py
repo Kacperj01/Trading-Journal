@@ -80,7 +80,8 @@ self.addEventListener("fetch", e => {{
   const url = new URL(req.url);
   // The page: try the network for the latest version, fall back to the saved copy offline.
   if (req.mode === "navigate") {{
-    e.respondWith(fetch(req).then(res => {{ const copy = res.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); return res; }})
+    // Bypass the HTTP cache (GitHub Pages caches pages for 10 minutes) so updates show on the next open.
+    e.respondWith(fetch(req, {{ cache: "no-store" }}).then(res => {{ const copy = res.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); return res; }})
       .catch(() => caches.match("./index.html")));
     return;
   }}
