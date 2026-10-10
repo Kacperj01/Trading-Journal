@@ -1,13 +1,13 @@
 {
-  "name": "Trading Journal",
-  "short_name": "Journal",
+  "name": "ELEV8 Trading Journal",
+  "short_name": "ELEV8",
   "description": "Log trades with sessions, setups and emotions, and see your P&L, win rate and insights.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0e1a",
-  "theme_color": "#0a0e1a",
+  "background_color": "#06111f",
+  "theme_color": "#06111f",
   "icons": [
     {
       "src": "icons/icon-192.png",

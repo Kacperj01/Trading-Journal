@@ -23,19 +23,19 @@ page = f"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Trading Journal</title>
-<meta name="theme-color" content="#0a0e1a">
+<title>ELEV8 Trading Journal</title>
+<meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Journal">
+<meta name="apple-mobile-web-app-title" content="ELEV8">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <style>
   /* Keep content clear of the iPhone status bar and home indicator when opened from the home screen. */
-  html {{ background: #0a0e1a; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }}
+  html {{ background: #06111f; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }}
   body {{ margin: 0; }}
   [hidden] {{ display: none !important; }}
 </style>
@@ -47,15 +47,15 @@ page = f"""<!doctype html>
 """
 
 manifest = {
-    "name": "Trading Journal",
-    "short_name": "Journal",
+    "name": "ELEV8 Trading Journal",
+    "short_name": "ELEV8",
     "description": "Log trades with sessions, setups and emotions, and see your P&L, win rate and insights.",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#0a0e1a",
-    "theme_color": "#0a0e1a",
+    "background_color": "#06111f",
+    "theme_color": "#06111f",
     "icons": [
         {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
         {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
@@ -104,6 +104,5 @@ docs.mkdir(exist_ok=True)
 (docs / "manifest.webmanifest").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 (docs / "sw.js").write_text(sw, encoding="utf-8")
 (docs / ".nojekyll").write_text("", encoding="utf-8")
-if not (docs / "icons" / "icon-512.png").exists():
-    subprocess.run([sys.executable, str(root / "site" / "make_icons.py"), str(docs / "icons")], check=True)
+subprocess.run([sys.executable, str(root / "site" / "make_icons.py"), str(docs / "icons")], check=True)
 print("built docs/ (version", version + ")")
