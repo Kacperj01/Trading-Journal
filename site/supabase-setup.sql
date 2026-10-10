@@ -26,3 +26,9 @@ create policy "Own trades" on public.trades
 drop policy if exists "Own settings" on public.journal_settings;
 create policy "Own settings" on public.journal_settings
   for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Newer Supabase projects don't expose new tables to the API automatically.
+-- Signed-in users need these grants; the policies above still limit them to their own rows.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.trades to authenticated;
+grant select, insert, update, delete on public.journal_settings to authenticated;
