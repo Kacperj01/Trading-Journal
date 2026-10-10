@@ -13,6 +13,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+
 <style>
   /* Keep content clear of the iPhone status bar and home indicator when opened from the home screen. */
   html { background: #06111f; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
@@ -974,6 +975,30 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           </form>
         </section>
 
+        <section class="card accent-teal reveal" style="--d:2" aria-labelledby="syncTitle" id="syncCard" hidden>
+          <div class="card-head"><div><h3 id="syncTitle">Sync</h3><div class="sub">Keep your trades the same on your iPhone and MacBook</div></div></div>
+          <div id="syncSignedOut" class="stack">
+            <p class="muted" style="margin:0;font-size:13.5px">Sign in with the same email on each device. Trades on this device are added to your account the first time you sign in.</p>
+            <form id="syncForm" class="stack" novalidate>
+              <div class="field"><label for="syncEmail">Email</label><input type="email" id="syncEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
+              <div class="field"><label for="syncPassword">Password</label><input type="password" id="syncPassword" autocomplete="current-password" minlength="6" required></div>
+              <p id="syncMsg" class="muted" role="status" aria-live="polite" style="margin:0;font-size:13px"></p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn primary" type="submit" id="syncSignIn">Sign in</button>
+                <button class="btn" type="button" id="syncSignUp">Create account</button>
+              </div>
+            </form>
+          </div>
+          <div id="syncSignedIn" class="stack" hidden>
+            <p style="margin:0;font-size:14px">Signed in as <strong id="syncWho"></strong></p>
+            <p class="muted" style="margin:0;font-size:13px" id="syncLast"></p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn primary" type="button" id="syncNow">Sync now</button>
+              <button class="btn danger" type="button" id="syncSignOut">Sign out</button>
+            </div>
+          </div>
+        </section>
+
         <section class="card accent-green reveal" style="--d:2" aria-labelledby="dataTitle">
           <div class="card-head"><h3 id="dataTitle">Import &amp; export</h3></div>
           <div class="stack">
@@ -1124,12 +1149,12 @@ function putTrade(t) {
   const i = realTrades.findIndex(x => x.id === t.id);
   if (i >= 0) realTrades[i] = t; else realTrades.push(t);
   if (persist.mode === "cloud") { const body = clean(t); enqueue(() => tradesCol().doc(t.id).set(body)); }
-  else saveLocal();
+  else { saveLocal(); sbQueue({ op: "put", id: t.id }); }
 }
 function removeTrade(id) {
   realTrades = realTrades.filter(x => x.id !== id);
   if (persist.mode === "cloud") enqueue(() => tradesCol().doc(id).delete());
-  else saveLocal();
+  else { saveLocal(); sbQueue({ op: "del", id }); }
 }
 function saveSettings() {
   store.set(KEY_SETTINGS, settings);
@@ -1137,6 +1162,173 @@ function saveSettings() {
     const body = {};
     SETTINGS_KEYS.forEach(k => body[k] = settings[k]);
     enqueue(() => persist.db.doc(persist.base + "/settings").set(clean(body)));
+  } else sbQueue({ op: "settings" });
+}
+
+/* ======================================================================
+   Supabase sync (hosted app only). The page is configured by the build with
+   window.ELEV8_SUPABASE = { url, key }. Every change is saved on the device first and
+   queued; the queue is sent in order, then the account's copy is fetched and merged,
+   keeping any changes still waiting to be sent.
+   ====================================================================== */
+const SB = (window.ELEV8_SUPABASE && window.ELEV8_SUPABASE.url && window.ELEV8_SUPABASE.key) ? window.ELEV8_SUPABASE : null;
+const KEY_SB_SESSION = "tj.sb.session.v1";
+const KEY_SB_OUTBOX = "tj.sb.outbox.v1";
+const KEY_SB_USER = "tj.sb.user.v1"; // which account this device's trades were last merged with
+const sb = { session: SB ? store.get(KEY_SB_SESSION, null) : null, busy: false, again: false, lastSync: 0, offline: false };
+const sbOn = () => !!(SB && sb.session && !inViewer());
+
+function sbQueue(entry) {
+  if (!sbOn()) return;
+  const box = store.get(KEY_SB_OUTBOX, []).filter(e => !(e.op === entry.op && e.id === entry.id) && !(entry.op !== "settings" && e.id === entry.id));
+  box.push(entry);
+  store.set(KEY_SB_OUTBOX, box);
+  sbSync();
+}
+async function sbAuth(path, body) {
+  const res = await fetch(SB.url + "/auth/v1/" + path, { method: "POST", headers: { apikey: SB.key, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.msg || json.error_description || json.message || json.error || "Sign-in failed");
+  return json;
+}
+function sbSaveSession(s) {
+  if (s && s.access_token) {
+    s.expires_at = s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
+    sb.session = { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at, user: { id: s.user.id, email: s.user.email } };
+  } else sb.session = null;
+  store.set(KEY_SB_SESSION, sb.session);
+}
+async function sbToken() {
+  if (sb.session.expires_at - 60 < Date.now() / 1000) await sbRefresh();
+  return sb.session.access_token;
+}
+async function sbRefresh() {
+  try { sbSaveSession(await sbAuth("token?grant_type=refresh_token", { refresh_token: sb.session.refresh_token })); }
+  catch (e) {
+    if (e instanceof TypeError) throw e; // offline: keep the session and try later
+    sbSaveSession(null); sbRender(); setSync("err", "Signed out. Sign in again in Settings to sync");
+    throw e;
+  }
+}
+async function sbRest(method, path, body, prefer, retried) {
+  const headers = { apikey: SB.key, Authorization: "Bearer " + await sbToken(), "Content-Type": "application/json" };
+  if (prefer) headers.Prefer = prefer;
+  const res = await fetch(SB.url + "/rest/v1/" + path, { method, headers, body: body == null ? undefined : JSON.stringify(body) });
+  if (res.status === 401 && !retried) { await sbRefresh(); return sbRest(method, path, body, prefer, true); }
+  if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.message || ("Sync error " + res.status)); }
+  return res.status === 204 ? null : res.json().catch(() => null);
+}
+function settingsBody() { const b = {}; SETTINGS_KEYS.forEach(k => b[k] = settings[k]); return clean(b); }
+
+async function sbSync() {
+  if (!sbOn()) return;
+  if (sb.busy) { sb.again = true; return; }
+  sb.busy = true;
+  const uid = sb.session.user.id;
+  try {
+    // First sign-in on this device for this account: add this device's trades to the account.
+    const prevUser = store.get(KEY_SB_USER, null);
+    if (prevUser !== uid) {
+      if (prevUser) {
+        // A different account was used on this device before: don't copy its trades into this one.
+        realTrades = []; saveLocal(); store.set(KEY_SB_OUTBOX, []);
+      } else {
+        const box = store.get(KEY_SB_OUTBOX, []);
+        realTrades.forEach(t => { if (!box.some(e => e.id === t.id)) box.push({ op: "put", id: t.id }); });
+        box.push({ op: "settings" });
+        store.set(KEY_SB_OUTBOX, box);
+      }
+      store.set(KEY_SB_USER, uid);
+    }
+    // 1. Send queued changes, oldest first.
+    let box = store.get(KEY_SB_OUTBOX, []);
+    while (box.length) {
+      const e = box[0];
+      if (e.op === "put") {
+        const t = realTrades.find(x => x.id === e.id);
+        if (t) await sbRest("POST", "trades?on_conflict=user_id,id", [{ user_id: uid, id: t.id, data: clean(t), updated_at: new Date().toISOString() }], "resolution=merge-duplicates,return=minimal");
+      } else if (e.op === "del") {
+        await sbRest("DELETE", "trades?id=eq." + encodeURIComponent(e.id), null, "return=minimal");
+      } else if (e.op === "settings") {
+        await sbRest("POST", "journal_settings?on_conflict=user_id", [{ user_id: uid, data: settingsBody(), updated_at: new Date().toISOString() }], "resolution=merge-duplicates,return=minimal");
+      }
+      box = store.get(KEY_SB_OUTBOX, []).filter(x => !(x.op === e.op && x.id === e.id));
+      store.set(KEY_SB_OUTBOX, box);
+    }
+    // 2. Fetch the account's copy and merge.
+    let rows = [], page;
+    for (let off = 0; ; off += 1000) {
+      page = await sbRest("GET", `trades?select=id,data&order=id&limit=1000&offset=${off}`);
+      rows = rows.concat(page || []);
+      if (!page || page.length < 1000) break;
+    }
+    const pending = store.get(KEY_SB_OUTBOX, []);
+    const keepLocal = new Set(pending.filter(e => e.op === "put").map(e => e.id));
+    const dropped = new Set(pending.filter(e => e.op === "del").map(e => e.id));
+    const merged = rows.filter(r => !keepLocal.has(r.id) && !dropped.has(r.id)).map(r => Object.assign({}, r.data, { id: r.id }))
+      .concat(realTrades.filter(t => keepLocal.has(t.id)));
+    const changed = JSON.stringify(sortChrono(merged)) !== JSON.stringify(sortChrono(realTrades));
+    if (changed) { realTrades = merged; saveLocal(); }
+    const st = await sbRest("GET", "journal_settings?select=data");
+    let settingsChanged = false;
+    if (st && st[0] && !pending.some(e => e.op === "settings")) {
+      const next = Object.assign({}, DEFAULT_SETTINGS, st[0].data);
+      if (JSON.stringify(next) !== JSON.stringify(settings)) { settings = next; store.set(KEY_SETTINGS, settings); settingsChanged = true; }
+    }
+    sb.lastSync = Date.now(); sb.offline = false;
+    setSync("cloud", "Synced · " + sb.session.user.email);
+    if (settingsChanged) { refreshLists(); renderListEditors(); renderAccount(); }
+    if (changed || settingsChanged) { syncView(); onDataChanged(); }
+    sbRender();
+  } catch (e) {
+    if (!sb.session) { /* signed out during sync */ }
+    else if (e instanceof TypeError || !navigator.onLine) { sb.offline = true; setSync("local", "Offline · changes will sync"); }
+    else setSync("err", "Sync problem: " + e.message);
+  } finally {
+    sb.busy = false;
+    if (sb.again) { sb.again = false; sbSync(); }
+  }
+}
+
+function sbRender() {
+  if (!SB || inViewer()) return;
+  F("syncCard").hidden = false;
+  const on = !!sb.session;
+  F("syncSignedOut").hidden = on;
+  F("syncSignedIn").hidden = !on;
+  if (on) {
+    F("syncWho").textContent = sb.session.user.email;
+    F("syncLast").textContent = sb.lastSync ? "Last synced " + new Date(sb.lastSync).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "Not synced yet";
+  }
+}
+function sbStart() {
+  if (!SB || inViewer()) return;
+  sbRender();
+  if (!sb.session) { setSync("local", "Saved on this device · sign in to sync"); return; }
+  setSync("", "Syncing…");
+  sbSync();
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") sbSync(); });
+  window.addEventListener("online", () => sbSync());
+  setInterval(() => { if (document.visibilityState === "visible") sbSync(); }, 30000);
+}
+async function sbSignIn(signUp) {
+  const email = F("syncEmail").value.trim(), password = F("syncPassword").value;
+  const msg = F("syncMsg");
+  if (!email || password.length < 6) { msg.textContent = "Enter your email and a password of at least 6 characters."; return; }
+  msg.textContent = signUp ? "Creating your account…" : "Signing in…";
+  try {
+    const res = signUp ? await sbAuth("signup", { email, password }) : await sbAuth("token?grant_type=password", { email, password });
+    if (!res.access_token) {
+      msg.textContent = "Account created. Open the confirmation email we sent to " + email + ", then come back here and sign in.";
+      return;
+    }
+    sbSaveSession(res);
+    msg.textContent = "";
+    F("syncPassword").value = "";
+    toast("Signed in. Syncing your trades…");
+    sbStart();
+  } catch (e) {
+    msg.textContent = e instanceof TypeError ? "Couldn't reach the sync service. Check your connection and try again." : e.message;
   }
 }
 
@@ -1184,7 +1376,7 @@ async function connectCloud() {
 
 function finishLoading(mode) {
   if (mode === "local") {
-    setSync("local", "Saved on this device");
+    if (!SB) setSync("local", "Saved on this device");
     // Ask the browser not to clear this app's storage under pressure.
     try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* optional */ }
   }
@@ -2835,6 +3027,21 @@ window.addEventListener("scroll", () => {
   scrollTimer = setTimeout(() => { ui.scrollY = Math.round(window.scrollY); saveUi(); }, 250);
 }, { passive: true });
 connectCloud();
+sbStart();
+if (SB) {
+  F("syncForm").addEventListener("submit", e => { e.preventDefault(); sbSignIn(false); });
+  F("syncSignUp").addEventListener("click", () => sbSignIn(true));
+  F("syncNow").addEventListener("click", () => { setSync("", "Syncing…"); sbSync(); });
+  F("syncSignOut").addEventListener("click", async () => {
+    const ok = await askConfirm("Sign out of sync on this device? Your trades stay in your account. This device keeps its copy until you sign in with a different account.", { title: "Sign out?", ok: "Sign out" });
+    if (!ok) return;
+    sbSaveSession(null);
+    sbRender();
+    setSync("local", "Saved on this device · sign in to sync");
+  });
+  F("syncChip").style.cursor = "pointer";
+  F("syncChip").addEventListener("click", () => showTab("settings"));
+}
 
 // Offline support, only for the hosted app (its page links a web app manifest).
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')) {

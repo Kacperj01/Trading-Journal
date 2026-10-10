@@ -17,7 +17,15 @@ head_part, body_part = src[:cut], src[cut:]
 head_part = re.sub(r'<meta charset="utf-8">\s*', "", head_part)
 head_part = re.sub(r"<title>.*?</title>\s*", "", head_part)
 
-version = hashlib.sha256(src.encode()).hexdigest()[:10]
+# Sync settings: the Supabase project address and its public (anon/publishable) key.
+# The key is designed to be public; row-level security keeps each person's trades private.
+cfg_path = root / "site" / "config.json"
+cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
+sync_script = ""
+if cfg.get("supabaseUrl") and cfg.get("supabaseAnonKey"):
+    sync_script = "<script>window.ELEV8_SUPABASE = " + json.dumps({"url": cfg["supabaseUrl"].rstrip("/"), "key": cfg["supabaseAnonKey"]}) + ";</script>"
+
+version = hashlib.sha256((src + sync_script).encode()).hexdigest()[:10]
 page = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -33,6 +41,7 @@ page = f"""<!doctype html>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+{sync_script}
 <style>
   /* Keep content clear of the iPhone status bar and home indicator when opened from the home screen. */
   html {{ background: #06111f; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }}
