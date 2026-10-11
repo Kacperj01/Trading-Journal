@@ -263,14 +263,15 @@ main { padding: 28px 0 80px; overflow: clip; position: relative; } /* the backgr
 .filter-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .filter-btn.on, .filter-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); background: var(--blue-soft); }
 .filter-badge { min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--accent); color: #06111f; font-size: 11.5px; font-weight: 700; display: inline-grid; place-items: center; }
-.filter-panel { position: absolute; z-index: 70; width: 380px; max-width: calc(100vw - 32px); box-sizing: border-box; padding: 18px 20px 20px; border-radius: 16px; background: var(--card-solid); border: 1px solid var(--border-strong); box-shadow: 0 24px 60px rgba(0, 0, 0, .45); display: grid; gap: 14px; }
+.filter-panel { position: absolute; z-index: 70; overflow-y: auto; overscroll-behavior: contain; width: 380px; max-width: calc(100vw - 32px); box-sizing: border-box; padding: 18px 20px 20px; border-radius: 16px; background: var(--card-solid); border: 1px solid var(--border-strong); box-shadow: 0 24px 60px rgba(0, 0, 0, .45); display: grid; gap: 14px; }
 .filter-panel[hidden] { display: none; }
 .filter-panel .field { margin: 0; }
 .fp-head { display: flex; justify-content: space-between; align-items: center; }
 .fp-head h4 { margin: 0; font-size: 16px; }
 .fp-grab { display: none; }
 .fp-periods { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
-.fp-periods button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: 13px; color: var(--text-2); transition: border-color .15s, background-color .15s, color .15s; }
+.filter-panel .lbl { display: block; margin-bottom: 6px; }
+.fp-periods button { all: unset; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: 13px; color: var(--text-2); transition: border-color .15s, background-color .15s, color .15s; }
 .fp-periods button:hover { border-color: var(--border-strong); color: var(--text); }
 .fp-periods button[aria-checked="true"] { border-color: var(--accent); color: var(--accent); background: var(--blue-soft); }
 .fp-periods button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -1141,7 +1142,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   /* Phones: the Filters button sits under the title and the options slide up from the bottom. */
   #analyticsHeader .toolbar { flex-wrap: wrap; }
   .filter-btn { margin-top: 2px; }
-  .filter-panel { position: fixed; left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; max-width: none; max-height: 86vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); border-width: 1px 0 0; box-shadow: 0 -20px 60px rgba(0, 0, 0, .5); animation: sheetUp .28s cubic-bezier(.2, .7, .2, 1); }
+  .filter-panel { position: fixed; left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; max-width: none; max-height: 86vh !important; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); border-width: 1px 0 0; box-shadow: 0 -20px 60px rgba(0, 0, 0, .5); animation: sheetUp .28s cubic-bezier(.2, .7, .2, 1); }
   .fp-grab { display: block; width: 40px; height: 5px; border-radius: 99px; background: var(--border-strong); margin: 0 auto 2px; }
   .fp-periods button { padding: 8px 13px; font-size: 14px; }
   .fp-btns .btn { flex: 1; justify-content: center; }
@@ -2038,9 +2039,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <div class="field" id="fFromWrap" hidden><label for="fFrom">From</label><input type="date" id="fFrom"></div>
     <div class="field" id="fToWrap" hidden><label for="fTo">To</label><input type="date" id="fTo"></div>
   </div>
-  <div class="field"><label for="fSession">Session</label><select id="fSession"><option value="">All sessions</option></select></div>
-  <div class="field"><label for="fSetup">Setup</label><select id="fSetup"><option value="">All setups</option></select></div>
-  <div class="field" id="fAccountWrap" hidden><label for="fAccount">Account</label><select id="fAccount"><option value="">All accounts</option></select></div>
+  <div class="field"><span class="lbl" id="fSessionLbl">Session</span><div class="fp-periods" role="radiogroup" aria-labelledby="fSessionLbl" data-opts="fSession"></div><select id="fSession" hidden tabindex="-1" aria-hidden="true"><option value="">All sessions</option></select></div>
+  <div class="field"><span class="lbl" id="fSetupLbl">Setup</span><div class="fp-periods" role="radiogroup" aria-labelledby="fSetupLbl" data-opts="fSetup"></div><select id="fSetup" hidden tabindex="-1" aria-hidden="true"><option value="">All setups</option></select></div>
+  <div class="field" id="fAccountWrap" hidden><span class="lbl" id="fAccountLbl">Account</span><div class="fp-periods" role="radiogroup" aria-labelledby="fAccountLbl" data-opts="fAccount"></div><select id="fAccount" hidden tabindex="-1" aria-hidden="true"><option value="">All accounts</option></select></div>
   <div class="fp-btns"><button class="btn ghost" type="button" id="fClear">Reset</button><button class="btn primary" type="button" id="fDone">Done</button></div>
 </div>
 
@@ -4551,6 +4552,12 @@ function syncFilters() {
   F("filterBtn").classList.toggle("on", !!n);
   F("filterBtn").setAttribute("aria-label", n ? `Filters, ${n} on` : "Filters");
   $$("#fPeriods button").forEach(b => b.setAttribute("aria-checked", b.dataset.range === ui.range));
+  // Session, setup and account chips mirror their (hidden) lists; redrawn only when the choices change.
+  $$("#filterPanel [data-opts]").forEach(box => {
+    const sel = F(box.dataset.opts), opts = Array.from(sel.options).map(o => [o.value, o.text]), key = JSON.stringify(opts);
+    if (box.dataset.key !== key) { box.dataset.key = key; box.innerHTML = opts.map(([v, t]) => `<button type="button" role="radio" data-v="${esc(v)}">${esc(t)}</button>`).join(""); }
+    $$("button", box).forEach(b => b.setAttribute("aria-checked", b.dataset.v === sel.value));
+  });
   F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
   F("fClear").disabled = !n;
   if (!F("filterPanel").hidden) F("fDone").textContent = phoneSheet() ? `Show ${plural(filtered().length, "trade")}` : "Done";
@@ -4560,6 +4567,7 @@ function placeFilterPanel() {
   if (phoneSheet()) return;
   const r = F("filterBtn").getBoundingClientRect(), w = F("filterPanel").offsetWidth;
   F("filterPanel").style.top = (r.bottom + window.scrollY + 8) + "px";
+  F("filterPanel").style.maxHeight = Math.max(260, window.innerHeight - r.bottom - 24) + "px";
   F("filterPanel").style.left = Math.max(16, Math.min(r.right - w, document.documentElement.clientWidth - w - 16)) + window.scrollX + "px";
 }
 function setFilterPanel(open) {
@@ -4586,8 +4594,17 @@ F("fPeriods").addEventListener("click", e => {
   F("fRange").dispatchEvent(new Event("change"));
   if (b.dataset.range === "custom") setTimeout(() => F("fFrom").focus(), 0);
 });
-F("fPeriods").addEventListener("keydown", e => {
-  const list = $$("#fPeriods button"), i = list.indexOf(document.activeElement);
+F("filterPanel").addEventListener("click", e => {
+  const b = e.target.closest("[data-opts] [data-v]");
+  if (!b) return;
+  const sel = F(b.closest("[data-opts]").dataset.opts);
+  sel.value = b.dataset.v;
+  sel.dispatchEvent(new Event("change"));
+});
+F("filterPanel").addEventListener("keydown", e => {
+  const group = e.target.closest(".fp-periods");
+  if (!group) return;
+  const list = $$("button", group), i = list.indexOf(document.activeElement);
   const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
   if (step && i >= 0) { e.preventDefault(); list[(i + step + list.length) % list.length].focus(); }
 });
