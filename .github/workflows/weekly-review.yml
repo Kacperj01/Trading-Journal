@@ -12,6 +12,11 @@ on:
         description: "Send a test to just this account's email (leave blank to send to everyone opted in)"
         required: false
         default: ""
+      preview_all:
+        description: "One-off preview to every confirmed account (with a 'turn it on in Settings' note)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -30,4 +35,5 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ONLY_EMAIL: ${{ github.event.inputs.only_email }}
+          PREVIEW_ALL: ${{ github.event.inputs.preview_all }}
         run: python3 site/weekly_review.py

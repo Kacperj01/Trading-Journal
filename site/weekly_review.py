@@ -30,6 +30,8 @@ RESEND_URL = os.environ.get("RESEND_URL", "https://api.resend.com/emails")
 FROM = os.environ.get("MAIL_FROM", "ELEV8 Weekly Review <reviews@elev8tradingjournal.com>")
 SITE = "https://elev8tradingjournal.com"
 ONLY = os.environ.get("ONLY_EMAIL", "").strip().lower()
+# One-off: every confirmed account gets a preview of their week, even if weekly emails are off.
+PREVIEW_ALL = os.environ.get("PREVIEW_ALL") in ("1", "true")
 DRY = os.environ.get("DRY_RUN") == "1"
 
 
@@ -179,7 +181,7 @@ def build_week(trades, start, cur):
 
 
 # ---------- Email ----------
-def render(w, name):
+def render(w, name, preview=False):
     st, money = w["st"], w["money"]
     rng = f"{w['start'].strftime('%-d %b')} – {w['end'].strftime('%-d %b %Y')}"
     col = lambda v: "#13955a" if v > 0 else "#d8344f" if v < 0 else "#5d6d84"
@@ -202,6 +204,7 @@ def render(w, name):
     <td style="padding-left:12px"><div style="font-weight:800;font-size:20px;letter-spacing:2px;color:#4a9af0">ELEV8</div><div style="font-size:10px;letter-spacing:3px;color:#25c0c0">WEEKLY REVIEW</div></td>
   </tr></table>
 </td></tr>
+{('<tr><td style="padding:16px 24px 0"><div style="background:#e6f6f5;border:1px solid #bfe8e5;border-radius:10px;padding:12px 14px;font-size:13.5px;color:#0d4f4c;line-height:1.5"><b>New: weekly reviews by email.</b> This is a preview of your week. To get one every Sunday evening, turn on <b>Email me my weekly review</b> in ELEV8 › Settings › Profile.</div></td></tr>') if preview else ""}
 <tr><td style="padding:22px 24px 4px"><div style="font-size:13px;color:#5d6d84">{rng}</div><div style="font-size:20px;font-weight:700;color:#0d1b2e;margin-top:4px">Hi {hello}, here's your week</div>
 <p style="font-size:15px;color:#33445c;line-height:1.5;margin:10px 0 0">{w['verdict']}</p></td></tr>
 <tr><td style="padding:16px 18px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="6"><tr>
@@ -213,7 +216,7 @@ def render(w, name):
 {section("Focus for next week", "#1f6fc4", lst(w['focus'], "Keep doing what you're doing."))}
 <tr><td style="padding:22px 24px 26px" align="center"><a href="{SITE}/#insights" style="display:inline-block;background:#1f6fc4;background-image:linear-gradient(120deg,#2a7fd9,#25c0c0);color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px">Open your journal</a></td></tr>
 </table>
-<p style="font-size:12px;color:#5d6d84;margin:14px 0 0;max-width:600px">You're getting this because weekly reviews are on in ELEV8 › Settings › Profile. Turn them off there any time.</p>
+<p style="font-size:12px;color:#5d6d84;margin:14px 0 0;max-width:600px">{"This is a one-off preview. You won't get these again unless you turn on weekly reviews in ELEV8 › Settings › Profile." if preview else "You're getting this because weekly reviews are on in ELEV8 › Settings › Profile. Turn them off there any time."}</p>
 </td></tr></table></body></html>"""
 
 
@@ -247,16 +250,19 @@ def main():
         s = settings.get(u["id"], {})
         if ONLY:
             if email != ONLY: continue
+        elif PREVIEW_ALL:
+            if not u.get("email_confirmed_at"): continue
         elif not s.get("weeklyEmail") or not u.get("email_confirmed_at"):
             continue
         w = build_week(trades.get(u["id"], []), start, s.get("currency") or "$")
-        if not w["st"]["n"] and not ONLY:
+        if not w["st"]["n"] and not ONLY and not PREVIEW_ALL:
             skipped += 1  # nothing logged this week: no email
             continue
         name = (u.get("user_metadata") or {}).get("full_name", "")
-        subject = f"Your ELEV8 week: {w['money'](w['st']['total'])} · {w['st']['n']} trades · {w['st']['win_rate']:.0%} win rate"
+        preview = PREVIEW_ALL and not s.get("weeklyEmail")
+        subject = ("Preview: " if preview else "") + f"Your ELEV8 week: {w['money'](w['st']['total'])} · {w['st']['n']} trades · {w['st']['win_rate']:.0%} win rate"
         try:
-            send(u["email"], subject, render(w, name))
+            send(u["email"], subject, render(w, name, preview))
             sent += 1
         except Exception as exc:  # one bad address shouldn't stop the rest
             print("  could not send to", email, "-", exc, file=sys.stderr)
