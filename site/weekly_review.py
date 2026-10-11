@@ -17,6 +17,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -39,8 +40,16 @@ def sb_get(path, extra=None):
         headers["Authorization"] = "Bearer " + KEY
     headers.update(extra or {})
     req = urllib.request.Request(SB_URL.rstrip("/") + path, headers=headers)
-    with urllib.request.urlopen(req, timeout=60) as res:
-        return json.load(res)
+    try:
+        with urllib.request.urlopen(req, timeout=60) as res:
+            return json.load(res)
+    except urllib.error.HTTPError as exc:  # say what Supabase said, not just the status code
+        detail = exc.read().decode("utf-8", "replace")[:300]
+        hint = ""
+        if exc.code in (401, 403):
+            hint = (" -> Check SUPABASE_SERVICE_KEY is the SECRET key (service_role / sb_secret_...), not the publishable/anon key,"
+                    " and that site/supabase-setup.sql's grants to service_role have been run.")
+        sys.exit(f"Supabase refused {path.split('?')[0]} ({exc.code}): {detail}{hint}")
 
 
 def all_users():

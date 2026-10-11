@@ -32,3 +32,9 @@ create policy "Own settings" on public.journal_settings
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on public.trades to authenticated;
 grant select, insert, update, delete on public.journal_settings to authenticated;
+
+-- The weekly review email job (GitHub Action) reads with the secret service key.
+-- Newer projects don't grant the service role access to new tables automatically.
+grant usage on schema public to service_role;
+grant select on public.trades to service_role;
+grant select on public.journal_settings to service_role;
