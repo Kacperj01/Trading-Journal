@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "2259dee02d";</script>
+<script>window.ELEV8_BUILD = "b639ff29fd";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -276,18 +276,32 @@ main { padding: 28px 0 80px; overflow: clip; position: relative; } /* the backgr
 .toolbar .left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .toolbar h2 { margin: 0; font-size: 24px; font-weight: 600; }
 .toolbar .lead { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
-/* Analytics filters: one slim row of pill chips under the page title. */
-.chip-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
-.fchip { position: relative; display: inline-flex; align-items: center; margin: 0; }
-.fchip select { -webkit-appearance: none; appearance: none; width: auto; height: 34px; padding: 0 30px 0 14px; border-radius: 999px; font-size: 13.5px; font-weight: 500; color: var(--text-2);
-  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238394ad' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; border: 1px solid var(--border); cursor: pointer; transition: border-color .15s, background-color .15s, color .15s; text-overflow: ellipsis; }
-.fchip select:hover { border-color: var(--border-strong); color: var(--text); }
-.fchip.on select { color: var(--accent); border-color: var(--accent); background-color: var(--blue-soft); }
-.fdate { gap: 4px; height: 34px; box-sizing: border-box; padding: 0 4px 0 13px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; color: var(--muted); }
-.fdate input { border: 0; background: transparent; padding: 0 6px; height: 30px; width: auto; font-size: 13.5px; color: var(--text); min-width: 0; box-shadow: none; }
-.fchip-clear { all: unset; cursor: pointer; font-size: 13px; color: var(--muted); padding: 6px 8px; border-radius: 8px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-strong); white-space: nowrap; }
-.fchip-clear:hover { color: var(--text); }
-.fchip-clear:focus-visible { outline: 2px solid var(--focus); }
+/* Analytics filters: one button beside the title; the options open in a panel (a sheet on phones). */
+#analyticsHeader .toolbar { align-items: flex-start; flex-wrap: nowrap; }
+.filter-btn { all: unset; box-sizing: border-box; flex-shrink: 0; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 14px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: border-color .15s, background-color .15s, color .15s; }
+.filter-btn .ni { width: 17px; height: 17px; opacity: .9; }
+.filter-btn:hover { color: var(--text); border-color: var(--accent); }
+.filter-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.filter-btn.on, .filter-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); background: var(--blue-soft); }
+.filter-badge { min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--accent); color: #06111f; font-size: 11.5px; font-weight: 700; display: inline-grid; place-items: center; }
+.filter-panel { position: absolute; z-index: 70; width: 380px; max-width: calc(100vw - 32px); box-sizing: border-box; padding: 18px 20px 20px; border-radius: 16px; background: var(--card-solid); border: 1px solid var(--border-strong); box-shadow: 0 24px 60px rgba(0, 0, 0, .45); display: grid; gap: 14px; }
+.filter-panel[hidden] { display: none; }
+.filter-panel .field { margin: 0; }
+.fp-head { display: flex; justify-content: space-between; align-items: center; }
+.fp-head h4 { margin: 0; font-size: 16px; }
+.fp-grab { display: none; }
+.fp-periods { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.fp-periods button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: 13px; color: var(--text-2); transition: border-color .15s, background-color .15s, color .15s; }
+.fp-periods button:hover { border-color: var(--border-strong); color: var(--text); }
+.fp-periods button[aria-checked="true"] { border-color: var(--accent); color: var(--accent); background: var(--blue-soft); }
+.fp-periods button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.fp-dates:not(:has(.field:not([hidden]))) { display: none; }
+.fp-dates { margin: 0; }
+.fp-btns { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
+.fp-btns .btn:disabled { opacity: .45; cursor: default; }
+.filter-dim { position: fixed; inset: 0; z-index: 65; background: rgba(2, 8, 18, .55); }
+.filter-dim[hidden] { display: none; }
+.sheet-open, .sheet-open body { overflow: hidden; }
 
 .banner {
   display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;
@@ -1130,7 +1144,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
    and many stacked backdrop blurs can stall scrolling or leave parts of the page blank. */
 @media (max-width: 760px), (pointer: coarse) {
   input, select, textarea { font-size: 16px; }
-  .fchip select, .fdate input, .table-tools input, .table-tools select { font-size: 16px; }
+  .table-tools input, .table-tools select { font-size: 16px; }
   .glow { display: none; }
   body::before { position: absolute; }
   .card, .tooltip, header.top { backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -1145,13 +1159,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .fields.fields-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .brand-logo { height: 38px; }
   .brand .wordmark { font-size: 19px; }
-  /* Phones: the filter chips stay on one line and scroll sideways. */
-  .chip-bar { flex-wrap: nowrap; overflow-x: auto; margin: 12px -24px 0; padding: 2px 24px 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
-  .chip-bar::-webkit-scrollbar { display: none; }
-  .fchip, .fchip-clear { flex-shrink: 0; }
-  /* The home-screen app stops iPhone zooming into fields, so its chip text can be smaller. */
-  .hosted .fchip select, .hosted .fdate input { font-size: 14px; }
+  /* Phones: the Filters button sits under the title and the options slide up from the bottom. */
+  #analyticsHeader .toolbar { flex-wrap: wrap; }
+  .filter-btn { margin-top: 2px; }
+  .filter-panel { position: fixed; left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; max-width: none; max-height: 86vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); border-width: 1px 0 0; box-shadow: 0 -20px 60px rgba(0, 0, 0, .5); animation: sheetUp .28s cubic-bezier(.2, .7, .2, 1); }
+  .fp-grab { display: block; width: 40px; height: 5px; border-radius: 99px; background: var(--border-strong); margin: 0 auto 2px; }
+  .fp-periods button { padding: 8px 13px; font-size: 14px; }
+  .fp-btns .btn { flex: 1; justify-content: center; }
   .table-tools .seg-tabs { width: 100%; }
   .table-tools .seg-tabs button { flex: 1; justify-content: center; padding: 8px 6px; font-size: 13.5px; }
   .table-tools { width: 100%; }
@@ -1183,7 +1197,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .table-scroll tbody td[colspan] { grid-column: 1 / -1; }
   .table-scroll tbody td[colspan]::before { display: none; }
 }
-@media (max-width: 640px) { .chip-bar { margin-inline: -16px; padding-inline: 16px; } }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
 @media (min-width: 761px) { .mobile-only { display: none; } }
 
 /* After the first visit the journal opens as you left it: no entrance animations or growing charts. */
@@ -1253,32 +1267,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <h2 id="pageTitle">Overview</h2>
           <p class="lead" id="rangeLabel">All trades</p>
         </div>
-      </div>
-      <div class="filters chip-bar reveal" style="--d:0" role="group" aria-label="Filters for all analytics tabs">
-          <label class="fchip"><span class="sr-only">Period</span>
-            <select id="fRange">
-              <option value="all">All time</option>
-              <option value="week">This week</option>
-              <option value="lastweek">Last week</option>
-              <option value="month">This month</option>
-              <option value="30">Last 30 days</option>
-              <option value="90">Last 90 days</option>
-              <option value="ytd">Year to date</option>
-              <option value="custom">Custom range</option>
-            </select>
-          </label>
-          <label class="fchip fdate" id="fFromWrap" hidden><span>From</span><input type="date" id="fFrom"></label>
-          <label class="fchip fdate" id="fToWrap" hidden><span>To</span><input type="date" id="fTo"></label>
-          <label class="fchip"><span class="sr-only">Session</span>
-            <select id="fSession"><option value="">All sessions</option></select>
-          </label>
-          <label class="fchip"><span class="sr-only">Setup</span>
-            <select id="fSetup"><option value="">All setups</option></select>
-          </label>
-          <label class="fchip" id="fAccountWrap" hidden><span class="sr-only">Account</span>
-            <select id="fAccount"><option value="">All accounts</option></select>
-          </label>
-          <button class="fchip-clear" type="button" id="fClear" hidden>Clear filters</button>
+        <button class="filter-btn" type="button" id="filterBtn" aria-expanded="false" aria-controls="filterPanel" aria-haspopup="dialog"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M7 12h10M10 17.5h4"/></svg><span>Filters</span><span class="filter-badge" id="filterBadge" hidden></span></button>
       </div>
 
       <div id="dashEmpty" class="card empty reveal" style="--d:1; margin-top:22px" hidden>
@@ -2046,6 +2035,37 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <div id="rulesBody"></div>
   </div>
 </dialog>
+
+<div class="filter-dim" id="filterDim" hidden></div>
+<div class="filter-panel" id="filterPanel" role="dialog" aria-modal="false" aria-labelledby="filterTitle" hidden>
+  <div class="fp-grab" aria-hidden="true"></div>
+  <div class="fp-head"><h4 id="filterTitle">Filters</h4><button class="btn sm ghost" type="button" id="filterClose" aria-label="Close filters">✕</button></div>
+  <div class="field">
+    <span class="lbl" id="fPeriodLbl">Period</span>
+    <div class="fp-periods" id="fPeriods" role="radiogroup" aria-labelledby="fPeriodLbl">
+      <button type="button" role="radio" data-range="week">This week</button>
+      <button type="button" role="radio" data-range="lastweek">Last week</button>
+      <button type="button" role="radio" data-range="month">This month</button>
+      <button type="button" role="radio" data-range="30">Last 30 days</button>
+      <button type="button" role="radio" data-range="90">Last 90 days</button>
+      <button type="button" role="radio" data-range="ytd">Year to date</button>
+      <button type="button" role="radio" data-range="all">All time</button>
+      <button type="button" role="radio" data-range="custom">Custom</button>
+    </div>
+    <select id="fRange" hidden tabindex="-1" aria-hidden="true">
+      <option value="all">All time</option><option value="week">This week</option><option value="lastweek">Last week</option><option value="month">This month</option>
+      <option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="ytd">Year to date</option><option value="custom">Custom range</option>
+    </select>
+  </div>
+  <div class="fields fields-pair fp-dates">
+    <div class="field" id="fFromWrap" hidden><label for="fFrom">From</label><input type="date" id="fFrom"></div>
+    <div class="field" id="fToWrap" hidden><label for="fTo">To</label><input type="date" id="fTo"></div>
+  </div>
+  <div class="field"><label for="fSession">Session</label><select id="fSession"><option value="">All sessions</option></select></div>
+  <div class="field"><label for="fSetup">Setup</label><select id="fSetup"><option value="">All setups</option></select></div>
+  <div class="field" id="fAccountWrap" hidden><label for="fAccount">Account</label><select id="fAccount"><option value="">All accounts</option></select></div>
+  <div class="fp-btns"><button class="btn ghost" type="button" id="fClear">Reset</button><button class="btn primary" type="button" id="fDone">Done</button></div>
+</div>
 
 <dialog id="certDlg" class="rules-dlg cert-dlg" aria-labelledby="certTitle">
   <div class="dlg-body">
@@ -2962,7 +2982,7 @@ function stats(list) {
    Rendering — Dashboard
    ====================================================================== */
 function renderDashboard() {
-  syncFilterChips();
+  syncFilters();
   renderWeekly();
   const list = filtered();
   const hasAny = trades.length > 0;
@@ -3730,7 +3750,7 @@ function refreshLists() {
   F("fAccountWrap").hidden = accts.length < 2;
   F("fAccount").innerHTML = `<option value="">All accounts</option>` + opts;
   F("fAccount").value = ui.account;
-  syncFilterChips();
+  syncFilters();
   for (const [id, extra] of [["tAccount", `<option value="">No account</option>`], ["qAccount", ""]]) {
     const sel = F(id), cur = sel.value, had = Array.from(sel.options).some(o => o.value === cur);
     sel.innerHTML = opts + (accts.length ? extra : "");
@@ -4482,6 +4502,7 @@ const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "P
 const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
 function showTab(name, { focus = false, push = true } = {}) {
   if (!TABS.includes(name)) name = "overview";
+  if (!F("filterPanel").hidden) setFilterPanel(false);
   if (name === "settings") showSetPane(ui.setPane || "profile");
   const header = F("analyticsHeader");
   header.hidden = !isAnalytics(name);
@@ -4544,27 +4565,58 @@ document.addEventListener("click", e => {
 });
 window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { push: false }));
 
-// Filters: each chip is as wide as its current choice, and lights up when it narrows the view.
-// (Function declarations only, so the early renders at start-up can call them.)
-function fitChip(sel) {
-  const chipCtx = fitChip.ctx || (fitChip.ctx = document.createElement("canvas").getContext("2d"));
-  const cs = getComputedStyle(sel), t = (sel.options[sel.selectedIndex] || {}).text || "";
-  chipCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  sel.style.width = Math.ceil(chipCtx.measureText(t).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 4) + "px";
+// Filters: one button opens a panel with every option; changes apply straight away.
+// Function declarations, so the start-up renders can call them before this point runs.
+function filterCount() { return (ui.range !== "all" ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && accounts().length > 1 && acctById(ui.account) ? 1 : 0); }
+function syncFilters() {
+  const n = filterCount();
+  F("filterBadge").hidden = !n; F("filterBadge").textContent = n;
+  F("filterBtn").classList.toggle("on", !!n);
+  F("filterBtn").setAttribute("aria-label", n ? `Filters, ${n} on` : "Filters");
+  $$("#fPeriods button").forEach(b => b.setAttribute("aria-checked", b.dataset.range === ui.range));
+  F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
+  F("fClear").disabled = !n;
+  if (!F("filterPanel").hidden) F("fDone").textContent = phoneSheet() ? `Show ${plural(filtered().length, "trade")}` : "Done";
 }
-function syncFilterChips() {
-  [["fRange", v => v !== "all"], ["fSession", Boolean], ["fSetup", Boolean], ["fAccount", Boolean]].forEach(([id, on]) => {
-    const el = F(id);
-    el.closest(".fchip").classList.toggle("on", on(el.value));
-    fitChip(el);
-  });
-  F("fClear").hidden = ui.range === "all" && !ui.session && !ui.setup && !(ui.account && !F("fAccountWrap").hidden);
+function phoneSheet() { return window.matchMedia("(max-width: 760px)").matches; }
+function placeFilterPanel() {
+  if (phoneSheet()) return;
+  const r = F("filterBtn").getBoundingClientRect(), w = F("filterPanel").offsetWidth;
+  F("filterPanel").style.top = (r.bottom + window.scrollY + 8) + "px";
+  F("filterPanel").style.left = Math.max(16, Math.min(r.right - w, document.documentElement.clientWidth - w - 16)) + window.scrollX + "px";
 }
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncFilterChips);
+function setFilterPanel(open) {
+  const panel = F("filterPanel");
+  if (open === !panel.hidden) return;
+  panel.hidden = !open;
+  F("filterBtn").setAttribute("aria-expanded", open);
+  F("filterDim").hidden = !(open && phoneSheet());
+  document.documentElement.classList.toggle("sheet-open", open && phoneSheet());
+  if (open) { syncFilters(); placeFilterPanel(); ($("#fPeriods [aria-checked=true]") || $("#fPeriods button")).focus({ preventScroll: true }); }
+  else F("filterBtn").focus({ preventScroll: true });
+}
+F("filterBtn").addEventListener("click", () => setFilterPanel(F("filterPanel").hidden));
+F("filterClose").addEventListener("click", () => setFilterPanel(false));
+F("fDone").addEventListener("click", () => setFilterPanel(false));
+F("filterDim").addEventListener("click", () => setFilterPanel(false));
+document.addEventListener("pointerdown", e => { if (!F("filterPanel").hidden && !e.target.closest("#filterPanel, #filterBtn")) setFilterPanel(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !F("filterPanel").hidden) setFilterPanel(false); });
+window.addEventListener("resize", () => { if (!F("filterPanel").hidden) { F("filterDim").hidden = !phoneSheet(); placeFilterPanel(); } });
+F("fPeriods").addEventListener("click", e => {
+  const b = e.target.closest("[data-range]");
+  if (!b) return;
+  F("fRange").value = b.dataset.range;
+  F("fRange").dispatchEvent(new Event("change"));
+  if (b.dataset.range === "custom") setTimeout(() => F("fFrom").focus(), 0);
+});
+F("fPeriods").addEventListener("keydown", e => {
+  const list = $$("#fPeriods button"), i = list.indexOf(document.activeElement);
+  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+  if (step && i >= 0) { e.preventDefault(); list[(i + step + list.length) % list.length].focus(); }
+});
 F("fClear").addEventListener("click", () => {
   ui.range = "all"; ui.session = ""; ui.setup = ""; ui.account = ""; ui.calMonth = "";
   F("fRange").value = "all"; F("fSession").value = ""; F("fSetup").value = ""; F("fAccount").value = "";
-  F("fFromWrap").hidden = F("fToWrap").hidden = true;
   saveUi(); renderDashboard();
 });
 F("fRange").addEventListener("change", e => {
