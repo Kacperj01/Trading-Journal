@@ -1,0 +1,32 @@
+name: Update economic calendar
+
+# Fetches the weekly economic calendar every 3 hours and saves it to docs/calendar.json,
+# which the journal's News tab reads. Can also be run by hand from the Actions tab.
+on:
+  schedule:
+    - cron: "23 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: calendar
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch calendar
+        run: python3 site/fetch_calendar.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/calendar.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Update economic calendar"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"

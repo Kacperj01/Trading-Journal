@@ -590,6 +590,40 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .wk-trade small { font-size: 12.5px; color: var(--text-2); }
 .week-strip { appearance: none; font: inherit; color: inherit; text-align: left; box-sizing: border-box; display: flex; width: 100%; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; cursor: pointer; padding: 14px 20px; }
 .week-strip:hover { background: var(--surface); }
+.news-strip { margin-top: 12px; }
+.news-strip .ws-l .imp { align-self: center; }
+/* Economic calendar */
+.news-next { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 10px 0 18px; padding: 16px 20px; }
+.news-next .nn-k { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.news-next .nn-t { font-size: 17px; font-weight: 600; }
+.news-next .nn-in { margin-left: auto; font: 600 20px var(--font-mono); color: var(--red); }
+.imp { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: var(--neutral); }
+.imp.High { background: var(--red); } .imp.Medium { background: #f08a24; } .imp.Low { background: #e5c33a; } .imp.Holiday, .imp.Non-Economic { background: var(--neutral); }
+.news-curs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 14px; }
+.news-curs button { appearance: none; border: 1px solid var(--border-strong); background: transparent; color: var(--text-2); font: 500 12.5px var(--font-mono); padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+.news-curs button[aria-pressed="true"] { background: var(--active-bg); color: var(--text); box-shadow: inset 0 0 0 1px var(--active-ring); border-color: transparent; }
+.news-day { margin-top: 6px; }
+.news-day h4 { display: flex; gap: 8px; align-items: center; margin: 14px 0 6px; font-size: 13px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .8px; }
+.news-day h4 .today { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); letter-spacing: .6px; }
+.news-row { display: grid; grid-template-columns: 58px 46px 14px minmax(0, 1fr) 90px 90px; gap: 10px; align-items: center; padding: 9px 10px; border-radius: 10px; font-size: 14px; }
+.news-row:nth-child(odd) { background: var(--tint); }
+.news-row.past { opacity: .5; }
+.news-row.next { box-shadow: inset 0 0 0 1px var(--red); }
+.news-row .time { font: 500 13px var(--font-mono); color: var(--text-2); }
+.news-row .cur { font: 600 12.5px var(--font-mono); }
+.news-row .title { min-width: 0; overflow-wrap: anywhere; }
+.news-row .num { font: 500 12.5px var(--font-mono); color: var(--text-2); text-align: right; }
+.news-row .num small { display: block; font: 500 10px var(--font-sans); color: var(--muted); letter-spacing: .6px; text-transform: uppercase; }
+.news-row .fp { display: none; margin-top: 2px; font: 500 12px var(--font-mono); color: var(--muted); }
+.td-news { display: flex; gap: 8px; align-items: center; margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--red-soft); font-size: 13.5px; }
+.news-src { margin: 16px 0 0; font-size: 12px; color: var(--muted); }
+.news-empty { padding: 26px 10px; text-align: center; color: var(--muted); font-size: 14px; }
+@media (max-width: 640px) {
+  .news-row { grid-template-columns: 50px 40px 12px minmax(0, 1fr); row-gap: 4px; }
+  .news-row .num { display: none; }
+  .news-row .fp { display: block; }
+  .news-next .nn-in { margin-left: 0; }
+}
 .week-strip:focus-visible { outline: 2px solid var(--focus); }
 .week-strip .ws-l { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 14px; color: var(--text-2); }
 .week-strip .ws-l strong { color: var(--text); font-weight: 600; }
@@ -882,6 +916,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="tab" role="tab" id="tab-psychology" aria-controls="panel-psychology" aria-selected="false" tabindex="-1" data-tab="psychology"><span aria-hidden="true">🧠</span> Psychology</button>
       <button class="tab" role="tab" id="tab-calendar" aria-controls="panel-calendar" aria-selected="false" tabindex="-1" data-tab="calendar"><span aria-hidden="true">📅</span> Calendar</button>
       <button class="tab" role="tab" id="tab-insights" aria-controls="panel-insights" aria-selected="false" tabindex="-1" data-tab="insights"><span aria-hidden="true">💡</span> Insights</button>
+      <div class="nav-label" aria-hidden="true">Market</div>
+      <button class="tab" role="tab" id="tab-news" aria-controls="panel-news" aria-selected="false" tabindex="-1" data-tab="news"><span aria-hidden="true">📰</span> News</button>
       <div class="nav-label" aria-hidden="true">Journal</div>
       <button class="tab" role="tab" id="tab-journal" aria-controls="panel-journal" aria-selected="false" tabindex="-1" data-tab="journal"><span aria-hidden="true">📒</span> Trade log</button>
       <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" data-tab="log"><span aria-hidden="true">✍️</span> Log trade</button>
@@ -1012,6 +1048,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         </div>
 
         <button type="button" class="card week-strip section reveal" style="--d:8" id="weekStrip" hidden></button>
+        <button type="button" class="card week-strip news-strip reveal" style="--d:8" id="newsStrip" hidden></button>
 
         <section class="section reveal" style="--d:9" aria-labelledby="topInsTitle">
           <div class="section-head">
@@ -1171,6 +1208,32 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     </section>
 
     <!-- =================== LOG TRADE =================== -->
+    <section id="panel-news" role="tabpanel" aria-labelledby="tab-news" hidden>
+      <div class="toolbar reveal" style="--d:0">
+        <div>
+          <h2>Economic calendar</h2>
+          <p class="lead" id="newsLead">This week's news events, in your local time.</p>
+        </div>
+        <button class="btn sm" type="button" id="newsRefresh">↻ Refresh</button>
+      </div>
+
+      <div class="card news-next reveal" style="--d:1" id="newsNext" hidden></div>
+
+      <section class="card section reveal" style="--d:2" aria-labelledby="newsListTitle">
+        <div class="card-head">
+          <div><h3 id="newsListTitle">This week</h3><div class="sub" id="newsCount"></div></div>
+          <div class="seg-tabs" role="group" aria-label="Impact" id="newsImpact">
+            <button type="button" data-imp="high">🔴 High</button>
+            <button type="button" data-imp="medium">🟠 Medium+</button>
+            <button type="button" data-imp="all">All</button>
+          </div>
+        </div>
+        <div class="news-curs" role="group" aria-label="Currencies" id="newsCurs"></div>
+        <div id="newsDays"></div>
+        <p class="news-src" id="newsSrc"></p>
+      </section>
+    </section>
+
     <section id="panel-log" role="tabpanel" aria-labelledby="tab-log" hidden>
       <div class="toolbar reveal" style="--d:0">
         <div>
@@ -1646,7 +1709,7 @@ let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 let trades = [];
 
-const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", account: "", setPane: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", account: "", setPane: "", newsImpact: "medium", newsCurs: null, sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
@@ -2809,6 +2872,7 @@ function renderWeekStrip() {
   if (!trades.length) { strip.hidden = true; return; }
   const w = buildWeek(latestWeek());
   strip.hidden = false;
+  renderNewsStrip();
   strip.innerHTML = `<span class="ws-l"><strong>Week of ${fmtDate(w.start, { day: "numeric", month: "short" })}</strong><span class="mono ${tone(w.st.total)}">${money(w.st.total)}</span><span>${plural(w.st.n, "trade")} · ${pct(w.st.winRate, 0)} win rate</span></span><span class="ws-r">View weekly review →</span>`;
 }
 
@@ -3589,11 +3653,11 @@ async function importFile(file) {
 /* ======================================================================
    Tabs
    ====================================================================== */
-const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "journal", "log", "settings"];
+const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "news", "journal", "log", "settings"];
 const TAB_TITLES = { overview: "Performance overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade log" };
 const isAnalytics = name => name in TAB_TITLES;
 // Browser tab titles, e.g. "Calendar - ELEV8".
-const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade Log", log: "Log Trade", settings: "Settings" };
+const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", news: "News", journal: "Trade Log", log: "Log Trade", settings: "Settings" };
 const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
 function showTab(name, { focus = false, push = true } = {}) {
   if (!TABS.includes(name)) name = "overview";
@@ -3616,6 +3680,7 @@ function showTab(name, { focus = false, push = true } = {}) {
   if (push && location.hash !== "#" + name) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* sandboxed */ } }
   if (isAnalytics(name)) renderDashboard();
   if (name === "log") { renderRecent(); updatePreview(); }
+  if (name === "news") { renderNews(); loadNews(); }
   document.title = TAB_NAMES[name] + " - ELEV8";
   if (ui.tab !== name) { ui.tab = name; ui.scrollY = 0; saveUi(); }
   if (!restoring) window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
@@ -3856,6 +3921,7 @@ function openTrade(t) {
       ${item("Followed plan", t.followedPlan === false ? "No" : "Yes", t.followedPlan === false ? "neg" : "")}
       ${item("Mistakes", esc(t.mistakes || ""), "warn-text")}
     </div>
+    ${newsNear(t).length ? `<p class="td-news"><span class="imp High" aria-hidden="true"></span> High-impact news within an hour: ${newsNear(t).map(e => `${esc(e.cur)} ${esc(e.title)} (${fmtTime(new Date(e.t))})`).join(", ")}</p>` : ""}
     ${t.notes ? `<p class="td-notes" style="margin-top:14px">${esc(t.notes)}</p>` : ""}
     ${t.sourceUrl ? `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open in Notion ↗</a></p>` : ""}`;
   const dlg = F("tradeDlg");
@@ -3998,6 +4064,159 @@ function maybeAskAccount() {
   if (persist.mode === "cloud" && !persist.settingsSeen) return;
   openAccountDlg(null, true);
 }
+
+/* ======================================================================
+   News: economic calendar (Forex Factory weekly feed, saved to calendar.json
+   every few hours by a GitHub Action; see site/fetch_calendar.py)
+   ====================================================================== */
+const KEY_NEWS = "tj.news.v1";
+const NEWS_URLS = ["calendar.json", "https://raw.githubusercontent.com/Kacperj01/Trading-Journal/HEAD/docs/calendar.json"];
+let news = store.get(KEY_NEWS, null);
+let newsLoading = null, newsFailed = false;
+const newsEvents = () => (news && Array.isArray(news.events) ? news.events : []);
+
+async function loadNews(force) {
+  if (newsLoading) return newsLoading;
+  if (!force && news && Date.now() - (news.fetchedAt || 0) < 15 * 60 * 1000) return;
+  newsLoading = (async () => {
+    // The app's own copy only exists on the GitHub site; elsewhere (claude.ai, a saved file) use GitHub directly.
+    const urls = /^https?:$/.test(location.protocol) && !inViewer() ? NEWS_URLS : NEWS_URLS.slice(1);
+    const got = await Promise.allSettled(urls.map(u => fetch(u + "?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status)))));
+    const ok = got.filter(g => g.status === "fulfilled" && g.value && Array.isArray(g.value.events)).map(g => g.value);
+    if (ok.length) {
+      const best = ok.sort((a, b) => String(b.updated).localeCompare(String(a.updated)))[0];
+      news = { updated: best.updated, events: best.events, fetchedAt: Date.now() };
+      store.set(KEY_NEWS, news);
+      newsFailed = false;
+    } else newsFailed = true;
+  })().finally(() => { newsLoading = null; renderNews(); renderNewsStrip(); });
+  return newsLoading;
+}
+
+// Currencies a pair or index moves with, e.g. GBPJPY → GBP, JPY; XAUUSD → USD; US30 → USD.
+const INDEX_CUR = { US30: "USD", NAS100: "USD", US100: "USD", SPX500: "USD", US500: "USD", DJI: "USD", USOIL: "USD", GER40: "EUR", DE40: "EUR", DAX: "EUR", UK100: "GBP", FTSE: "GBP", JP225: "JPY", AUS200: "AUD" };
+function pairCurrencies(pair) {
+  const p = String(pair || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (INDEX_CUR[p]) return [INDEX_CUR[p]];
+  if (/^[A-Z]{6}$/.test(p)) return [p.slice(0, 3), p.slice(3)].filter(c => !["XAU", "XAG", "BTC", "ETH"].includes(c));
+  return [];
+}
+const myCurrencies = () => Array.from(new Set(trades.flatMap(t => pairCurrencies(t.pair))));
+function newsCurSet() {
+  if (Array.isArray(ui.newsCurs)) return ui.newsCurs.length ? new Set(ui.newsCurs) : null; // [] = all currencies
+  const mine = myCurrencies();
+  return mine.length ? new Set(mine) : null; // null = all
+}
+const impRank = { High: 3, Medium: 2, Low: 1, Holiday: 0, "Non-Economic": 0 };
+const passesImpact = e => ui.newsImpact === "all" || (impRank[e.impact] || 0) >= (ui.newsImpact === "high" ? 3 : 2);
+const fmtTime = d => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+const localDay = d => isoDate(d);
+function untilText(ms) {
+  const m = Math.max(0, Math.round(ms / 60000));
+  if (m < 60) return m + "m";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + "h " + (m % 60) + "m";
+  return Math.floor(h / 24) + "d " + (h % 24) + "h";
+}
+function nextHigh(curs) {
+  const now = Date.now();
+  return newsEvents().filter(e => e.impact === "High" && new Date(e.t).getTime() > now && (!curs || curs.has(e.cur)))
+    .sort((a, b) => a.t.localeCompare(b.t))[0] || null;
+}
+
+function renderNews() {
+  if (F("panel-news").hidden) return;
+  const all = newsEvents(), curs = newsCurSet();
+  $$("#newsImpact button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.imp === ui.newsImpact)));
+  // Currency chips: everything in the feed, with "All" and the pairs you trade.
+  const present = Array.from(new Set(all.map(e => e.cur))).filter(c => c && c !== "ALL").sort();
+  const mine = myCurrencies();
+  F("newsCurs").innerHTML = `<button type="button" data-cur="*" aria-pressed="${!curs}">All</button>`
+    + (mine.length ? `<button type="button" data-cur="mine" aria-pressed="${!Array.isArray(ui.newsCurs)}" title="${esc(mine.join(", "))}">My pairs</button>` : "")
+    + present.map(c => `<button type="button" data-cur="${esc(c)}" aria-pressed="${!!curs && curs.has(c)}">${esc(c)}</button>`).join("");
+  const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "local time").replace(/_/g, " ");
+  F("newsSrc").innerHTML = news
+    ? `Source: Forex Factory calendar. Times in your time zone (${esc(tz)}). Updated ${esc(new Date(news.updated).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" }))}.`
+    : "";
+  if (!all.length) {
+    F("newsNext").hidden = true;
+    F("newsCount").textContent = "";
+    F("newsDays").innerHTML = `<div class="news-empty">${newsLoading ? "Loading this week's calendar…" : newsFailed
+      ? (inViewer() ? "The economic calendar is available in the ELEV8 app saved to your home screen." : "Couldn't load the calendar. Check your connection and tap Refresh.")
+      : "No calendar yet. It appears here after the first update."}</div>`;
+    return;
+  }
+  // Show the latest week in the file (older weeks are kept for matching trades to news).
+  const from = new Date(all[all.length - 1].t).getTime() - 7 * 864e5;
+  const week = all.filter(e => new Date(e.t).getTime() > from);
+  const weekStart = localDay(new Date(week[0].t));
+  const now = Date.now();
+  const list = week.filter(e => (!curs || curs.has(e.cur) || e.cur === "ALL") && passesImpact(e));
+  const nh = nextHigh(curs);
+  F("newsNext").hidden = !nh;
+  if (nh) {
+    const d = new Date(nh.t);
+    F("newsNext").innerHTML = `<span class="imp High" aria-hidden="true"></span><div><div class="nn-k">Next high-impact event</div><div class="nn-t">${esc(nh.cur)} · ${esc(nh.title)}</div><div class="muted" style="font-size:13px">${esc(d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" }))} at ${fmtTime(d)}${nh.forecast ? " · Forecast " + esc(nh.forecast) : ""}</div></div><div class="nn-in" aria-label="Starts in ${untilText(d - now)}">in ${untilText(d - now)}</div>`;
+  }
+  F("newsCount").textContent = `${plural(list.length, "event")} · week of ${fmtDate(weekStart, { day: "numeric", month: "short" })}`;
+  const today = localDay(new Date());
+  const byDay = new Map();
+  list.forEach(e => { const k = localDay(new Date(e.t)); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(e); });
+  F("newsDays").innerHTML = byDay.size ? Array.from(byDay, ([day, evs]) => `
+    <div class="news-day">
+      <h4>${esc(fmtDate(day, { weekday: "long", day: "numeric", month: "short" }))}${day === today ? `<span class="today">Today</span>` : ""}</h4>
+      ${evs.map(e => {
+        const d = new Date(e.t), allDay = e.impact === "Holiday";
+        const nums = `<span class="num"><small>Forecast</small>${esc(e.forecast || "—")}</span><span class="num"><small>Previous</small>${esc(e.previous || "—")}</span>`;
+        const fp = e.forecast || e.previous ? `<span class="fp">F ${esc(e.forecast || "—")} · P ${esc(e.previous || "—")}</span>` : "";
+        return `<div class="news-row${d.getTime() < now ? " past" : ""}${nh && e === nh ? " next" : ""}">
+          <span class="time">${allDay ? "All day" : fmtTime(d)}</span><span class="cur">${esc(e.cur)}</span>
+          <span class="imp ${esc(e.impact)}" title="${esc(e.impact)} impact" aria-label="${esc(e.impact)} impact"></span>
+          <span class="title">${esc(e.title)}${fp}</span>${nums}</div>`;
+      }).join("")}
+    </div>`).join("") : `<div class="news-empty">No events match these filters this week.</div>`;
+}
+
+function renderNewsStrip() {
+  const strip = F("newsStrip");
+  const nh = nextHigh(newsCurSet());
+  strip.hidden = !nh;
+  if (!nh) return;
+  const d = new Date(nh.t);
+  strip.innerHTML = `<span class="ws-l"><span class="imp High" aria-hidden="true"></span><strong>${esc(nh.cur)} · ${esc(nh.title)}</strong><span>${esc(d.toLocaleDateString("en-GB", { weekday: "short" }))} ${fmtTime(d)} · in ${untilText(d - Date.now())}</span></span><span class="ws-r">Economic calendar →</span>`;
+}
+
+// High-impact news within an hour of a trade, for the trade card. Trade times follow the session time zone setting.
+function newsNear(t) {
+  if (!t.time || !t.date) return [];
+  const at = new Date(t.date + "T" + t.time + (settings.sessionMode === "utc" ? ":00Z" : ":00")).getTime();
+  if (isNaN(at)) return [];
+  const curs = new Set(pairCurrencies(t.pair));
+  return newsEvents().filter(e => e.impact === "High" && curs.has(e.cur) && Math.abs(new Date(e.t).getTime() - at) <= 60 * 60 * 1000);
+}
+
+F("newsImpact").addEventListener("click", e => {
+  const b = e.target.closest("[data-imp]"); if (!b) return;
+  ui.newsImpact = b.dataset.imp; saveUi(); renderNews();
+});
+F("newsCurs").addEventListener("click", e => {
+  const b = e.target.closest("[data-cur]"); if (!b) return;
+  const c = b.dataset.cur;
+  if (c === "*") ui.newsCurs = [];
+  else if (c === "mine") ui.newsCurs = null;
+  else {
+    const set = newsCurSet() || new Set();
+    set.has(c) ? set.delete(c) : set.add(c);
+    ui.newsCurs = Array.from(set);
+  }
+  saveUi(); renderNews(); renderNewsStrip();
+});
+F("newsRefresh").addEventListener("click", () => { loadNews(true); renderNews(); });
+F("newsStrip").addEventListener("click", () => showTab("news"));
+setInterval(() => { renderNewsStrip(); if (!F("panel-news").hidden) renderNews(); }, 60 * 1000);
+renderNewsStrip();
+loadNews();
 
 /* ---------- Report a bug: a pre-filled GitHub issue (no trades or email included) ---------- */
 const BUG_REPO = "https://github.com/Kacperj01/Trading-Journal/issues/new";
