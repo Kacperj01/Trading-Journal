@@ -723,6 +723,45 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .cert-dlg .dlg-actions { justify-content: space-between; }
 #certDownload .ni { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
 .btn.danger-text { color: var(--red); }
+.rw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px; margin-bottom: 18px; }
+.card.rw-stat { padding: 14px 16px; display: grid; gap: 4px; }
+.rw-stat span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.rw-stat b { font: 600 20px var(--font-mono); }
+.rw-layout { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 1040px) { .rw-layout { grid-template-columns: minmax(0, 1fr); } }
+.rw-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rw-head h3 { margin: 0; }
+.rw-head .field { margin: 0; min-width: 180px; }
+.rw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 14px; }
+.rw-none { grid-column: 1 / -1; }
+.card.rw-card { padding: 0; overflow: hidden; display: grid; align-content: start; }
+.rw-cert { all: unset; box-sizing: border-box; position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 3; background: var(--surface-2); border-bottom: 1px solid var(--border); cursor: pointer; overflow: hidden; color: var(--muted); font-size: 13px; text-align: center; }
+.rw-cert img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.rw-cert iframe { width: 100%; height: 100%; border: 0; pointer-events: none; background: #fff; }
+.pdf-page { display: grid; place-items: center; width: 100%; height: 100%; min-height: 120px; color: var(--muted); font-size: 13px; }
+.rw-cert:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.rw-cert-empty { align-content: center; gap: 6px; border: 1.5px dashed var(--border-strong); margin: 12px 12px 0; width: auto; border-radius: var(--radius-sm); aspect-ratio: 16 / 7; color: var(--text-2); }
+.rw-cert-empty:hover { border-color: var(--accent); color: var(--text); }
+.rw-cert-empty .ni { width: 22px; height: 22px; opacity: .9; }
+.rw-cert-empty small { color: var(--muted); font-size: 12px; }
+.rw-cert.busy { pointer-events: none; }
+.rw-uploading { position: absolute; left: 10px; bottom: 10px; padding: 4px 10px; border-radius: 999px; background: rgba(6, 17, 31, .8); color: #fff; font-size: 12px; }
+.rw-body { padding: 14px 16px 16px; display: grid; gap: 12px; }
+.rw-top { display: flex; gap: 10px; align-items: center; }
+.rw-name { flex: 1; min-width: 0; }
+.rw-name b { display: block; font-size: 14.5px; font-weight: 600; }
+.rw-name small { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.rw-amt { font: 600 17px var(--font-mono); white-space: nowrap; }
+.rw-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.rw-actions .ni { width: 15px; height: 15px; margin-right: 6px; vertical-align: -3px; }
+.pay-preview { margin-top: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); overflow: hidden; display: grid; place-items: center; }
+.pay-preview img { display: block; max-width: 100%; max-height: 280px; object-fit: contain; }
+.pay-preview iframe { width: 100%; height: 280px; border: 0; background: #fff; }
+.rw-empty { display: grid; gap: 8px; max-width: 560px; }
+.rw-empty h3, .rw-empty p { margin: 0; }
+.fact-link { all: unset; cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.fact-link:hover { color: var(--accent); }
+.fact-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
 .rules-dlg { width: min(620px, calc(100vw - 32px)); max-width: none; }
 .rules-dlg .dlg-body { max-height: min(80vh, 760px); overflow-y: auto; overflow-x: hidden; }
 .rules-dlg .td-head > div { min-width: 0; }
@@ -1143,6 +1182,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="nav-label" aria-hidden="true">Journal</div>
       <button class="tab" role="tab" id="tab-journal" aria-controls="panel-journal" aria-selected="false" tabindex="-1" data-tab="journal"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.6"/></svg><span>Trade log</span></button>
       <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" data-tab="log"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.5 20.5H21"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7.5 18.5l-4 1 1-4z"/></svg><span>Log trade</span></button>
+      <button class="tab" role="tab" id="tab-rewards" aria-controls="panel-rewards" aria-selected="false" tabindex="-1" data-tab="rewards"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3a3 3 0 0 0 3.3 3.8M16.5 6h3a3 3 0 0 1-3.3 3.8M12 13.5v4M8 20.5h8"/></svg><span>Rewards</span></button>
       <div class="nav-label nav-bottom" aria-hidden="true">Account</div>
       <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M18 6h2M4 12h3M12 12h8M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="17.5" cy="18" r="2.2"/></svg><span>Settings</span></button>
       </div>
@@ -1634,6 +1674,57 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     </section>
 
     <!-- =================== SETTINGS =================== -->
+    <!-- =================== REWARDS =================== -->
+    <section id="panel-rewards" role="tabpanel" aria-labelledby="tab-rewards" hidden>
+      <div class="toolbar reveal" style="--d:0">
+        <div>
+          <h2>Rewards</h2>
+          <p class="lead">Your prop firm payouts and the certificates that came with them.</p>
+        </div>
+      </div>
+      <section class="card rw-empty reveal" style="--d:1" id="rwEmpty" hidden>
+        <h3>Add your funded account first</h3>
+        <p class="muted">Payouts are recorded against a trading account. Add the prop firm account that paid you, then come back here.</p>
+        <div><button class="btn primary" type="button" id="rwAddAcct">+ Add account</button></div>
+      </section>
+      <div id="rwMain">
+        <div class="rw-stats reveal" style="--d:1" id="rwStats"></div>
+        <div class="rw-layout section">
+          <form id="payForm" class="card accent-teal rw-form reveal" style="--d:2" novalidate aria-labelledby="payFormTitle">
+            <div class="card-head"><div><h3 id="payFormTitle">Add a payout</h3><div class="sub">Fill it in when a payout lands</div></div></div>
+            <div class="stack">
+              <div class="field"><label for="payAccount">Account</label><select id="payAccount"></select></div>
+              <div class="fields fields-pair" style="margin:0">
+                <div class="field"><label for="payDate">Date paid</label><input type="date" id="payDate" required></div>
+                <div class="field"><label for="payAmount">Amount you received</label><input type="number" step="any" min="0" id="payAmount" inputmode="decimal" placeholder="e.g. 1600" required></div>
+              </div>
+              <div class="field"><label for="payNote">Note (optional)</label><input type="text" id="payNote" maxlength="80" placeholder="e.g. 80% split, paid by Rise"></div>
+              <div class="field" id="payCertWrap">
+                <span class="lbl">Payout certificate (optional)</span>
+                <div class="cert-pick">
+                  <label class="btn sm file-label"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg><span id="payCertBtn">Attach image or PDF</span><input type="file" id="payCert" accept="image/*,application/pdf" aria-label="Attach a payout certificate"></label>
+                  <button class="btn sm ghost" type="button" id="payCertClear" hidden>Remove</button>
+                  <span class="cert-name" id="payCertName"></span>
+                </div>
+                <div class="pay-preview" id="payPreview" hidden></div>
+              </div>
+              <p class="hint" id="payCertOff" hidden>Sign in to your ELEV8 account to attach payout certificates.</p>
+              <p id="payMsg" class="q-msg" role="alert"></p>
+              <div><button class="btn primary" type="submit" id="paySubmit">Add payout</button></div>
+              <p class="muted" style="margin:0;font-size:12.5px">After a payout, a prop account's rules are tracked from its starting size again, the way FTMO, Funding Pips and Alpha Capital reset it.</p>
+            </div>
+          </form>
+          <section class="rw-listwrap reveal" style="--d:3" aria-labelledby="rwListTitle">
+            <div class="section-head rw-head">
+              <div><h3 id="rwListTitle">Your payouts</h3><span class="muted" id="rwCount" style="font-size:13px"></span></div>
+              <div class="field" id="rwFilterWrap"><label class="sr-only" for="rwFilter">Show payouts for</label><select id="rwFilter"></select></div>
+            </div>
+            <div class="rw-grid" id="rwList"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
     <section id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
       <div class="toolbar reveal" style="--d:0">
         <div>
@@ -1908,36 +1999,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="btn sm ghost" type="button" id="rulesClose" aria-label="Close">✕</button>
     </div>
     <div id="rulesBody"></div>
-  </div>
-</dialog>
-
-<dialog id="payDlg" class="rules-dlg pay-dlg" aria-labelledby="payTitle">
-  <div class="dlg-body">
-    <div class="td-head">
-      <div><h3 id="payTitle"></h3><div class="sub" id="paySub"></div></div>
-      <button class="btn sm ghost" type="button" id="payClose" aria-label="Close">✕</button>
-    </div>
-    <div class="pay-total" id="payTotal"></div>
-    <ul class="pay-list" id="payList"></ul>
-    <form id="payForm" class="rule-phase" novalidate>
-      <h4>Add a payout</h4>
-      <div class="fields fields-pair" style="margin:0">
-        <div class="field"><label for="payDate">Date paid</label><input type="date" id="payDate" required></div>
-        <div class="field"><label for="payAmount">Amount you received</label><input type="number" step="any" min="0" id="payAmount" inputmode="decimal" placeholder="e.g. 1600" required></div>
-        <div class="field wide"><label for="payNote">Note (optional)</label><input type="text" id="payNote" maxlength="80" placeholder="e.g. 80% split, paid by Rise"></div>
-        <div class="field wide" id="payCertWrap">
-          <span class="lbl">Payout certificate (optional)</span>
-          <div class="cert-pick">
-            <label class="btn sm file-label"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg>Attach image or PDF<input type="file" id="payCert" accept="image/*,application/pdf" aria-label="Attach a payout certificate"></label>
-            <span class="cert-name" id="payCertName"></span>
-          </div>
-        </div>
-        <p class="hint field wide" id="payCertOff" hidden>Sign in to your ELEV8 account to attach payout certificates.</p>
-      </div>
-      <p id="payMsg" class="q-msg" role="alert"></p>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm primary" type="submit" id="paySubmit">Add payout</button></div>
-      <p class="muted" style="margin:10px 0 0;font-size:12.5px">After a payout the account's rules are tracked from its starting size again, the way FTMO, Funding Pips and Alpha Capital reset it.</p>
-    </form>
   </div>
 </dialog>
 
@@ -4366,11 +4427,11 @@ async function importFile(file) {
 /* ======================================================================
    Tabs
    ====================================================================== */
-const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "news", "journal", "log", "settings"];
+const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "news", "journal", "log", "rewards", "settings"];
 const TAB_TITLES = { overview: "Performance overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade log" };
 const isAnalytics = name => name in TAB_TITLES;
 // Browser tab titles, e.g. "Calendar - ELEV8".
-const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", news: "News", journal: "Trade Log", log: "Log Trade", settings: "Settings" };
+const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", news: "News", journal: "Trade Log", log: "Log Trade", rewards: "Rewards", settings: "Settings" };
 const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
 function showTab(name, { focus = false, push = true } = {}) {
   if (!TABS.includes(name)) name = "overview";
@@ -4394,6 +4455,7 @@ function showTab(name, { focus = false, push = true } = {}) {
   if (isAnalytics(name)) renderDashboard();
   if (name === "log") { renderRecent(); updatePreview(); }
   if (name === "news") { renderNews(); loadNews(); }
+  if (name === "rewards") renderRewards();
   document.title = TAB_NAMES[name] + " - ELEV8";
   if (ui.tab !== name) { ui.tab = name; ui.scrollY = 0; saveUi(); }
   if (!restoring) window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
@@ -4402,6 +4464,7 @@ let restoring = false;
 
 function refreshAll() {
   refreshLists();
+  if (currentTab() === "rewards") renderRewards();
   renderListEditors();
   renderAccount();
   renderRecent();
@@ -4658,7 +4721,7 @@ function renderAccounts() {
     return `<li class="acct-item">
       ${firmLogo(a) || `<span class="acct-badge ${cls}">${esc(a.type)}</span>`}
       <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(meta)}</span><span>${plural(n, "trade")}</span></div>
-      <div class="acct-btns">${a.type === "Prop firm" ? `<button class="btn sm ghost" type="button" data-payouts="${esc(a.id)}">Payouts</button>` : ""}${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
+      <div class="acct-btns">${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
     </li>`;
   }).join("") : `<li class="acct-empty">No trading accounts yet. Add the live, demo or prop firm account you trade.</li>`;
   const loose = list.length ? unassignedTrades() : [];
@@ -4943,13 +5006,13 @@ function propCard(a) {
   if (st.bestShare != null) facts.push(`Best day ${pct(st.bestShare, 0)} of profit (max ${st.r.consistency.pct}%)`);
   if (ph.newsMins) facts.push(`No trades ±${ph.newsMins} min around red news`);
   if (ph.weekend) facts.push(esc(ph.weekend));
-  if (st.payouts) facts.push(`Paid out ${m(st.paidOut)} · ${plural(st.payouts, "payout")}`);
+  if (st.payouts) facts.push(`<button class="fact-link" type="button" data-goto="rewards">Paid out ${m(st.paidOut)} · ${plural(st.payouts, "payout")}</button>`);
   return `<article class="card prop-card">
     <div class="pc-head">${firmLogo(a)}<div class="pc-name"><b>${esc(acctLabel(a))}</b><small>${esc(firm.name)} · ${esc(prog.name)} · ${esc(ph.name)}</small></div><span class="pc-status ${status[1]}">${status[0]}</span></div>
     ${st.breach ? `<p class="td-news" style="margin:0"><span class="imp High" aria-hidden="true"></span>${esc(st.breach.rule)} reached on ${esc(fmtDate(st.breach.date))} (closed trades). Check your firm dashboard.</p>` : ""}
     ${parts.join("")}
     ${facts.length ? `<div class="pc-facts">${facts.map(f => `<span>${f}</span>`).join("")}</div>` : ""}
-    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns"><button class="btn sm ghost" type="button" data-payouts="${esc(a.id)}">Payouts</button><button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
+    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns"><button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
   </article>`;
 }
 // Overview banner: any prop account at 70%+ of its daily or max loss, or past a limit. Dismissible
@@ -5287,7 +5350,8 @@ async function openCert(accountId, payoutId) {
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   try {
     const url = await certUrl(p.cert);
-    F("certView").innerHTML = isPdf(p.cert) ? `<iframe src="${url}" title="Payout certificate (PDF)"></iframe>` : `<img src="${url}" alt="Payout certificate for ${esc(money(Number(p.amount) || 0, { signed: false }))} on ${esc(fmtDate(p.date))}">`;
+    F("certView").innerHTML = certMarkup(url, p.cert, `Payout certificate for ${money(Number(p.amount) || 0, { signed: false })} on ${fmtDate(p.date)}`);
+    hydratePdfs(F("certView"));
     F("certDownload").href = url; F("certDownload").download = p.cert.name || "payout-certificate";
   } catch (e) { F("certView").innerHTML = `<p class="q-msg" style="margin:0">Couldn't open it: ${esc(e.message)}</p>`; }
 }
@@ -5302,36 +5366,96 @@ F("certRemove").addEventListener("click", async () => {
   toast("Certificate removed");
 });
 
-/* ---------- Payouts (funded prop accounts) ---------- */
-function openPayouts(a) {
-  if (!a) return;
-  F("payDlg").dataset.id = a.id;
-  F("payTitle").innerHTML = `${firmLogo(a, "sm")}<span>${esc(acctLabel(a))} payouts</span>`;
-  F("paySub").textContent = [a.firm, programOf(a) ? programOf(a).name : "", a.phase].filter(Boolean).join(" · ");
-  renderPayouts();
-  F("payDate").value = isoDate(new Date()); F("payAmount").value = ""; F("payNote").value = ""; F("payMsg").textContent = "";
-  F("payCert").value = ""; F("payCertName").textContent = "";
+/* ---------- Rewards: payouts (per account, synced with settings) and their certificates ---------- */
+const payAccounts = () => accounts().slice().sort((a, b) => (b.type === "Prop firm") - (a.type === "Prop firm"));
+let payFileUrl = ""; // the chosen certificate, shown before it's uploaded
+function renderRewards() {
+  const list = payAccounts();
+  F("rwEmpty").hidden = !!list.length; F("rwMain").hidden = !list.length;
+  if (!list.length) return;
+  const opts = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+  const cur = F("payAccount").value;
+  F("payAccount").innerHTML = opts;
+  F("payAccount").value = acctById(cur) ? cur : (list.find(a => a.id === defaultAccount()) || list[0]).id;
+  F("rwFilter").innerHTML = `<option value="">All accounts</option>` + opts;
+  F("rwFilter").value = acctById(ui.rwAccount) ? ui.rwAccount : "";
+  F("rwFilterWrap").hidden = list.length < 2;
   F("payCertWrap").hidden = !sbOn(); F("payCertOff").hidden = sbOn();
-  const dlg = F("payDlg");
-  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  if (!F("payDate").value) F("payDate").value = isoDate(new Date());
+  const all = list.flatMap(a => payoutsOf(a).map(p => ({ a, p })));
+  const amt = x => Number(x.p.amount) || 0, m = v => money(v, { signed: false, decimals: 0 }), year = String(new Date().getFullYear());
+  const tile = (label, value, cls = "") => `<div class="card rw-stat"><span>${label}</span><b class="${cls}">${value}</b></div>`;
+  F("rwStats").innerHTML = tile("Total received", m(sum(all.map(amt))), all.length ? "pos" : "")
+    + tile(`In ${year}`, m(sum(all.filter(x => x.p.date.startsWith(year)).map(amt))))
+    + tile("Payouts", all.length)
+    + tile("Largest payout", all.length ? m(Math.max(...all.map(amt))) : "—")
+    + tile("Certificates", `${all.filter(x => x.p.cert).length} of ${all.length}`);
+  const shown = all.filter(x => !F("rwFilter").value || x.a.id === F("rwFilter").value).sort((x, y) => y.p.date.localeCompare(x.p.date));
+  F("rwCount").textContent = plural(shown.length, "payout");
+  F("rwList").innerHTML = shown.length ? shown.map(rwCard).join("")
+    : `<p class="none rw-none">No payouts${F("rwFilter").value ? " for this account" : ""} yet. Add your first one with the form${window.innerWidth > 1040 ? " on the left" : " above"}.</p>`;
+  loadCertPreviews();
 }
-function renderPayouts() {
-  const a = acctById(F("payDlg").dataset.id);
-  if (!a) return;
-  const list = payoutsOf(a), total = sum(list.map(p => Number(p.amount) || 0));
-  const size = Number(a.size) || 0;
-  F("payTotal").innerHTML = list.length
-    ? `<div><span>Total received</span><b class="pos">${money(total, { signed: false })}</b></div><div><span>Payouts</span><b>${list.length}</b></div>${size ? `<div><span>Return on account size</span><b>${pct(total / size, 1)}</b></div>` : ""}<div><span>Certificates</span><b>${list.filter(p => p.cert).length} of ${list.length}</b></div>`
-    : `<p class="muted" style="margin:0">No payouts recorded yet. Add each one when it lands, and see your total here and on the Overview card.</p>`;
-  const what = p => `${money(Number(p.amount) || 0, { signed: false })} on ${fmtDate(p.date)}`;
-  const certCell = p => p.cert
-    ? `<button class="cert-thumb" type="button" data-cert-view="${esc(p.id)}" aria-label="View certificate for ${esc(what(p))}">${isPdf(p.cert) ? `${ico("doc")}<span>PDF</span>` : `<img data-cert-img="${esc(p.id)}" alt="">`}</button>`
-    : sbOn() ? `<label class="btn sm ghost file-label cert-add" title="Attach certificate">${ico("clip")}<span class="cert-add-l">Certificate</span><input type="file" data-cert-add="${esc(p.id)}" accept="image/*,application/pdf" aria-label="Attach a certificate for ${esc(what(p))}"></label>` : "";
-  F("payList").innerHTML = list.slice().reverse().map(p => `<li><span class="pay-d">${esc(fmtDate(p.date))}</span><span class="pay-n">${esc(p.note || "")}</span><b class="pos pay-a">${money(Number(p.amount) || 0, { signed: false })}</b><span class="pay-c">${certCell(p)}</span><button class="btn sm ghost pay-x" type="button" data-pay-rm="${esc(p.id)}" aria-label="Remove payout of ${esc(what(p))}">✕</button></li>`).join("");
-  // Image thumbnails load after the list draws; a file that can't be fetched shows a document icon instead.
-  $$("img[data-cert-img]", F("payList")).forEach(img => {
-    const p = list.find(x => x.id === img.dataset.certImg);
-    certUrl(p.cert).then(u => { img.src = u; }).catch(() => { img.replaceWith(document.createRange().createContextualFragment(ico("doc"))); });
+function rwCard({ a, p }) {
+  const amt = money(Number(p.amount) || 0, { signed: false }), what = `${amt} on ${fmtDate(p.date)}`, ids = `data-acct="${esc(a.id)}" data-pay="${esc(p.id)}"`;
+  const cert = p.cert
+    ? `<button class="rw-cert" type="button" data-cert-view ${ids} aria-label="Open the certificate for ${esc(what)}"><span class="rw-cert-load" data-cert-load ${ids}>Loading certificate…</span></button>`
+    : sbOn() ? `<label class="rw-cert rw-cert-empty file-label">${ico("clip")}<span class="cert-add-l">Attach certificate</span><small>Image or PDF, up to 10 MB</small><input type="file" data-cert-add ${ids} accept="image/*,application/pdf" aria-label="Attach a certificate for ${esc(what)}"></label>` : "";
+  return `<article class="card rw-card">${cert}
+    <div class="rw-body">
+      <div class="rw-top">${firmLogo(a, "sm")}<div class="rw-name"><b>${esc(acctLabel(a))}</b><small>${esc(fmtDate(p.date))}${p.note ? " · " + esc(p.note) : ""}</small></div><b class="rw-amt pos">${amt}</b></div>
+      <div class="rw-actions">${p.cert ? `<button class="btn sm ghost" type="button" data-cert-view ${ids}>${ico("doc")}Open certificate</button>` : ""}<button class="btn sm ghost danger-text" type="button" data-pay-rm ${ids}>Delete payout</button></div>
+    </div>
+  </article>`;
+}
+const payoutBy = el => { const a = acctById(el.dataset.acct); return { a, p: a && payoutsOf(a).find(x => x.id === el.dataset.pay) }; };
+// PDFs show as a picture of their first page (drawn with pdf.js), since phones can't reliably show a PDF in a frame.
+const certMarkup = (url, cert, alt) => isPdf(cert) ? `<span class="pdf-page" data-pdf-src="${esc(url)}" data-pdf-alt="${esc(alt)}">Loading PDF…</span>` : `<img src="${url}" alt="${esc(alt)}">`;
+let pdfjsLoad = null;
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (!pdfjsLoad) pdfjsLoad = (async () => {
+    // The site's own copy (docs/vendor/pdfjs), or the same version from cdnjs elsewhere.
+    const bases = [/^https?:$/.test(location.protocol) && !inViewer() ? "vendor/pdfjs/" : "", "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/"].filter(Boolean);
+    for (const base of bases) {
+      try {
+        await new Promise((ok, bad) => { const el = document.createElement("script"); el.src = base + "pdf.min.js"; el.onload = ok; el.onerror = bad; document.head.appendChild(el); });
+        if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + "pdf.worker.min.js"; return window.pdfjsLib; }
+      } catch (e) { /* try the next copy */ }
+    }
+    throw new Error("PDF preview unavailable");
+  })().catch(e => { pdfjsLoad = null; throw e; });
+  return pdfjsLoad;
+}
+const pdfPages = new Map(); // PDF object URL → picture of its first page
+async function pdfFirstPage(url) {
+  if (!pdfPages.has(url)) pdfPages.set(url, (async () => {
+    const lib = await loadPdfJs(), doc = await lib.getDocument({ url, isEvalSupported: false }).promise;
+    try {
+      const page = await doc.getPage(1), v = page.getViewport({ scale: Math.min(3, 1400 / page.getViewport({ scale: 1 }).width) });
+      const c = document.createElement("canvas");
+      c.width = Math.round(v.width); c.height = Math.round(v.height);
+      await page.render({ canvasContext: c.getContext("2d"), viewport: v }).promise;
+      return URL.createObjectURL(await new Promise(r => c.toBlob(r, "image/png")));
+    } finally { doc.destroy(); }
+  })().catch(e => { pdfPages.delete(url); throw e; }));
+  return pdfPages.get(url);
+}
+function hydratePdfs(root) {
+  $$(".pdf-page[data-pdf-src]", root).forEach(el => {
+    const src = el.dataset.pdfSrc, alt = el.dataset.pdfAlt || "PDF certificate";
+    el.removeAttribute("data-pdf-src");
+    pdfFirstPage(src).then(img => { if (el.isConnected) el.outerHTML = `<img src="${img}" alt="${esc(alt)}">`; })
+      .catch(() => { if (el.isConnected) el.outerHTML = `<iframe src="${src}#toolbar=0&navpanes=0&view=FitH" title="${esc(alt)}" tabindex="-1"></iframe>`; });
+  });
+}
+// Certificates show in their cards straight away; ones uploaded on this device are already in memory.
+function loadCertPreviews() {
+  $$("[data-cert-load]", F("rwList")).forEach(el => {
+    const { a, p } = payoutBy(el);
+    if (!p || !p.cert) return;
+    certUrl(p.cert).then(u => { if (el.isConnected) { const box = el.parentNode; el.outerHTML = certMarkup(u, p.cert, `Payout certificate for ${money(Number(p.amount) || 0, { signed: false })} on ${fmtDate(p.date)}`); hydratePdfs(box); } })
+      .catch(err => { el.textContent = "Couldn't load the certificate: " + err.message; });
   });
 }
 function savePayouts(id, list) {
@@ -5340,51 +5464,79 @@ function savePayouts(id, list) {
   all[i] = Object.assign({}, all[i], { payouts: list });
   settings.accounts = all;
   saveSettings();
-  renderPayouts();
+  renderRewards();
   renderAccounts();
-  if (isAnalytics(currentTab())) renderDashboard();
 }
+async function attachCert(a, payoutId, file) {
+  const cert = await uploadCert(a.id, payoutId, file);
+  certUrls.set(cert.path, URL.createObjectURL(file)); // show the file we have rather than downloading it again
+  return cert;
+}
+function clearPayFile() {
+  F("payCert").value = ""; F("payCertName").textContent = ""; F("payCertClear").hidden = true;
+  F("payCertBtn").textContent = "Attach image or PDF";
+  F("payPreview").hidden = true; F("payPreview").innerHTML = "";
+  if (payFileUrl) { URL.revokeObjectURL(payFileUrl); payFileUrl = ""; }
+}
+F("payCert").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (payFileUrl) URL.revokeObjectURL(payFileUrl);
+  payFileUrl = "";
+  if (!f) { clearPayFile(); return; }
+  payFileUrl = URL.createObjectURL(f);
+  const pdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+  F("payCertName").textContent = `${f.name} · ${(f.size / 1048576).toFixed(f.size < 1048576 ? 2 : 1)} MB`;
+  F("payCertBtn").textContent = "Change file"; F("payCertClear").hidden = false;
+  F("payPreview").innerHTML = certMarkup(payFileUrl, { type: pdf ? "application/pdf" : f.type, path: f.name }, "Certificate preview");
+  F("payPreview").hidden = false;
+  hydratePdfs(F("payPreview"));
+});
+F("payCertClear").addEventListener("click", clearPayFile);
 F("payForm").addEventListener("submit", async e => {
   e.preventDefault();
   if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return; }
-  const a = acctById(F("payDlg").dataset.id), amount = num(F("payAmount").value), date = F("payDate").value;
-  if (!date || !(amount > 0)) { F("payMsg").textContent = !date ? "Add the date it was paid." : "Add the amount you received."; (date ? F("payAmount") : F("payDate")).focus(); return; }
+  const a = acctById(F("payAccount").value), amount = num(F("payAmount").value), date = F("payDate").value;
+  const bad = !a ? ["payAccount", "Choose the account that paid you."] : !date ? ["payDate", "Add the date it was paid."] : !(amount > 0) ? ["payAmount", "Add the amount you received."] : null;
+  if (bad) { F("payMsg").textContent = bad[1]; F(bad[0]).focus(); return; }
   const pay = { id: uid(), date, amount, note: F("payNote").value.trim() }, file = F("payCert").files[0];
   let failed = "";
   if (file) {
-    F("paySubmit").disabled = true; F("paySubmit").textContent = "Uploading…";
-    try { pay.cert = await uploadCert(a.id, pay.id, file); } catch (err) { failed = err.message; }
+    F("paySubmit").disabled = true; F("paySubmit").textContent = "Uploading certificate…";
+    try { pay.cert = await attachCert(a, pay.id, file); } catch (err) { failed = err.message; }
     F("paySubmit").disabled = false; F("paySubmit").textContent = "Add payout";
   }
   savePayouts(a.id, [...payoutsOf(a), pay]);
-  F("payAmount").value = ""; F("payNote").value = ""; F("payCert").value = ""; F("payCertName").textContent = "";
-  F("payMsg").textContent = failed ? `Payout added, but the certificate didn't upload: ${failed}.` : "";
+  F("payAmount").value = ""; F("payNote").value = ""; clearPayFile();
+  F("payMsg").textContent = failed ? `Payout added, but the certificate didn't upload: ${failed}. Attach it from the payout's card.` : "";
   toast(`Payout of ${money(amount, { signed: false })} added${pay.cert ? " with its certificate" : ""}`);
 });
-F("payCert").addEventListener("change", e => {
-  const f = e.target.files[0];
-  F("payCertName").textContent = f ? `${f.name} · ${(f.size / 1048576).toFixed(f.size < 1048576 ? 2 : 1)} MB` : "";
-});
-F("payList").addEventListener("change", async e => {
+F("payForm").addEventListener("input", () => { F("payMsg").textContent = ""; });
+F("rwFilter").addEventListener("change", e => { ui.rwAccount = e.target.value; saveUi(); renderRewards(); });
+F("rwAddAcct").addEventListener("click", () => openAccountDlg(null, false));
+// Attach to an existing payout: the picked file shows in the card at once, then uploads.
+F("rwList").addEventListener("change", async e => {
   const input = e.target.closest("[data-cert-add]"), file = input && input.files[0];
   if (!file) return;
-  const a = acctById(F("payDlg").dataset.id), id = input.dataset.certAdd, label = input.closest("label");
-  label.classList.add("busy"); label.querySelector(".cert-add-l").textContent = "Uploading…";
-  try { setPayout(a.id, id, { cert: await uploadCert(a.id, id, file) }); toast("Certificate attached"); }
-  catch (err) { toast("Upload failed: " + err.message); renderPayouts(); }
+  const { a, p } = payoutBy(input), box = input.closest(".rw-cert"), local = URL.createObjectURL(file);
+  const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+  box.classList.remove("rw-cert-empty"); box.classList.add("busy");
+  box.innerHTML = certMarkup(local, { type: pdf ? "application/pdf" : file.type, path: file.name }, "Certificate being uploaded") + `<span class="rw-uploading">Uploading…</span>`;
+  hydratePdfs(box);
+  try { const cert = await uploadCert(a.id, p.id, file); certUrls.set(cert.path, local); setPayout(a.id, p.id, { cert }); toast("Certificate attached"); }
+  catch (err) { URL.revokeObjectURL(local); toast("Upload failed: " + err.message); renderRewards(); }
 });
-F("payList").addEventListener("click", async e => {
+F("rwList").addEventListener("click", async e => {
   const view = e.target.closest("[data-cert-view]");
-  if (view) { openCert(F("payDlg").dataset.id, view.dataset.certView); return; }
-  const b = e.target.closest("[data-pay-rm]");
-  if (!b) return;
-  const a = acctById(F("payDlg").dataset.id), p = payoutsOf(a).find(x => x.id === b.dataset.payRm);
-  if (p && p.cert && !await askConfirm("This payout and its certificate will be deleted.", { title: "Remove payout?", ok: "Remove" })) return;
-  if (p) removeCertFile(p.cert);
-  savePayouts(a.id, payoutsOf(a).filter(x => x.id !== b.dataset.payRm));
+  if (view) { openCert(view.dataset.acct, view.dataset.pay); return; }
+  const rm = e.target.closest("[data-pay-rm]");
+  if (!rm) return;
+  const { a, p } = payoutBy(rm);
+  if (!p) return;
+  if (!await askConfirm(`The ${money(Number(p.amount) || 0, { signed: false })} payout from ${fmtDate(p.date)}${p.cert ? " and its certificate" : ""} will be deleted.`, { title: "Delete payout?", ok: "Delete" })) return;
+  removeCertFile(p.cert);
+  savePayouts(a.id, payoutsOf(a).filter(x => x.id !== p.id));
+  toast("Payout deleted");
 });
-F("payClose").addEventListener("click", () => F("payDlg").close());
-document.addEventListener("click", e => { const b = e.target.closest("[data-payouts]"); if (b) openPayouts(acctById(b.dataset.payouts)); });
 
 // After a trade is saved: warn when a prop account gets close to, or past, a limit.
 function propWarn(t) {
