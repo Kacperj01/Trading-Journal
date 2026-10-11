@@ -1,0 +1,33 @@
+name: Weekly review emails
+
+# Every Sunday at 17:00 UTC (6pm UK in summer, 5pm in winter), emails each user who turned on
+# "Email me my weekly review" their week, from reviews@elev8tradingjournal.com via Resend.
+# Run it by hand with an email address to send a one-off test to just that account.
+on:
+  schedule:
+    - cron: "0 17 * * 0"
+  workflow_dispatch:
+    inputs:
+      only_email:
+        description: "Send a test to just this account's email (leave blank to send to everyone opted in)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-review
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send weekly reviews
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ONLY_EMAIL: ${{ github.event.inputs.only_email }}
+        run: python3 site/weekly_review.py
