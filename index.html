@@ -2329,7 +2329,9 @@ const DEFAULT_SETTINGS = {
   pairs: ["XAUUSD", "GBPUSD", "GBPJPY", "US30", "NAS100", "EURUSD", "USDJPY"],
   setups: ["Asia Sweep", "PDH/PDL Sweep", "Supply/Demand Zone", "Break & Retest", "Breakout"],
   sessions: ["Asia", "London", "New York", "Overlap"],
-  emotions: ["Confident", "Unsure", "Neutral", "Stressed", "FOMO", "Proud", "Disappointed", "Lesson learned", "Angry"],
+  emotions: ["Confident", "Unsure", "Neutral", "Stressed", "FOMO", "Impatient"],            // before a trade
+  emotionsAfter: ["Proud", "Lesson learned", "Angry", "Disappointed", "Satisfied"],         // after a trade
+  emotionsSplit: false, // set once the old single emotion list has been split into before / after
   planRules: ["Traded one of my setups", "Waited for confirmation", "Risk within my plan", "Stop loss set before entry", "No red news within 30 min"],
   mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"],
   accounts: [],     // trading accounts: { id, type: Live | Demo | Prop firm, size, broker, firm, phase, platform, name }
@@ -2353,7 +2355,9 @@ function learnLists(list) {
   add("pairs", list.map(t => t.pair));
   add("setups", list.map(t => t.setup));
   add("sessions", list.map(t => t.session));
-  add("emotions", list.flatMap(t => [t.emotionBefore, t.emotionAfter]));
+  // An emotion that belongs to the other list (e.g. "Proud" logged as a before-emotion) isn't copied across.
+  add("emotions", list.map(t => t.emotionBefore).filter(e => !(settings.emotionsAfter || []).includes(e)));
+  add("emotionsAfter", list.map(t => t.emotionAfter).filter(e => !(settings.emotions || []).includes(e)));
   add("mistakes", list.flatMap(t => String(t.mistakes || "").split(",").map(x => x.trim())));
   return changed;
 }
@@ -3805,7 +3809,25 @@ function fillSelect(sel, items, { placeholder, value } = {}) {
   }
 }
 
+// Journals from before the split had one emotion list for both fields: give them the new before / after
+// lists, keeping any emotions they added themselves on the side they were used.
+const OLD_EMOTIONS = ["Confident", "Unsure", "Neutral", "Stressed", "FOMO", "Proud", "Disappointed", "Lesson learned", "Angry"];
+function splitEmotions() {
+  if (settings.emotionsSplit) return;
+  const own = (settings.emotions || []).filter(e => e && !OLD_EMOTIONS.includes(e));
+  const usedAfter = new Set(realTrades.map(t => t.emotionAfter).filter(Boolean));
+  const before = DEFAULT_SETTINGS.emotions.slice(), after = DEFAULT_SETTINGS.emotionsAfter.slice();
+  own.forEach(e => {
+    const list = usedAfter.has(e) && !realTrades.some(t => t.emotionBefore === e) ? after : before;
+    if (!list.includes(e)) list.push(e);
+  });
+  settings.emotions = before;
+  settings.emotionsAfter = after;
+  settings.emotionsSplit = true;
+  if (!persist.loading) saveSettings();
+}
 function refreshLists() {
+  splitEmotions();
   const allSessions = Array.from(new Set([...settings.sessions, ...trades.map(t => t.session).filter(Boolean)]));
   const allSetups = Array.from(new Set([...settings.setups, ...trades.map(t => t.setup).filter(Boolean)]));
   $("#pairList").innerHTML = settings.pairs.map(p => `<option value="${esc(p)}">`).join("");
@@ -3814,7 +3836,7 @@ function refreshLists() {
   fillSelect($("#tSessionSel"), settings.sessions, { placeholder: "Select session", value: $("#tSessionSel").value });
   refreshPlanChecks();
   fillSelect($("#tEmoBefore"), settings.emotions, { placeholder: "—", value: $("#tEmoBefore").value });
-  fillSelect($("#tEmoAfter"), settings.emotions, { placeholder: "—", value: $("#tEmoAfter").value });
+  fillSelect($("#tEmoAfter"), settings.emotionsAfter, { placeholder: "—", value: $("#tEmoAfter").value });
   fillSelect($("#qSession"), settings.sessions, { placeholder: "Select", value: $("#qSession").value });
   fillSelect($("#qEmo"), settings.emotions, { placeholder: "—", value: $("#qEmo").value });
   fillSelect($("#fSession"), allSessions, { placeholder: "All sessions", value: ui.session });
@@ -3949,7 +3971,7 @@ function loadIntoForm(t) {
   setNum("tEntry", t.entry); setNum("tStop", t.stop); setNum("tTarget", t.target); setNum("tExit", t.exit);
   setNum("tSize", t.size); setNum("tRisk", t.risk); setNum("tPnl", t.pnl); setNum("tR", t.r); setNum("tFees", t.fees);
   fillSelect(F("tEmoBefore"), settings.emotions, { placeholder: "—", value: t.emotionBefore || "" });
-  fillSelect(F("tEmoAfter"), settings.emotions, { placeholder: "—", value: t.emotionAfter || "" });
+  fillSelect(F("tEmoAfter"), settings.emotionsAfter, { placeholder: "—", value: t.emotionAfter || "" });
   F("tConf").value = t.confidence || 3; F("tConfOut").textContent = (t.confidence || 3) + "/5";
   syncPlanForm(t);
   F("tMistakes").value = t.mistakes || "";
@@ -4028,7 +4050,8 @@ const LISTS = [
   { key: "pairs", title: "Pairs / instruments", placeholder: "Add a pair, e.g. AUDUSD", upper: true },
   { key: "setups", title: "Setups", placeholder: "Add a setup, e.g. FVG Retest" },
   { key: "sessions", title: "Sessions", placeholder: "Add a session, e.g. London Close" },
-  { key: "emotions", title: "Emotions", placeholder: "Add an emotion, e.g. Overconfident" },
+  { key: "emotions", title: "Emotions before a trade", placeholder: "Add an emotion, e.g. Overconfident" },
+  { key: "emotionsAfter", title: "Emotions after a trade", placeholder: "Add an emotion, e.g. Relieved" },
   { key: "mistakes", title: "Common mistakes", placeholder: "Add a mistake, e.g. Ignored HTF bias" },
   { key: "planRules", title: "Trading plan rules", placeholder: "Add a rule, e.g. Only trade the London open", sub: "ticked off on every trade" }
 ];
