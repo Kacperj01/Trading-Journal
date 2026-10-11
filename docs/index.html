@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "b3ff0d048b";</script>
+<script>window.ELEV8_BUILD = "8fb3c23cb4";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -153,7 +153,7 @@ header.top {
   background: linear-gradient(120deg, rgba(42, 127, 217, 0.34), rgba(37, 192, 192, 0.16));
   box-shadow: inset 0 0 0 1px rgba(47, 208, 200, 0.38);
 }
-main { padding: 28px 0 80px; overflow-x: clip; }
+main { padding: 28px 0 80px; overflow: clip; position: relative; } /* the background glows never make a short page scroll */
 [role="tabpanel"][hidden] { display: none; }
 
 .section { margin-top: 22px; }
@@ -439,6 +439,23 @@ input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-dat
 .recent li { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
 
 /* ---------- Settings ---------- */
+/* Settings sections */
+.set-nav { display: flex; width: max-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; margin: 4px 0 22px; }
+.set-nav::-webkit-scrollbar { display: none; }
+@media (max-width: 760px) {
+  .set-nav { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; overflow: visible; }
+  .set-nav button { flex-direction: column; justify-content: center; gap: 3px; padding: 8px 2px; font-size: 12px; min-width: 0; }
+  .set-nav .ico { font-size: 17px; line-height: 1; }
+  #panel-settings .fields-pair { grid-template-columns: 1fr; }
+}
+.set-head { margin: 0 0 14px; }
+.set-head h3 { margin: 0 0 4px; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.set-head p { margin: 0; color: var(--muted); font-size: 14px; max-width: 640px; }
+.set-narrow { max-width: 720px; }
+.set-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.set-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.set-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.danger-zone { border-color: rgba(255, 92, 122, 0.22); }
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
 @media (max-width: 400px) { .settings-grid { grid-template-columns: 1fr; } }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
@@ -1272,46 +1289,35 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="toolbar reveal" style="--d:0">
         <div>
           <h2>Settings</h2>
-          <p class="lead">Customise your account, dropdown lists and data.</p>
+          <p class="lead">Your profile, trading accounts, preferences and data.</p>
         </div>
       </div>
 
-      <div class="settings-grid section">
-        <section class="card accent-teal reveal" style="--d:1" aria-labelledby="tradeAcctTitle">
-          <div class="card-head">
-            <div><h3 id="tradeAcctTitle">Trading accounts</h3><div class="sub">Live, demo and prop firm accounts you trade</div></div>
-            <button class="btn sm primary" type="button" id="acctAdd">+ Add account</button>
-          </div>
-          <ul class="acct-list" id="acctList"></ul>
-          <div class="acct-unassigned" id="acctUnassigned" hidden>
-            <p id="acctUnassignedText"></p>
-            <div class="acct-assign">
-              <label class="sr-only" for="acctAssignSel">Account to link them to</label>
-              <select id="acctAssignSel"></select>
-              <button class="btn sm" type="button" id="acctAssignBtn">Link trades</button>
-            </div>
-          </div>
-        </section>
+      <div class="seg-tabs set-nav reveal" style="--d:0" role="group" aria-label="Settings sections" id="setNav">
+        <button type="button" data-pane="profile" id="setNavProfile" hidden><span class="ico" aria-hidden="true">👤</span>Profile</button>
+        <button type="button" data-pane="accounts"><span class="ico" aria-hidden="true">💼</span>Accounts</button>
+        <button type="button" data-pane="prefs"><span class="ico" aria-hidden="true">⚙️</span>Preferences</button>
+        <button type="button" data-pane="lists"><span class="ico" aria-hidden="true">🗂️</span>Lists</button>
+        <button type="button" data-pane="data"><span class="ico" aria-hidden="true">💾</span>Data</button>
+      </div>
 
-        <section class="card accent-blue reveal" style="--d:1" aria-labelledby="acctTitle">
-          <div class="card-head"><h3 id="acctTitle">Preferences</h3></div>
-          <form class="stack" id="acctForm">
-            <div class="field"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint" hidden>Worked out from your trading account sizes</span></div>
-            <div class="field"><label for="sCurrency">Currency symbol</label><input type="text" id="sCurrency" maxlength="4"></div>
-            <div class="field"><label for="sRisk">Default risk per trade</label><input type="number" step="any" id="sRisk" inputmode="decimal"></div>
-            <div class="field">
-              <label for="sSessionMode">Session time zone for auto-fill</label>
-              <select id="sSessionMode">
-                <option value="utc">UTC</option>
-                <option value="local">My local time</option>
-              </select>
-            </div>
-            <div><button class="btn primary" type="submit">Save preferences</button></div>
-          </form>
-        </section>
+      <!-- Profile & sync -->
+      <div class="set-pane" data-pane="profile" hidden>
+        <div class="set-head"><h3>Profile</h3><p>Who you are and how this journal syncs between your devices.</p></div>
+        <div class="settings-grid">
+          <section class="card accent-blue" aria-labelledby="profTitle" id="profileCard" hidden>
+            <div class="card-head"><div><h3 id="profTitle">Your details</h3><div class="sub">Used for your welcome message</div></div></div>
+            <form id="profileForm" class="stack" novalidate>
+              <div class="fields fields-pair" style="margin:0">
+                <div class="field"><label for="profName">Full name</label><input type="text" id="profName" autocomplete="name" autocapitalize="words"></div>
+                <div class="field"><label for="profAge">Age</label><input type="number" id="profAge" inputmode="numeric" min="13" max="120" step="1"></div>
+              </div>
+              <div><button class="btn primary" type="submit">Save details</button></div>
+            </form>
+          </section>
 
-        <section class="card accent-teal reveal" style="--d:2" aria-labelledby="syncTitle" id="syncCard" hidden>
-          <div class="card-head"><div><h3 id="syncTitle">Sync</h3><div class="sub">Keep your trades the same on all your devices</div></div></div>
+          <section class="card accent-teal" aria-labelledby="syncTitle" id="syncCard" hidden>
+            <div class="card-head"><div><h3 id="syncTitle">Sync &amp; sign-in</h3><div class="sub">Keep your trades the same on all your devices</div></div></div>
           <div id="syncSignedOut" class="stack">
             <p class="muted" style="margin:0;font-size:13.5px">Sign in with the same email on each device. Trades on this device are added to your account the first time you sign in.</p>
             <form id="syncForm" class="stack" novalidate>
@@ -1324,43 +1330,102 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               </div>
             </form>
           </div>
-          <div id="syncSignedIn" class="stack" hidden>
-            <p style="margin:0;font-size:14px">Signed in as <strong id="syncWho"></strong></p>
-            <p class="muted" style="margin:0;font-size:13px" id="syncLast"></p>
-            <form id="profileForm" class="stack" novalidate style="border-top:1px solid var(--border);padding-top:12px">
-              <div class="fields fields-pair" style="margin:0">
-                <div class="field"><label for="profName">Full name</label><input type="text" id="profName" autocomplete="name" autocapitalize="words"></div>
-                <div class="field"><label for="profAge">Age</label><input type="number" id="profAge" inputmode="numeric" min="13" max="120" step="1"></div>
+            <div id="syncSignedIn" class="stack" hidden>
+              <div class="set-row"><span class="muted">Signed in as</span><strong id="syncWho"></strong></div>
+              <div class="set-row"><span class="muted">Status</span><span id="syncLast"></span></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                <button class="btn primary" type="button" id="syncNow">Sync now</button>
+                <button class="btn danger" type="button" id="syncSignOut">Sign out</button>
               </div>
-              <div><button class="btn" type="submit">Save profile</button></div>
-            </form>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn primary" type="button" id="syncNow">Sync now</button>
-              <button class="btn danger" type="button" id="syncSignOut">Sign out</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Trading accounts -->
+      <div class="set-pane" data-pane="accounts" hidden>
+        <div class="set-head"><h3>Trading accounts</h3><p>The live, demo and prop firm accounts you trade. Each trade can be linked to one, and your balance follows their sizes.</p></div>
+        <section class="card accent-teal set-narrow" aria-labelledby="tradeAcctTitle">
+          <div class="card-head">
+            <div><h3 id="tradeAcctTitle">Your accounts</h3><div class="sub" id="acctCount"></div></div>
+            <button class="btn sm primary" type="button" id="acctAdd">+ Add account</button>
+          </div>
+          <ul class="acct-list" id="acctList"></ul>
+          <div class="acct-unassigned" id="acctUnassigned" hidden>
+            <p id="acctUnassignedText"></p>
+            <div class="acct-assign">
+              <label class="sr-only" for="acctAssignSel">Account to link them to</label>
+              <select id="acctAssignSel"></select>
+              <button class="btn sm" type="button" id="acctAssignBtn">Link trades</button>
             </div>
           </div>
         </section>
+      </div>
 
-        <section class="card accent-green reveal" style="--d:2" aria-labelledby="dataTitle">
-          <div class="card-head"><h3 id="dataTitle">Import &amp; export</h3></div>
-          <div class="stack">
-            <p class="muted" style="margin:0;font-size:13.5px"><strong style="color:var(--text)">Export journal</strong> saves a copy of this whole journal with your trades built in. Open it in any browser, no account needed. The Share or Download option in claude.ai saves the page without your trades, so use this instead.</p>
-            <p class="muted" style="margin:0;font-size:13.5px">Import an Excel (.xlsx), CSV or JSON file. Columns are matched by name, such as Date, Pair, Session, Direction, Setup, R, P&amp;L, Emotion and Notes.</p>
-            <label class="toggle"><input type="checkbox" id="importReplace"> Replace existing trades instead of adding</label>
-            <label class="btn primary file-label">⬆ Import file<input type="file" id="importFile" accept=".html,.htm,.xlsx,.csv,.json,.txt" aria-label="Import trades from file"></label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn primary" type="button" id="exportJournal">⬇ Export journal (with data)</button>
-              <button class="btn" type="button" id="exportXlsx">⬇ Export Excel</button>
-              <button class="btn" type="button" id="exportCsv">⬇ Export CSV</button>
-              <button class="btn" type="button" id="exportJson">⬇ Export JSON</button>
+      <!-- Preferences -->
+      <div class="set-pane" data-pane="prefs" hidden>
+        <div class="set-head"><h3>Preferences</h3><p>Defaults used when you log trades and when your balance and sessions are worked out.</p></div>
+        <form id="acctForm" class="set-narrow stack">
+          <section class="card accent-blue" aria-labelledby="acctTitle">
+            <div class="card-head"><div><h3 id="acctTitle">Money</h3><div class="sub">Balance, currency and risk</div></div></div>
+            <div class="fields fields-pair" style="margin:0">
+              <div class="field"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint" hidden>Worked out from your trading account sizes</span></div>
+              <div class="field"><label for="sCurrency">Currency symbol</label><input type="text" id="sCurrency" maxlength="4"></div>
+              <div class="field"><label for="sRisk">Default risk per trade</label><input type="number" step="any" id="sRisk" inputmode="decimal"></div>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px">
-              <button class="btn danger" type="button" id="clearAll">Delete all trades</button>
+          </section>
+          <section class="card accent-teal" aria-labelledby="sessPrefTitle">
+            <div class="card-head"><div><h3 id="sessPrefTitle">Sessions</h3><div class="sub">How the session is filled in from a trade's time</div></div></div>
+            <div class="field">
+              <label for="sSessionMode">Session time zone for auto-fill</label>
+              <select id="sSessionMode">
+                <option value="utc">UTC</option>
+                <option value="local">My local time</option>
+              </select>
             </div>
-          </div>
-        </section>
+          </section>
+          <div><button class="btn primary" type="submit">Save preferences</button></div>
+        </form>
+      </div>
 
-        <div id="listEditors" style="display:contents"></div>
+      <!-- Dropdown lists -->
+      <div class="set-pane" data-pane="lists" hidden>
+        <div class="set-head"><h3>Lists</h3><p>The choices offered in the log forms. New pairs and setups you type are added automatically.</p></div>
+        <div class="settings-grid" id="listEditors"></div>
+      </div>
+
+      <!-- Import, export, delete -->
+      <div class="set-pane" data-pane="data" hidden>
+        <div class="set-head"><h3>Data</h3><p>Bring trades in, take a copy out, or start again.</p></div>
+        <div class="settings-grid">
+          <section class="card accent-blue" aria-labelledby="importTitle">
+            <div class="card-head"><div><h3 id="importTitle">Import trades</h3><div class="sub">Excel (.xlsx), CSV or JSON</div></div></div>
+            <div class="stack">
+              <p class="muted" style="margin:0;font-size:13.5px">Columns are matched by name, such as Date, Pair, Session, Direction, Setup, R, P&amp;L, Emotion and Notes.</p>
+              <label class="toggle"><input type="checkbox" id="importReplace"> Replace existing trades instead of adding</label>
+              <div><label class="btn primary file-label">⬆ Import file<input type="file" id="importFile" accept=".html,.htm,.xlsx,.csv,.json,.txt" aria-label="Import trades from file"></label></div>
+            </div>
+          </section>
+          <section class="card accent-green" aria-labelledby="dataTitle">
+            <div class="card-head"><div><h3 id="dataTitle">Export</h3><div class="sub">Download a copy of your trades</div></div></div>
+            <div class="stack">
+              <p class="muted" style="margin:0;font-size:13.5px"><strong style="color:var(--text)">Export journal</strong> saves this whole journal with your trades built in. It opens in any browser, no account needed.</p>
+              <div><button class="btn primary" type="button" id="exportJournal">⬇ Export journal (with data)</button></div>
+              <div class="set-btns">
+                <button class="btn" type="button" id="exportXlsx">Excel</button>
+                <button class="btn" type="button" id="exportCsv">CSV</button>
+                <button class="btn" type="button" id="exportJson">JSON</button>
+              </div>
+            </div>
+          </section>
+          <section class="card accent-red danger-zone" aria-labelledby="dangerTitle">
+            <div class="card-head"><div><h3 id="dangerTitle">Danger zone</h3><div class="sub">This can't be undone</div></div></div>
+            <div class="stack">
+              <p class="muted" style="margin:0;font-size:13.5px">Deletes every trade in this journal. Export a copy first if you might want them back.</p>
+              <div><button class="btn danger" type="button" id="clearAll">Delete all trades</button></div>
+            </div>
+          </section>
+        </div>
       </div>
     </section>
   </div>
@@ -1524,7 +1589,7 @@ let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 let trades = [];
 
-const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", account: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", account: "", setPane: "", sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
@@ -1741,7 +1806,9 @@ function sbRender() {
   if (!SB || inViewer()) return;
   F("sideLogout").hidden = !sb.session;
   F("syncCard").hidden = false;
+  F("setNavProfile").hidden = false;
   const on = !!sb.session;
+  F("profileCard").hidden = !on;
   F("syncSignedOut").hidden = on;
   F("syncSignedIn").hidden = !on;
   if (on && document.activeElement !== F("profName") && document.activeElement !== F("profAge")) {
@@ -3073,7 +3140,7 @@ const LISTS = [
 ];
 function renderListEditors() {
   F("listEditors").innerHTML = LISTS.map((l, i) => `
-    <section class="card reveal" style="--d:${i + 3}" aria-labelledby="le-${l.key}">
+    <section class="card" aria-labelledby="le-${l.key}">
       <div class="card-head"><div><h3 id="le-${l.key}">${l.title}</h3><div class="sub">${settings[l.key].length} items · shown in the log form</div></div></div>
       <ul class="chips" aria-label="${l.title}" style="list-style:none;padding:0">
         ${settings[l.key].map((v, j) => `<li class="chip">${esc(v)}<button type="button" data-rm="${l.key}" data-j="${j}" aria-label="Remove ${esc(v)}">×</button></li>`).join("") || `<li class="muted">No items</li>`}
@@ -3084,6 +3151,15 @@ function renderListEditors() {
         <button class="btn" type="submit">Add</button>
       </form>
     </section>`).join("");
+}
+/* Settings sections: one shown at a time, remembered between visits. Profile only exists in the synced app. */
+function showSetPane(name) {
+  const btns = $$("#setNav button");
+  const usable = btns.filter(b => !b.hidden).map(b => b.dataset.pane);
+  if (!usable.includes(name)) name = usable[0];
+  btns.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pane === name)));
+  $$("#panel-settings .set-pane").forEach(p => p.hidden = p.dataset.pane !== name);
+  if (ui.setPane !== name) { ui.setPane = name; saveUi(); }
 }
 function renderAccount() {
   F("sBalance").value = settings.balance;
@@ -3453,6 +3529,7 @@ const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "P
 const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
 function showTab(name, { focus = false, push = true } = {}) {
   if (!TABS.includes(name)) name = "overview";
+  if (name === "settings") showSetPane(ui.setPane || "profile");
   const header = F("analyticsHeader");
   header.hidden = !isAnalytics(name);
   if (isAnalytics(name)) {
@@ -3722,6 +3799,7 @@ F("tdClose").addEventListener("click", () => F("tradeDlg").close());
 /* ---------- Trading accounts: register, edit, remove ---------- */
 function renderAccounts() {
   const list = accounts();
+  F("acctCount").textContent = list.length ? plural(list.length, "account") + " · " + plural(realTrades.length, "trade") + " in your journal" : "None registered yet";
   F("acctList").innerHTML = list.length ? list.map(a => {
     const n = realTrades.filter(t => t.account === a.id).length;
     const where = a.type === "Prop firm" ? [a.firm, a.phase, a.broker] : [a.broker];
@@ -3936,6 +4014,10 @@ F("formErrors").addEventListener("click", e => {
 });
 
 // Settings
+F("setNav").addEventListener("click", e => {
+  const b = e.target.closest("button[data-pane]");
+  if (b) showSetPane(b.dataset.pane);
+});
 F("acctForm").addEventListener("submit", e => {
   e.preventDefault();
   if (!F("sBalance").disabled) settings.balance = num(F("sBalance").value) ?? 0;
@@ -4134,7 +4216,7 @@ async function signOutFlow() {
 }
 if (SB) {
   F("syncChip").style.cursor = "pointer";
-  F("syncChip").addEventListener("click", () => { if (sb.session) showTab("settings"); else showHome(); });
+  F("syncChip").addEventListener("click", () => { if (sb.session) { showSetPane("profile"); showTab("settings"); } else showHome(); });
   F("homeForm").addEventListener("submit", e => { e.preventDefault(); sbSignIn(homeMode === "signup", "dialog"); });
   F("dlgSignUp").addEventListener("click", () => setHomeMode(homeMode === "signup" ? "signin" : "signup"));
   F("profileForm").addEventListener("submit", e => { e.preventDefault(); saveProfile(); });
