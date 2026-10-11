@@ -4847,7 +4847,7 @@ F("tradeForm").addEventListener("submit", e => {
   propWarn(t);
   resetForm(true);
   if (editing) showTab("journal");
-  else F("tPair").focus();
+  else window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
 });
 // Save a trade from either form. Returns false if this journal is read-only.
 function commitTrade(t) {
@@ -4918,8 +4918,7 @@ F("qMore").addEventListener("click", () => {
   if (!q.date) F("tDate").value = isoDate(new Date());
   store.set(KEY_DRAFT, Object.assign(readForm(), { _editing: false }));
   resetQuick();
-  showTab("log");
-  F("tPair").focus();
+  showTab("log"); // no field is focused, so phones don't pop the keyboard up
 });
 F("qToggle").addEventListener("click", () => {
   ui.quickOpen = F("quickLog").classList.contains("collapsed");
