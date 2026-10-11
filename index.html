@@ -755,6 +755,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .btn .ni { width: 16px; height: 16px; opacity: .9; }
 .btn.primary .ni { opacity: 1; }
 .tablist { display: flex; flex-direction: column; gap: 4px; }
+/* Settings, theme, bug report and log out sit together at the bottom of the menu. */
+.tabs { min-height: 0; }
+.tablist { flex: 1 0 auto; }
+.tablist .nav-bottom { margin-top: auto; font-size: 0; height: 1px; padding: 0; background: var(--border); margin-bottom: 8px; }
+.tablist .nav-bottom + .tab { margin-top: 0; }
 .side-actions { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
 .side-link { appearance: none; border: 0; background: transparent; color: var(--text-2); font: 500 14.5px var(--font-sans); cursor: pointer;
   display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: 10px; text-align: left; }
@@ -799,12 +804,17 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   header.top { position: fixed; top: 0; left: 0; bottom: 0; width: 244px; z-index: 40; border-bottom: 0; border-right: 1px solid var(--border);
     background: var(--sidebar-bg); padding: 20px 0 84px; overflow-y: auto; }
   header.top .container { padding: 0 14px; max-width: none; }
+  header.top { display: flex; flex-direction: column; }
+  header.top > .container:last-child { flex: 1 0 auto; display: flex; flex-direction: column; }
+  header.top .tabs { flex: 1 0 auto; }
+  .tablist .nav-bottom { margin-top: auto; padding-top: 18px; background: none; height: auto; }
+  .tablist .nav-bottom::before { content: ""; display: block; height: 1px; background: var(--border); }
   .top-inner { flex-direction: column; align-items: flex-start; gap: 0; min-height: 0; padding: 0 14px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
   #exportJournalTop { position: fixed; left: 14px; bottom: 20px; width: 216px; justify-content: center; }
   .tabs { flex-direction: column; background: transparent; border: 0; padding: 0; gap: 2px; overflow: visible; margin: 0; scroll-snap-type: none; }
   .tabs .tab, .side-link { justify-content: flex-start; flex: none; padding: 8px 12px; font-size: 13.5px; gap: 12px; border-radius: 9px; letter-spacing: .1px; }
   .tabs .tab[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--accent); }
-  .side-actions { border-top: 1px solid var(--border); margin: 14px 0 0; padding-top: 12px; }
+  .side-actions { margin: 4px 0 0; padding-top: 0; border-top: 0; }
   .nav-label { display: block; }
   main, footer { margin-left: 244px; }
   /* Collapsible sidebar: a slim icon rail; the round button on its edge toggles it. */
@@ -836,6 +846,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   html.side-collapsed .brand .sync::before { margin: 0; }
   .side-collapsed .nav-label { font-size: 0; height: 1px; padding: 0; margin: 12px 8px; background: var(--border); opacity: 1; }
   .side-collapsed .tablist > .nav-label:first-child { display: none; }
+  html.side-collapsed .tablist .nav-bottom { margin: auto 8px 8px; padding: 18px 0 0; height: auto; background: none; }
   .side-collapsed .tablist { padding-top: 8px; }
   .side-collapsed .tabs .tab, .side-collapsed .side-link { justify-content: center; padding: 9px 0; gap: 0; }
   .side-collapsed .tabs .tab > span, .side-collapsed .side-link > span { display: none; }
@@ -857,7 +868,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .side-link { padding: 10px 12px; font-size: 15px; gap: 13px; }
   .tabs .tab[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--accent); }
   .tabs .ni { width: 19px; height: 19px; }
-  .side-actions { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 10px; }
+  .side-actions { margin-top: 2px; }
   .nav-label { display: block; }
   .drawer-brand { display: flex; gap: 10px; align-items: center; padding: 0 6px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
   .drawer-brand img { height: 34px; width: auto; }
@@ -1035,7 +1046,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="nav-label" aria-hidden="true">Journal</div>
       <button class="tab" role="tab" id="tab-journal" aria-controls="panel-journal" aria-selected="false" tabindex="-1" data-tab="journal"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.6"/></svg><span>Trade log</span></button>
       <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" data-tab="log"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.5 20.5H21"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7.5 18.5l-4 1 1-4z"/></svg><span>Log trade</span></button>
-      <div class="nav-label" aria-hidden="true">Account</div>
+      <div class="nav-label nav-bottom" aria-hidden="true">Account</div>
       <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M18 6h2M4 12h3M12 12h8M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="17.5" cy="18" r="2.2"/></svg><span>Settings</span></button>
       </div>
       <div class="side-actions">
@@ -2135,7 +2146,7 @@ function hideHome() {
   if (F("home").hidden) return;
   F("home").hidden = true;
   document.documentElement.classList.remove("gated");
-  showTab(ui.tab || "overview");
+  showTab("overview");
 }
 
 async function saveProfile() {
@@ -4866,17 +4877,15 @@ F("qDate").value = isoDate(new Date());
 setQuickOpen(ui.quickOpen !== false);
 renderListEditors();
 renderAccount();
-// Reopen where the journal was left: same tab, same scroll position, same unsaved form.
+// Every launch starts on Overview at the top (an unsaved trade form is still kept).
 const first = !ui.opened;
 if (!first) document.documentElement.classList.add("calm");
 ui.opened = true; saveUi();
 restoreDraft();
 restoring = true;
-const startTab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : ui.tab;
-const savedY = ui.tab === startTab ? ui.scrollY : 0;
-showTab(startTab, { push: false });
+showTab("overview");
 restoring = false;
-requestAnimationFrame(() => window.scrollTo(0, savedY));
+requestAnimationFrame(() => window.scrollTo(0, 0));
 if (first) setTimeout(() => document.documentElement.classList.add("calm"), 2500);
 let scrollTimer;
 window.addEventListener("scroll", () => {
