@@ -661,8 +661,22 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .meter small { font-size: 12px; color: var(--muted); }
 .pc-facts { display: flex; flex-wrap: wrap; gap: 6px; }
 .pc-facts span { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: var(--tint); border: 1px solid var(--border); color: var(--text-2); }
-.pc-foot { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
-.pc-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.pc-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+.pc-foot > span:first-child { flex: 1 1 200px; }
+.pc-btns { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.pc-passed { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--green-soft); border: 1px solid rgba(52, 210, 123, 0.4); font-size: 13px; color: var(--text-2); }
+.pc-passed .ni { width: 18px; height: 18px; opacity: 1; color: var(--green); flex-shrink: 0; margin-top: 1px; }
+.pc-passed b { color: var(--text); }
+.pc-btns .ni { width: 15px; height: 15px; margin-right: 5px; vertical-align: -3px; }
+.pass-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(110px, 100%), 1fr)); gap: 10px; margin: 2px 0 14px; }
+.pass-sum > div { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: grid; gap: 2px; }
+.pass-sum span { font-size: 12px; color: var(--muted); }
+.pass-sum b { font: 600 16px var(--font-mono); }
+#passTitle { display: flex; align-items: center; gap: 10px; }
+.pass-dlg form > * + * { margin-top: 12px; }
+.acct-archive { margin-top: 16px; }
+.arch-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
+.arch-badge .ni { width: 12px; height: 12px; opacity: 1; }
 .plan-checks { display: flex; flex-wrap: wrap; gap: 6px; }
 .plan-chip { position: relative; cursor: pointer; }
 .plan-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -1815,6 +1829,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             </div>
           </div>
         </section>
+        <section class="card set-narrow acct-archive" aria-labelledby="archTitle" id="archCard" hidden>
+          <div class="card-head"><div><h3 id="archTitle">Archive</h3><div class="sub" id="archCount"></div></div></div>
+          <ul class="acct-list" id="archList"></ul>
+        </section>
       </div>
 
       <!-- Preferences -->
@@ -2044,6 +2062,28 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   <div class="field" id="fAccountWrap" hidden><span class="lbl" id="fAccountLbl">Account</span><div class="fp-periods" role="radiogroup" aria-labelledby="fAccountLbl" data-opts="fAccount"></div><select id="fAccount" hidden tabindex="-1" aria-hidden="true"><option value="">All accounts</option></select></div>
   <div class="fp-btns"><button class="btn ghost" type="button" id="fClear">Reset</button><button class="btn primary" type="button" id="fDone">Done</button></div>
 </div>
+
+<dialog id="passDlg" class="acct-dlg pass-dlg" aria-labelledby="passTitle">
+  <form id="passForm" class="dlg-body" novalidate>
+    <div class="td-head">
+      <div><h3 id="passTitle"></h3><div class="sub" id="passSub"></div></div>
+      <button class="btn sm ghost" type="button" id="passClose" aria-label="Close">✕</button>
+    </div>
+    <div class="pass-sum" id="passSum"></div>
+    <div id="passNextWrap">
+      <label class="toggle"><input type="checkbox" id="passNext" checked> <span id="passNextText"></span></label>
+      <div class="fields fields-pair" id="passNextFields" style="margin:12px 0 0">
+        <div class="field"><label for="passStart">Starts on</label><input type="date" id="passStart"></div>
+        <div class="field"><label for="passSize">Account size</label><input type="number" step="any" min="0" id="passSize" inputmode="decimal"></div>
+      </div>
+    </div>
+    <p class="muted" style="margin:0;font-size:13px">The passed account moves to the Archive in Settings › Accounts. Its trades stay in your journal and in your stats.</p>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="passCancel">Cancel</button>
+      <button class="btn primary" type="submit" id="passOk">Mark as passed</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="certDlg" class="rules-dlg cert-dlg" aria-labelledby="certTitle">
   <div class="dlg-body">
@@ -2869,11 +2909,13 @@ function filtered() {
 }
 
 /* ---------- Trading accounts ---------- */
-const accounts = () => Array.isArray(settings.accounts) ? settings.accounts : [];
-const acctById = id => (id && accounts().find(a => a.id === id)) || null;
+// Every account, archived ones included (passed phases keep their trades); accounts() is the ones still in use.
+const allAccounts = () => Array.isArray(settings.accounts) ? settings.accounts : [];
+const accounts = () => allAccounts().filter(a => !a.archived);
+const acctById = id => (id && allAccounts().find(a => a.id === id)) || null;
 const inAccount = t => !ui.account || t.account === ui.account;
 const unassignedTrades = () => realTrades.filter(t => !acctById(t.account));
-const defaultAccount = () => (acctById(settings.lastAccount) || accounts()[0] || {}).id || "";
+const defaultAccount = () => ((a => a && !a.archived ? a : null)(acctById(settings.lastAccount)) || accounts()[0] || {}).id || "";
 const shortSize = n => !(n > 0) ? "" : n >= 1e6 ? +(n / 1e6).toFixed(2) + "M" : n >= 1000 ? +(n / 1000).toFixed(1) + "K" : String(n);
 function acctLabel(a) {
   if (!a) return "";
@@ -2887,7 +2929,7 @@ function acctLabel(a) {
 function startingBalance(accountId) {
   const one = acctById(accountId);
   if (one) return Number(one.size) > 0 ? Number(one.size) : Number(settings.balance);
-  const sizes = accounts().map(a => Number(a.size)).filter(n => n > 0);
+  const sizes = allAccounts().map(a => Number(a.size)).filter(n => n > 0);
   return sizes.length ? sum(sizes) : Number(settings.balance);
 }
 // Balance just before the first trade in view: the starting balance plus earlier P&L in the same account(s).
@@ -3722,11 +3764,11 @@ function refreshLists() {
   fillSelect($("#fSession"), allSessions, { placeholder: "All sessions", value: ui.session });
   fillSelect($("#fSetup"), allSetups, { placeholder: "All setups", value: ui.setup });
   // Accounts: the filter appears once there are two; the trade forms keep their choice while it still exists.
-  const accts = accounts();
+  const accts = accounts(), every = allAccounts();
   if (ui.account && !acctById(ui.account)) { ui.account = ""; saveUi(); }
   const opts = accts.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
-  F("fAccountWrap").hidden = accts.length < 2;
-  F("fAccount").innerHTML = `<option value="">All accounts</option>` + opts;
+  F("fAccountWrap").hidden = every.length < 2;
+  F("fAccount").innerHTML = `<option value="">All accounts</option>` + opts + every.filter(a => a.archived).map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))} (passed)</option>`).join("");
   F("fAccount").value = ui.account;
   syncFilters();
   for (const [id, extra] of [["tAccount", `<option value="">No account</option>`], ["qAccount", ""]]) {
@@ -3841,7 +3883,10 @@ function loadIntoForm(t) {
   F("tPair").value = t.pair || "";
   refreshLists();
   fillSelect(F("tSessionSel"), settings.sessions, { placeholder: "Select session", value: t.session || "" });
-  F("tAccount").value = acctById(t.account) ? t.account : t.id ? "" : defaultAccount();
+  // A trade from a passed (archived) phase keeps its account when edited.
+  const own = acctById(t.account);
+  if (own && own.archived && !Array.from(F("tAccount").options).some(o => o.value === own.id)) F("tAccount").insertAdjacentHTML("beforeend", `<option value="${esc(own.id)}">${esc(acctLabel(own))} (passed)</option>`);
+  F("tAccount").value = own ? t.account : t.id ? "" : defaultAccount();
   $$("input[name=tDir]").forEach(r => r.checked = r.value === t.direction);
   F("tSetup").value = t.setup || "";
   const setNum = (id, v) => F(id).value = v == null ? "" : v;
@@ -4545,7 +4590,7 @@ window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { pu
 
 // Filters: one button opens a panel with every option; changes apply straight away.
 // Function declarations, so the start-up renders can call them before this point runs.
-function filterCount() { return (ui.range !== "all" ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && accounts().length > 1 && acctById(ui.account) ? 1 : 0); }
+function filterCount() { return (ui.range !== "all" ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && allAccounts().length > 1 && acctById(ui.account) ? 1 : 0); }
 function syncFilters() {
   const n = filterCount();
   F("filterBadge").hidden = !n; F("filterBadge").textContent = n;
@@ -4836,7 +4881,7 @@ function renderAccounts() {
     return `<li class="acct-item">
       ${firmLogo(a) || `<span class="acct-badge ${cls}">${esc(a.type)}</span>`}
       <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(meta)}</span><span>${plural(n, "trade")}</span></div>
-      <div class="acct-btns">${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
+      <div class="acct-btns">${canPass(a) ? `<button class="btn sm ghost" type="button" data-pass="${esc(a.id)}">Mark passed</button>` : ""}${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
     </li>`;
   }).join("") : `<li class="acct-empty">No trading accounts yet. Add the live, demo or prop firm account you trade.</li>`;
   const loose = list.length ? unassignedTrades() : [];
@@ -4848,6 +4893,7 @@ function renderAccounts() {
     F("acctAssignSel").value = acctById(cur) ? cur : defaultAccount();
   }
   renderActive();
+  renderArchive();
   F("mtAccountWrap").hidden = !list.length;
   const mtCur = F("mtAccount").value;
   F("mtAccount").innerHTML = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
@@ -4962,7 +5008,7 @@ F("acctDlgForm").addEventListener("submit", e => {
   // Keep what the form doesn't edit (adjusted limits, payouts).
   const acct = { ...(acctById(id) || {}), id, type, size, broker, firm: prop ? firm : "", phase: prop ? F("aPhase").value : "", platform: F("aPlatform").value, name: F("aName").value.trim(),
     program: prop && !F("aProgramWrap").hidden ? F("aProgram").value : "", startDate: prop ? F("aStart").value : "" };
-  const list = accounts().slice(), i = list.findIndex(a => a.id === id);
+  const list = allAccounts().slice(), i = list.findIndex(a => a.id === id);
   if (i >= 0) list[i] = acct; else list.push(acct);
   const loose = !F("aAssignWrap").hidden && F("aAssign").checked ? unassignedTrades() : [];
   settings.accounts = list;
@@ -4976,7 +5022,7 @@ F("acctDlgForm").addEventListener("submit", e => {
   onDataChanged();
 });
 F("acctAdd").addEventListener("click", () => openAccountDlg(null, false));
-F("acctList").addEventListener("click", async e => {
+const onAcctListClick = async e => {
   const edit = e.target.closest("[data-acct-edit]"), del = e.target.closest("[data-acct-del]");
   if (edit) openAccountDlg(acctById(edit.dataset.acctEdit), false);
   if (!del) return;
@@ -4987,14 +5033,17 @@ F("acctList").addEventListener("click", async e => {
     ? `${acctLabel(a)} will be removed. Its ${plural(linked.length, "trade")} stay in your journal, just not linked to an account.`
     : `${acctLabel(a)} will be removed.`, { title: "Remove account?", ok: "Remove" });
   if (!ok) return;
-  settings.accounts = accounts().filter(x => x.id !== a.id);
+  settings.accounts = allAccounts().filter(x => x.id !== a.id);
   if (settings.lastAccount === a.id) settings.lastAccount = (accounts()[0] || {}).id || "";
+  if (ui.account === a.id) { ui.account = ""; saveUi(); }
   saveSettings();
   if (linked.length) linkTrades(linked, "");
   toast("Account removed");
   refreshAll();
   onDataChanged();
-});
+};
+F("acctList").addEventListener("click", onAcctListClick);
+F("archList").addEventListener("click", onAcctListClick);
 F("acctAssignBtn").addEventListener("click", () => {
   const id = F("acctAssignSel").value, loose = unassignedTrades();
   if (!acctById(id) || !loose.length) return;
@@ -5006,7 +5055,7 @@ F("acctAssignBtn").addEventListener("click", () => {
 
 // Ask for a trading account once the journal (and its synced settings) has loaded and none is registered.
 function maybeAskAccount() {
-  if (accounts().length || persist.loading || persist.readOnly || F("acctDlg").open) return;
+  if (allAccounts().length || persist.loading || persist.readOnly || F("acctDlg").open) return;
   if (document.documentElement.classList.contains("gated") || document.querySelector("dialog[open]")) return;
   if (SB && !inViewer() && !(sb.session && sb.synced)) return;
   if (persist.mode === "cloud" && !persist.settingsSeen) return;
@@ -5124,10 +5173,11 @@ function propCard(a) {
   if (st.payouts) facts.push(`<button class="fact-link" type="button" data-goto="rewards">Paid out ${m(st.paidOut)} · ${plural(st.payouts, "payout")}</button>`);
   return `<article class="card prop-card">
     <div class="pc-head">${firmLogo(a)}<div class="pc-name"><b>${esc(acctLabel(a))}</b><small>${esc(firm.name)} · ${esc(prog.name)} · ${esc(ph.name)}</small></div><span class="pc-status ${status[1]}">${status[0]}</span></div>
+    ${st.hit && st.daysOk && !st.breach ? `<p class="pc-passed">${ico("target")}<span><b>Target reached.</b> Once ${esc(firm.name)} confirms it, mark this ${esc(ph.name.toLowerCase())} as passed to archive it${nextPhase(a) ? ` and start the ${esc(nextPhase(a).toLowerCase())}` : ""}.</span></p>` : ""}
     ${st.breach ? `<p class="td-news" style="margin:0"><span class="imp High" aria-hidden="true"></span>${esc(st.breach.rule)} reached on ${esc(fmtDate(st.breach.date))} (closed trades). Check your firm dashboard.</p>` : ""}
     ${parts.join("")}
     ${facts.length ? `<div class="pc-facts">${facts.map(f => `<span>${f}</span>`).join("")}</div>` : ""}
-    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns"><button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
+    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns">${st.targetAmt ? `<button class="btn sm ${st.hit && st.daysOk ? "primary" : "ghost"}" type="button" data-pass="${esc(a.id)}">${ico("check")}Mark as passed</button>` : ""}<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
   </article>`;
 }
 // Overview banner: any prop account at 70%+ of its daily or max loss, or past a limit. Dismissible
@@ -5221,7 +5271,7 @@ function openRules(a) {
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
 }
 function saveAdjust(id, values) {
-  const list = accounts().slice(), i = list.findIndex(x => x.id === id);
+  const list = allAccounts().slice(), i = list.findIndex(x => x.id === id);
   if (i < 0) return;
   list[i] = Object.assign({}, list[i], { rules: values });
   settings.accounts = list;
@@ -5481,17 +5531,106 @@ F("certRemove").addEventListener("click", async () => {
   toast("Certificate removed");
 });
 
+/* ---------- Passing a phase: archive the account, optionally start the next phase ---------- */
+// The stage after this one in the firm's programme (or Challenge → Verification → Funded for other firms).
+function nextPhase(a) {
+  if (!a || a.type !== "Prop firm") return "";
+  const prog = programOf(a), names = prog ? prog.phases.map(p => p.name) : ["Challenge", "Verification", "Funded"];
+  const i = names.indexOf(prog ? (phaseOf(a) || {}).name : a.phase);
+  return i >= 0 && i < names.length - 1 ? names[i + 1] : "";
+}
+// A phase can be passed when it has a profit target (funded accounts don't).
+function canPass(a) { return !!a && !a.archived && a.type === "Prop firm" && (rulesFor(a) ? !!rulesFor(a).target : nextPhase(a) !== ""); }
+function openPass(a) {
+  if (!canPass(a)) return;
+  const st = propStatus(a), next = nextPhase(a), m = v => money(v, { signed: false, decimals: 0 });
+  // This stage's trades: from its start date, the same ones its rules are tracked on.
+  const list = realTrades.filter(t => t.account === a.id && (!a.startDate || t.date >= a.startDate)), pnl = sum(list.map(t => Number(t.pnl) || 0));
+  const days = new Set(list.map(t => t.date)).size;
+  F("passForm").dataset.id = a.id;
+  F("passTitle").innerHTML = `${firmLogo(a, "sm")}<span>Passed the ${esc((phaseOf(a) || { name: a.phase || "phase" }).name.toLowerCase())}?</span>`;
+  F("passSub").textContent = acctLabel(a);
+  F("passSum").innerHTML = `<div><span>Profit</span><b class="${tone(pnl)}">${money(pnl)}</b></div>
+    ${st && st.targetAmt ? `<div><span>Target</span><b>${m(st.targetAmt)}</b></div>` : ""}
+    <div><span>Trades</span><b>${list.length}</b></div><div><span>Trading days</span><b>${days}</b></div>`;
+  F("passNextWrap").hidden = !next;
+  F("passNext").checked = !!next;
+  F("passNextText").textContent = next ? `Start the ${next.toLowerCase()} as a new account, and make it the active account` : "";
+  F("passStart").value = isoDate(new Date());
+  F("passSize").value = a.size || "";
+  F("passNextFields").hidden = !next;
+  F("passOk").textContent = next ? "Mark as passed" : "Mark as passed and archive";
+  const dlg = F("passDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+F("passNext").addEventListener("change", e => { F("passNextFields").hidden = !e.target.checked; });
+F("passClose").addEventListener("click", () => F("passDlg").close());
+F("passCancel").addEventListener("click", () => F("passDlg").close());
+F("passForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return; }
+  const a = acctById(F("passForm").dataset.id);
+  if (!a) return;
+  const next = F("passNext").checked && nextPhase(a), today = isoDate(new Date());
+  const list = allAccounts().map(x => x.id === a.id ? Object.assign({}, x, { archived: { status: "passed", date: today, phase: x.phase } }) : x);
+  let fresh = null;
+  if (next) {
+    fresh = { id: uid(), type: "Prop firm", firm: a.firm, program: a.program || "", phase: next, size: num(F("passSize").value) || a.size,
+      broker: a.broker || "", platform: a.platform || "", name: "", startDate: F("passStart").value || today };
+    list.push(fresh);
+  }
+  settings.accounts = list;
+  if (fresh) settings.lastAccount = fresh.id;
+  else if (settings.lastAccount === a.id) settings.lastAccount = (accounts()[0] || {}).id || "";
+  if (ui.account === a.id) { ui.account = fresh && accounts().length > 1 ? fresh.id : ""; saveUi(); }
+  saveSettings();
+  F("passDlg").close();
+  toast(fresh ? `${acctLabel(a)} passed and archived. ${acctLabel(fresh)} started.` : `${acctLabel(a)} passed and archived`);
+  refreshAll();
+  onDataChanged();
+});
+document.addEventListener("click", e => { const b = e.target.closest("[data-pass]"); if (b) openPass(acctById(b.dataset.pass)); });
+
+// Settings › Accounts › Archive: passed phases, newest first.
+function renderArchive() {
+  const list = allAccounts().filter(a => a.archived).sort((x, y) => String(y.archived.date).localeCompare(String(x.archived.date)));
+  F("archCard").hidden = !list.length;
+  if (!list.length) return;
+  F("archCount").textContent = `${plural(list.length, "passed phase")} · trades stay in your stats`;
+  F("archList").innerHTML = list.map(a => {
+    const tr = realTrades.filter(t => t.account === a.id), pnl = sum(tr.map(t => Number(t.pnl) || 0));
+    const where = [a.firm, programOf(a) ? programOf(a).name : "", Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
+    return `<li class="acct-item arch-item">
+      ${firmLogo(a) || `<span class="acct-badge prop">${esc(a.type)}</span>`}
+      <div class="acct-main"><b>${esc(acctLabel(a))} <span class="arch-badge">${ico("check")}Passed</span></b><span>${esc(where)}</span>
+        <span>Passed ${esc(fmtDate(a.archived.date))} · ${plural(tr.length, "trade")} · <span class="${tone(pnl)}">${money(pnl)}</span></span></div>
+      <div class="acct-btns"><button class="btn sm ghost" type="button" data-arch-view="${esc(a.id)}">View trades</button><button class="btn sm ghost" type="button" data-arch-restore="${esc(a.id)}">Restore</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
+    </li>`;
+  }).join("");
+}
+F("archList").addEventListener("click", e => {
+  const view = e.target.closest("[data-arch-view]"), back = e.target.closest("[data-arch-restore]");
+  if (view) { ui.account = view.dataset.archView; ui.range = "all"; F("fRange").value = "all"; saveUi(); refreshLists(); showTab("journal"); }
+  if (back) {
+    const a = acctById(back.dataset.archRestore);
+    settings.accounts = allAccounts().map(x => x.id === a.id ? Object.assign({}, x, { archived: null }) : x);
+    saveSettings();
+    toast(`${acctLabel(a)} restored`);
+    refreshAll(); onDataChanged();
+  }
+});
+
 /* ---------- Rewards: payouts (per account, synced with settings) and their certificates ---------- */
-const payAccounts = () => accounts().slice().sort((a, b) => (b.type === "Prop firm") - (a.type === "Prop firm"));
+const payAccounts = () => allAccounts().slice().sort((a, b) => (!!a.archived - !!b.archived) || (b.type === "Prop firm") - (a.type === "Prop firm"));
 let payFileUrl = ""; // the chosen certificate, shown before it's uploaded
 function renderRewards() {
   const list = payAccounts();
   F("rwEmpty").hidden = !!list.length; F("rwMain").hidden = !list.length;
   if (!list.length) return;
-  const opts = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
-  const cur = F("payAccount").value;
-  F("payAccount").innerHTML = opts;
-  F("payAccount").value = acctById(cur) ? cur : (list.find(a => a.id === defaultAccount()) || list[0]).id;
+  const opts = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}${a.archived ? " (passed)" : ""}</option>`).join("");
+  const live = list.filter(a => !a.archived), cur = F("payAccount").value;
+  F("payAccount").innerHTML = (live.length ? live : list).map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+  F("payAccount").value = acctById(cur) && !acctById(cur).archived ? cur : ((live.find(a => a.id === defaultAccount()) || live[0] || list[0]).id);
   F("rwFilter").innerHTML = `<option value="">All accounts</option>` + opts;
   F("rwFilter").value = acctById(ui.rwAccount) ? ui.rwAccount : "";
   F("rwFilterWrap").hidden = list.length < 2;
@@ -5574,7 +5713,7 @@ function loadCertPreviews() {
   });
 }
 function savePayouts(id, list) {
-  const all = accounts().slice(), i = all.findIndex(x => x.id === id);
+  const all = allAccounts().slice(), i = all.findIndex(x => x.id === id);
   if (i < 0) return;
   all[i] = Object.assign({}, all[i], { payouts: list });
   settings.accounts = all;
