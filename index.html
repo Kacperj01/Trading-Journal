@@ -677,6 +677,61 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .acct-archive { margin-top: 16px; }
 .arch-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
 .arch-badge .ni { width: 12px; height: 12px; opacity: 1; }
+/* Accounts page */
+.ac-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 14px; margin: 22px 0 20px; }
+.ac-sum .card { padding: 16px 18px; display: grid; gap: 4px; }
+.ac-sum span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.ac-sum b { font: 600 20px var(--font-mono); }
+.ac-sum b span { font: inherit; letter-spacing: 0; text-transform: none; }
+.ac-sum b .pos { color: var(--green); } .ac-sum b .neg { color: var(--red); }
+.ac-chips { margin: 0 0 18px; }
+.ac-chips button small { color: var(--muted); margin-left: 3px; }
+.ac-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(440px, 100%), 1fr)); gap: 18px; align-items: start; }
+.acct-card { display: grid; gap: 14px; min-width: 0; }
+.acct-card .pc-head { display: flex; gap: 12px; align-items: center; }
+.acct-card .pc-name { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.acct-card .pc-name b { font-size: 16px; font-weight: 600; display: block; }
+.acct-card .pc-name small { color: var(--muted); font-size: 12.5px; }
+.ac-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.ac-stats div { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: grid; gap: 2px; min-width: 0; }
+.ac-stats span { font-size: 11.5px; color: var(--muted); }
+.ac-stats b { font: 600 15px var(--font-mono); overflow-wrap: anywhere; }
+.ac-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); }
+.active-tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--blue-soft); color: var(--accent); margin-left: 8px; vertical-align: 2px; }
+.ac-archive { margin-top: 30px; }
+.ac-archive .section-head h3 { margin: 0; font-size: 18px; }
+#panel-accounts > .toolbar { margin-bottom: 4px; }
+#panel-accounts .acct-unassigned { margin: 0 0 18px; }
+@media (max-width: 760px) { .ac-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ac-chips { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding: 0 16px 2px; scrollbar-width: none; } .ac-chips::-webkit-scrollbar { display: none; } .ac-chips button { flex-shrink: 0; } }
+/* Active account switcher (sidebar on computers, Accounts page on phones) and its menu */
+.acct-switch { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); transition: border-color .15s, background-color .15s; }
+.acct-switch:hover, .acct-switch[aria-expanded="true"] { border-color: var(--accent); }
+.acct-switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.acct-switch .as-logo { flex-shrink: 0; display: grid; }
+.acct-switch .as-logo .firm-logo { width: 28px; height: 28px; border-radius: 7px; }
+.acct-switch .as-logo .acct-badge { font-size: 9.5px; padding: 3px 6px; }
+.acct-switch .as-t { min-width: 0; flex: 1; display: grid; line-height: 1.25; }
+.acct-switch .as-t small { font-size: 10.5px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.acct-switch .as-t b { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.acct-switch .as-chev { width: 16px; height: 16px; opacity: .7; }
+.acct-switch.page { margin: 18px 0 0; max-width: 420px; padding: 10px 14px; }
+.acct-switch.side { grid-area: acct; }
+@media (min-width: 1041px) { .acct-switch.page { display: none; } header.top .top-inner { flex-shrink: 0; } }
+@media (max-width: 1040px) { .acct-switch.side { display: none !important; } }
+html.side-collapsed .acct-switch.side { width: auto; justify-self: center; padding: 6px; }
+html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.side .as-chev { display: none; }
+.acct-menu { position: absolute; z-index: 80; padding: 6px; border-radius: 14px; background: var(--card-solid); border: 1px solid var(--border-strong); box-shadow: 0 20px 50px rgba(0, 0, 0, .45); display: grid; gap: 2px; max-height: 70vh; overflow-y: auto; box-sizing: border-box; }
+.acct-menu[hidden] { display: none; }
+.acct-menu button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; font-size: 13.5px; color: var(--text); }
+.acct-menu button:hover, .acct-menu button:focus-visible { background: var(--surface-2); outline: none; }
+.acct-menu button[aria-checked="true"] { background: var(--blue-soft); }
+.acct-menu button > span:not(.acct-badge) { flex: 1; min-width: 0; display: grid; }
+.acct-menu .acct-badge { flex: none; }
+.acct-menu button small { color: var(--muted); font-size: 11.5px; }
+.acct-menu .firm-logo { width: 26px; height: 26px; border-radius: 7px; }
+.acct-menu .acct-badge { font-size: 9.5px; padding: 3px 6px; }
+.acct-menu .ni { width: 16px; height: 16px; color: var(--accent); opacity: 1; }
+.am-sep { height: 1px; background: var(--border); margin: 4px 6px; }
 .arch-badge.failed { background: var(--red-soft); color: var(--red); }
 .arch-note { font-style: italic; }
 .arch-filter { margin: -4px 0 14px; }
@@ -1033,7 +1088,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .side-collapsed .side-toggle svg { transform: rotate(180deg); }
   .side-collapsed header.top .container { padding: 0 10px; }
   .side-collapsed .top-inner { padding: 0 0 14px; align-items: center; }
-  html.side-collapsed .brand { grid-template-columns: 1fr; grid-template-areas: "logo" "sync" "toggle"; justify-items: center; row-gap: 10px; }
+  html.side-collapsed .brand { grid-template-columns: 1fr; grid-template-areas: "logo" "sync" "toggle" "acct"; justify-items: center; row-gap: 10px; }
   html.side-collapsed .brand h1 { display: none; }
   html.side-collapsed .brand-logo { height: auto; width: 42px; max-width: 100%; justify-self: center; }
   html.side-collapsed .brand { width: 52px; margin: 0 auto; }
@@ -1079,7 +1134,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 @media (min-width: 1041px) {
   main .container { max-width: 1560px; padding: 0 36px; }
   /* Sidebar header: logo beside the wordmark, sync status on its own row below. */
-  .brand { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "logo name name" "sync sync toggle"; align-items: center; column-gap: 12px; row-gap: 14px; width: 100%; margin: 0; }
+  .brand { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "logo name name" "sync sync toggle" "acct acct acct"; align-items: center; column-gap: 12px; row-gap: 14px; width: 100%; margin: 0; }
   .brand-logo { grid-area: logo; }
   .brand h1 { grid-area: name; }
   .brand p { grid-area: sync; }
@@ -1217,6 +1272,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div>
         <h1><span class="wordmark">ELEV8</span><span class="sub-title">Trading Journal</span></h1>
         <p><span id="syncChip" class="sync" title="Where your trades are saved">Loading…</span></p>
+        <button class="acct-switch side" type="button" data-acct-switch aria-haspopup="menu" aria-expanded="false" hidden><span class="as-logo"></span><span class="as-t"><small>Active account</small><b></b></span><svg class="ni as-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button>
       </div>
       <button class="side-toggle" type="button" id="sideToggle" aria-controls="mainNav" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar ( [ )"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
     </div>
@@ -1238,6 +1294,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="nav-label" aria-hidden="true">Journal</div>
       <button class="tab" role="tab" id="tab-journal" aria-controls="panel-journal" aria-selected="false" tabindex="-1" data-tab="journal"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.6"/></svg><span>Trade log</span></button>
       <button class="tab" role="tab" id="tab-log" aria-controls="panel-log" aria-selected="false" tabindex="-1" data-tab="log"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.5 20.5H21"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7.5 18.5l-4 1 1-4z"/></svg><span>Log trade</span></button>
+      <button class="tab" role="tab" id="tab-accounts" aria-controls="panel-accounts" aria-selected="false" tabindex="-1" data-tab="accounts"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="17" height="12.5" rx="2"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3.5 12.5h17"/></svg><span>Accounts</span></button>
       <button class="tab" role="tab" id="tab-rewards" aria-controls="panel-rewards" aria-selected="false" tabindex="-1" data-tab="rewards"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3a3 3 0 0 0 3.3 3.8M16.5 6h3a3 3 0 0 1-3.3 3.8M12 13.5v4M8 20.5h8"/></svg><span>Rewards</span></button>
       <div class="nav-label nav-bottom" aria-hidden="true">Account</div>
       <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M18 6h2M4 12h3M12 12h8M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="17.5" cy="18" r="2.2"/></svg><span>Settings</span></button>
@@ -1317,7 +1374,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </section>
 
       <section class="section reveal" style="--d:3" aria-labelledby="propTitle" id="propPanel" hidden>
-        <div class="section-head"><h3 id="propTitle">Prop firm accounts</h3><span class="muted" style="font-size:13px">Tracked against each firm's rules · closed trades</span></div>
+        <div class="section-head"><h3 id="propTitle">Prop firm account</h3><button class="btn sm ghost" type="button" data-goto="accounts" id="propAll" hidden>All accounts →</button></div>
         <div class="prop-grid" id="propCards"></div>
       </section>
 
@@ -1706,6 +1763,33 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     </section>
 
     <!-- =================== SETTINGS =================== -->
+    <!-- =================== ACCOUNTS =================== -->
+    <section id="panel-accounts" role="tabpanel" aria-labelledby="tab-accounts" hidden>
+      <div class="toolbar reveal" style="--d:0">
+        <div>
+          <h2>Accounts</h2>
+          <p class="lead">Every account you trade, with its progress, rules and history.</p>
+        </div>
+        <button class="btn primary" type="button" id="acctAdd">+ Add account</button>
+      </div>
+      <button class="acct-switch page reveal" style="--d:1" type="button" data-acct-switch aria-haspopup="menu" aria-expanded="false" hidden><span class="as-logo"></span><span class="as-t"><small>Active account · tap to switch</small><b></b></span><svg class="ni as-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button>
+      <div class="ac-sum reveal" style="--d:1" id="acctSum"></div>
+      <div class="fp-periods ac-chips reveal" style="--d:2" role="radiogroup" aria-label="Show accounts" id="acctChips"></div>
+      <div class="acct-unassigned card reveal" style="--d:2" id="acctUnassigned" hidden>
+        <p id="acctUnassignedText"></p>
+        <div class="acct-assign">
+          <label class="sr-only" for="acctAssignSel">Account to link them to</label>
+          <select id="acctAssignSel"></select>
+          <button class="btn sm" type="button" id="acctAssignBtn">Link trades</button>
+        </div>
+      </div>
+      <div class="ac-grid reveal" style="--d:3" id="acctGrid"></div>
+      <section class="ac-archive reveal" style="--d:4" aria-labelledby="archTitle" id="archCard" hidden>
+        <div class="section-head"><h3 id="archTitle">Archive</h3><span class="muted" id="archCount" style="font-size:13px"></span></div>
+        <div class="card"><ul class="acct-list" id="archList"></ul></div>
+      </section>
+    </section>
+
     <!-- =================== REWARDS =================== -->
     <section id="panel-rewards" role="tabpanel" aria-labelledby="tab-rewards" hidden>
       <div class="toolbar reveal" style="--d:0">
@@ -1767,7 +1851,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
       <div class="seg-tabs set-nav reveal" style="--d:0" role="group" aria-label="Settings sections" id="setNav">
         <button type="button" data-pane="profile" id="setNavProfile" hidden><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile</button>
-        <button type="button" data-pane="accounts"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></svg>Accounts</button>
         <button type="button" data-pane="prefs"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="6"/><circle cx="15.5" cy="12" r="3.5"/></svg>Preferences</button>
         <button type="button" data-pane="lists"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12.5V5a1.5 1.5 0 0 1 1.5-1.5h7.5l8 8a1.5 1.5 0 0 1 0 2.1l-6.4 6.4a1.5 1.5 0 0 1-2.1 0z"/><circle cx="8" cy="8" r="1.4"/></svg>Lists</button>
         <button type="button" data-pane="data"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v6.5c0 1.7 3.6 3 8 3s8-1.3 8-3V5.5M4 12v6.5c0 1.7 3.6 3 8 3s8-1.3 8-3V12"/></svg>Data</button>
@@ -1818,29 +1901,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
 
       <!-- Trading accounts -->
-      <div class="set-pane" data-pane="accounts" hidden>
-        <div class="set-head"><h3>Trading accounts</h3><p>The live, demo and prop firm accounts you trade. Each trade can be linked to one, and your balance follows their sizes.</p></div>
-        <section class="card accent-teal set-narrow" aria-labelledby="tradeAcctTitle">
-          <div class="card-head">
-            <div><h3 id="tradeAcctTitle">Your accounts</h3><div class="sub" id="acctCount"></div></div>
-            <button class="btn sm primary" type="button" id="acctAdd">+ Add account</button>
-          </div>
-          <ul class="acct-list" id="acctList"></ul>
-          <div class="acct-unassigned" id="acctUnassigned" hidden>
-            <p id="acctUnassignedText"></p>
-            <div class="acct-assign">
-              <label class="sr-only" for="acctAssignSel">Account to link them to</label>
-              <select id="acctAssignSel"></select>
-              <button class="btn sm" type="button" id="acctAssignBtn">Link trades</button>
-            </div>
-          </div>
-        </section>
-        <section class="card set-narrow acct-archive" aria-labelledby="archTitle" id="archCard" hidden>
-          <div class="card-head"><div><h3 id="archTitle">Archive</h3><div class="sub" id="archCount"></div></div></div>
-          <div class="fp-periods arch-filter" role="radiogroup" aria-label="Show" id="archFilter" hidden></div>
-          <ul class="acct-list" id="archList"></ul>
-        </section>
-      </div>
 
       <!-- Preferences -->
       <div class="set-pane" data-pane="prefs" hidden>
@@ -1854,13 +1914,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         </section>
         <form id="acctForm" class="set-narrow stack">
           <section class="card accent-blue" aria-labelledby="acctTitle">
-            <div class="card-head"><div><h3 id="acctTitle">Active account</h3><div class="sub">New trades go to this account, and the dashboard shows it</div></div></div>
-            <div class="stack" id="activeWrap" hidden>
-              <div class="field"><label for="sActive">Account</label><select id="sActive"></select></div>
-              <div class="active-sum" id="activeSum"></div>
-            </div>
-            <div class="fields fields-pair" style="margin:14px 0 0">
-              <div class="field" id="sBalanceWrap"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint">Add a trading account to use its size instead</span></div>
+            <div class="card-head"><div><h3 id="acctTitle">Balance &amp; risk</h3><div class="sub">Pick the account you're trading from the sidebar or the Accounts page</div></div></div>
+            <div class="fields fields-pair" style="margin:0">
+              <div class="field" id="sBalanceWrap"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint">Used until you add a trading account on the Accounts page</span></div>
               <div class="field"><label for="sCurrency">Currency symbol</label><input type="text" id="sCurrency" maxlength="4"></div>
               <div class="field"><label for="sRisk">Default risk per trade</label><input type="number" step="any" id="sRisk" inputmode="decimal"></div>
             </div>
@@ -2039,6 +2095,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </div>
 </dialog>
 
+<div class="acct-menu" id="acctMenu" role="menu" aria-label="Choose the active account" hidden></div>
 <div class="filter-dim" id="filterDim" hidden></div>
 <div class="filter-panel" id="filterPanel" role="dialog" aria-modal="false" aria-labelledby="filterTitle" hidden>
   <div class="fp-grab" aria-hidden="true"></div>
@@ -2097,7 +2154,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <div class="field"><label for="passSize">Account size</label><input type="number" step="any" min="0" id="passSize" inputmode="decimal"></div>
       </div>
     </div>
-    <p class="muted" style="margin:0;font-size:13px" id="passNote">The account moves to the Archive in Settings › Accounts. Its trades stay in your journal and in your stats.</p>
+    <p class="muted" style="margin:0;font-size:13px" id="passNote">The account moves to the Archive on the Accounts page. Its trades stay in your journal and in your stats.</p>
     <div class="dlg-actions">
       <button class="btn ghost" type="button" id="passCancel">Cancel</button>
       <button class="btn primary" type="submit" id="passOk">Mark as passed</button>
@@ -4546,11 +4603,11 @@ async function importFile(file) {
 /* ======================================================================
    Tabs
    ====================================================================== */
-const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "news", "journal", "log", "rewards", "settings"];
+const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "news", "journal", "log", "accounts", "rewards", "settings"];
 const TAB_TITLES = { overview: "Performance overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade log" };
 const isAnalytics = name => name in TAB_TITLES;
 // Browser tab titles, e.g. "Calendar - ELEV8".
-const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", news: "News", journal: "Trade Log", log: "Log Trade", rewards: "Rewards", settings: "Settings" };
+const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", news: "News", journal: "Trade Log", log: "Log Trade", accounts: "Accounts", rewards: "Rewards", settings: "Settings" };
 const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
 function showTab(name, { focus = false, push = true } = {}) {
   if (!TABS.includes(name)) name = "overview";
@@ -4576,6 +4633,7 @@ function showTab(name, { focus = false, push = true } = {}) {
   if (name === "log") { renderRecent(); updatePreview(); }
   if (name === "news") { renderNews(); loadNews(); }
   if (name === "rewards") renderRewards();
+  if (name === "accounts") renderAccounts();
   document.title = TAB_NAMES[name] + " - ELEV8";
   if (ui.tab !== name) { ui.tab = name; ui.scrollY = 0; saveUi(); }
   if (!restoring) window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
@@ -4909,57 +4967,78 @@ function openTrade(t) {
 }
 F("tdClose").addEventListener("click", () => F("tradeDlg").close());
 
-/* ---------- Trading accounts: register, edit, remove ---------- */
+/* ---------- Accounts page: every account, its progress, and the archive ---------- */
+const ACCT_SHOW = [["", "All"], ["standard", "Live & demo"], ["progress", "In progress"], ["funded", "Funded"], ["passed", "Passed"], ["failed", "Failed"]];
+const acctKind = a => a.type === "Prop firm" ? propState(a) : "standard";
+const badgeFor = a => firmLogo(a) || `<span class="acct-badge ${a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : "live"}">${esc(a.type)}</span>`;
+function manageRow(a) {
+  const active = a.id === defaultAccount();
+  return `<div class="ac-btns"><button class="btn sm ghost" type="button" data-acct-view="${esc(a.id)}">View trades</button>${active ? "" : `<button class="btn sm ghost" type="button" data-make-active="${esc(a.id)}">Make active</button>`}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>`;
+}
+// Live, demo, and prop accounts without known firm rules: balance, P&L, trades, win rate.
+function plainCard(a) {
+  const n = realTrades.filter(t => t.account === a.id), p = sum(n.map(t => Number(t.pnl) || 0)), w = n.filter(t => t.pnl > 0).length;
+  const meta = [a.type === "Prop firm" ? [a.firm, a.phase].filter(Boolean).join(" · ") : a.broker, a.platform, Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
+  return `<article class="card acct-card">
+    <div class="pc-head">${badgeFor(a)}<div class="pc-name"><b>${esc(acctLabel(a))}${a.id === defaultAccount() ? `<span class="active-tag">Active</span>` : ""}</b><small>${esc(meta)}</small></div></div>
+    <div class="ac-stats"><div><span>Balance</span><b>${Number(a.size) > 0 ? money(Number(a.size) + p, { signed: false, decimals: 0 }) : "—"}</b></div><div><span>P&amp;L</span><b class="${tone(p)}">${money(p)}</b></div>
+      <div><span>Trades</span><b>${n.length}</b></div><div><span>Win rate</span><b>${n.length ? pct(w / n.length, 0) : "—"}</b></div></div>
+    ${a.type === "Prop firm" ? `<div class="pc-foot"><span>Rules aren't built in for this firm</span><span class="pc-btns"><button class="btn sm ghost" type="button" data-fail="${esc(a.id)}">${ico("close")}Mark as failed</button>${canPass(a) ? `<button class="btn sm ghost" type="button" data-pass="${esc(a.id)}">${ico("check")}Mark as passed</button>` : ""}</span></div>` : ""}
+    ${manageRow(a)}
+  </article>`;
+}
 function renderAccounts() {
-  const list = accounts();
-  F("acctCount").textContent = list.length ? plural(list.length, "account") + " · " + plural(realTrades.length, "trade") + " in your journal" : "None registered yet";
-  F("acctList").innerHTML = list.length ? list.map(a => {
-    const n = realTrades.filter(t => t.account === a.id).length;
-    const where = a.type === "Prop firm" ? [a.firm, a.phase, a.broker] : [a.broker];
-    const paid = sum(payoutsOf(a).map(p => Number(p.amount) || 0));
-    const meta = [...where, a.platform, Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : "", paid ? "paid out " + money(paid, { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
-    const cls = a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : "live";
-    return `<li class="acct-item">
-      ${firmLogo(a) || `<span class="acct-badge ${cls}">${esc(a.type)}</span>`}
-      <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(meta)}</span><span>${plural(n, "trade")}</span></div>
-      <div class="acct-btns">${canPass(a) ? `<button class="btn sm ghost" type="button" data-pass="${esc(a.id)}">Mark passed</button>` : ""}${a.type === "Prop firm" ? `<button class="btn sm ghost" type="button" data-fail="${esc(a.id)}">Mark failed</button>` : ""}${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
-    </li>`;
-  }).join("") : `<li class="acct-empty">No trading accounts yet. Add the live, demo or prop firm account you trade.</li>`;
-  const loose = list.length ? unassignedTrades() : [];
+  const live = accounts(), every = allAccounts();
+  const counts = {}; every.forEach(a => { const k = acctKind(a); counts[k] = (counts[k] || 0) + 1; });
+  if (!ACCT_SHOW.some(([v]) => v === ui.acctShow) || (ui.acctShow && !counts[ui.acctShow])) ui.acctShow = "";
+  // Summary
+  const hasProp = every.some(a => a.type === "Prop firm"), m0 = v => money(v, { signed: false, decimals: 0 });
+  const paid = sum(every.flatMap(payoutsOf).map(x => Number(x.amount) || 0));
+  const tile = (l, v) => `<div class="card"><span>${l}</span><b>${v}</b></div>`;
+  const combined = sum(live.map(a => (Number(a.size) || 0) + sum(realTrades.filter(t => t.account === a.id).map(t => Number(t.pnl) || 0))));
+  F("acctSum").hidden = !every.length;
+  F("acctSum").innerHTML = tile("Active accounts", live.length)
+    + (hasProp ? tile("Challenges in progress", counts.progress || 0) + tile("Funded", counts.funded || 0)
+      + tile("Passed / failed", `<span class="pos">${counts.passed || 0}</span> / <span class="neg">${counts.failed || 0}</span>`) + tile("Paid out", `<span class="${paid ? "pos" : ""}">${m0(paid)}</span>`)
+      : tile("Combined balance", m0(combined)) + tile("Trades", realTrades.length));
+  // Filter chips (only kinds that exist)
+  const kinds = ACCT_SHOW.filter(([v]) => !v || counts[v]);
+  F("acctChips").hidden = kinds.length < 3;
+  F("acctChips").innerHTML = kinds.map(([v, t]) => `<button type="button" role="radio" data-acct-show="${v}" aria-checked="${(ui.acctShow || "") === v}">${t} <small>${v ? counts[v] : every.length}</small></button>`).join("");
+  // Cards
+  const show = ui.acctShow, inArchive = show === "passed" || show === "failed";
+  const cards = inArchive ? [] : live.filter(a => !show || acctKind(a) === show)
+    .sort((x, y) => (y.id === defaultAccount()) - (x.id === defaultAccount()));
+  F("acctGrid").innerHTML = !every.length
+    ? `<div class="card rw-empty"><h3>Add your first account</h3><p class="muted">Add the live, demo or prop firm account you trade. Prop firm accounts are tracked against the firm's rules.</p><div><button class="btn primary" type="button" data-acct-new>+ Add account</button></div></div>`
+    : cards.map(a => propStatus(a) ? propCard(a, true) : plainCard(a)).join("");
+  F("acctGrid").hidden = inArchive || (!cards.length && !!every.length);
+  // Trades not linked to an account
+  const loose = live.length ? unassignedTrades() : [];
   F("acctUnassigned").hidden = !loose.length;
   if (loose.length) {
     F("acctUnassignedText").textContent = `${plural(loose.length, "trade")} ${loose.length === 1 ? "isn't" : "aren't"} linked to an account.`;
     const cur = F("acctAssignSel").value;
-    F("acctAssignSel").innerHTML = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
-    F("acctAssignSel").value = acctById(cur) ? cur : defaultAccount();
+    F("acctAssignSel").innerHTML = live.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+    F("acctAssignSel").value = acctById(cur) && !acctById(cur).archived ? cur : defaultAccount();
   }
-  renderActive();
   renderArchive();
-  F("mtAccountWrap").hidden = !list.length;
+  renderSwitcher();
+  F("sBalanceWrap").hidden = !!live.length;
+  F("mtAccountWrap").hidden = !live.length;
   const mtCur = F("mtAccount").value;
-  F("mtAccount").innerHTML = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
-  F("mtAccount").value = acctById(mtCur) ? mtCur : defaultAccount();
+  F("mtAccount").innerHTML = live.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+  F("mtAccount").value = acctById(mtCur) && !acctById(mtCur).archived ? mtCur : defaultAccount();
 }
+F("acctChips").addEventListener("click", e => {
+  const b = e.target.closest("[data-acct-show]");
+  if (b) { ui.acctShow = b.dataset.acctShow; saveUi(); renderAccounts(); }
+});
 
-// Preferences › Active account: pick the account new trades go to; the dashboard follows it.
-function renderActive() {
-  const list = accounts(), a = acctById(defaultAccount());
-  F("activeWrap").hidden = !list.length;
-  F("sBalanceWrap").hidden = !!list.length;
-  if (!a) return;
-  F("sActive").innerHTML = list.map(x => `<option value="${esc(x.id)}">${esc(acctLabel(x))}</option>`).join("");
-  F("sActive").value = a.id;
-  const n = realTrades.filter(t => t.account === a.id), bal = (Number(a.size) || 0) + sum(n.map(t => Number(t.pnl) || 0));
-  const where = a.type === "Prop firm" ? [a.firm, programOf(a) ? programOf(a).name : "", a.phase] : [a.broker, a.platform];
-  const cls = a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : "live";
-  F("activeSum").innerHTML = `${firmLogo(a) || `<span class="acct-badge ${cls}">${esc(a.type)}</span>`}
-    <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(where.filter(Boolean).join(" · "))}</span>
-    <span>${Number(a.size) > 0 ? `Size ${money(Number(a.size), { signed: false, decimals: 0 })} · balance ${money(bal, { signed: false })} · ` : ""}${plural(n.length, "trade")}</span></div>
-    <div class="acct-btns">${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" id="activeEdit">Edit account</button></div>`;
-}
-F("sActive").addEventListener("change", e => {
-  const a = acctById(e.target.value);
-  if (!a) return;
+// The active account: new trades go to it and the dashboard shows it. Switch from the sidebar or the Accounts page.
+function setActiveAccount(id) {
+  const a = acctById(id);
+  if (!a || a.archived) return;
   settings.lastAccount = a.id;
   saveSettings();
   if (accounts().length > 1) { ui.account = a.id; saveUi(); }
@@ -4968,8 +5047,55 @@ F("sActive").addEventListener("change", e => {
   // Point both trade forms at it (unless a saved trade is open for editing).
   F("qAccount").value = a.id;
   if (!trades.some(t => t.id === F("tId").value)) F("tAccount").value = a.id;
+  renderAccounts();
+  if (isAnalytics(currentTab())) renderDashboard();
+}
+function renderSwitcher() {
+  const a = acctById(defaultAccount());
+  $$("[data-acct-switch]").forEach(b => {
+    b.hidden = !a;
+    if (!a) return;
+    $(".as-logo", b).innerHTML = badgeFor(a);
+    $(".as-t b", b).textContent = acctLabel(a);
+    b.title = "Active account: " + acctLabel(a);
+  });
+}
+function setAcctMenu(btn) {
+  const menu = F("acctMenu"), open = !!btn;
+  $$("[data-acct-switch]").forEach(b => b.setAttribute("aria-expanded", String(b === btn)));
+  menu.hidden = !open;
+  if (!open) return;
+  const cur = defaultAccount();
+  menu.innerHTML = accounts().map(a => `<button type="button" role="menuitemradio" aria-checked="${a.id === cur}" data-pick="${esc(a.id)}">${badgeFor(a)}<span>${esc(acctLabel(a))}<small>${esc(a.type === "Prop firm" ? a.firm + " · " + PROP_STATES[propState(a)] : [a.type, a.platform].filter(Boolean).join(" · "))}</small></span>${a.id === cur ? ico("check") : ""}</button>`).join("")
+    + `<div class="am-sep"></div><button type="button" role="menuitem" data-goto="accounts">${ico("doc")}<span>Manage accounts</span></button><button type="button" role="menuitem" data-acct-new>${ico("upload")}<span>Add account</span></button>`;
+  const r = btn.getBoundingClientRect(), w = Math.max(r.width, 260);
+  menu.style.width = w + "px";
+  menu.style.left = Math.max(12, Math.min(r.left, document.documentElement.clientWidth - w - 12)) + window.scrollX + "px";
+  menu.style.top = (r.bottom + window.scrollY + 6) + "px";
+  ($("[aria-checked=true]", menu) || $("button", menu)).focus({ preventScroll: true });
+}
+document.addEventListener("click", e => {
+  const sw = e.target.closest("[data-acct-switch]");
+  if (sw) { setAcctMenu(F("acctMenu").hidden || sw.getAttribute("aria-expanded") !== "true" ? sw : null); return; }
+  const pick = e.target.closest("#acctMenu [data-pick]");
+  if (pick) { setAcctMenu(null); if (pick.dataset.pick !== defaultAccount()) setActiveAccount(pick.dataset.pick); return; }
+  if (e.target.closest("[data-acct-new]")) { setAcctMenu(null); openAccountDlg(null, false); return; }
+  if (e.target.closest("#acctMenu [data-goto]")) { setAcctMenu(null); return; }
+  const make = e.target.closest("[data-make-active]");
+  if (make) { setActiveAccount(make.dataset.makeActive); return; }
+  const view = e.target.closest("[data-acct-view]");
+  if (view) { ui.account = view.dataset.acctView; ui.range = "all"; F("fRange").value = "all"; saveUi(); refreshLists(); showTab("journal"); return; }
+  if (!F("acctMenu").hidden && !e.target.closest("#acctMenu")) setAcctMenu(null);
 });
-F("activeSum").addEventListener("click", e => { if (e.target.id === "activeEdit") openAccountDlg(acctById(defaultAccount()), false); });
+document.addEventListener("keydown", e => {
+  if (F("acctMenu").hidden) return;
+  if (e.key === "Escape") { const b = $("[data-acct-switch][aria-expanded=true]"); setAcctMenu(null); if (b) b.focus(); }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const items = $$("#acctMenu button"), i = items.indexOf(document.activeElement);
+    e.preventDefault(); items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus();
+  }
+});
+window.addEventListener("resize", () => { if (!F("acctMenu").hidden) setAcctMenu(null); });
 
 function linkTrades(list, accountId) {
   list.forEach(t => putTrade(Object.assign({}, t, { account: accountId })));
@@ -5083,7 +5209,7 @@ const onAcctListClick = async e => {
   refreshAll();
   onDataChanged();
 };
-F("acctList").addEventListener("click", onAcctListClick);
+F("acctGrid").addEventListener("click", onAcctListClick);
 F("archList").addEventListener("click", onAcctListClick);
 F("acctAssignBtn").addEventListener("click", () => {
   const id = F("acctAssignSel").value, loose = unassignedTrades();
@@ -5192,7 +5318,7 @@ function meter(label, value, frac, cls, note) {
   return `<div class="meter ${cls}"><div class="m-top"><span>${label}</span><b>${value}</b></div><div class="m-bar"><i style="width:${(frac * 100).toFixed(1)}%"></i></div>${note ? `<small>${note}</small>` : ""}</div>`;
 }
 const level = f => f >= .9 ? "bad" : f >= .6 ? "warn" : "";
-function propCard(a) {
+function propCard(a, manage = false) {
   const st = propStatus(a), prog = programOf(a), ph = phaseOf(a), firm = findFirm(a.firm);
   const m = v => money(v, { signed: false, decimals: 0 });
   let status = ["In progress", ""];
@@ -5213,12 +5339,13 @@ function propCard(a) {
   if (ph.weekend) facts.push(esc(ph.weekend));
   if (st.payouts) facts.push(`<button class="fact-link" type="button" data-goto="rewards">Paid out ${m(st.paidOut)} · ${plural(st.payouts, "payout")}</button>`);
   return `<article class="card prop-card">
-    <div class="pc-head">${firmLogo(a)}<div class="pc-name"><b>${esc(acctLabel(a))}</b><small>${esc(firm.name)} · ${esc(prog.name)} · ${esc(ph.name)}</small></div><span class="pc-status ${status[1]}">${status[0]}</span></div>
+    <div class="pc-head">${firmLogo(a)}<div class="pc-name"><b>${esc(acctLabel(a))}${manage && a.id === defaultAccount() ? `<span class="active-tag">Active</span>` : ""}</b><small>${esc(firm.name)} · ${esc(prog.name)} · ${esc(ph.name)}</small></div><span class="pc-status ${status[1]}">${status[0]}</span></div>
     ${st.hit && st.daysOk && !st.breach ? `<p class="pc-passed">${ico("target")}<span><b>Target reached.</b> Once ${esc(firm.name)} confirms it, mark this ${esc(ph.name.toLowerCase())} as passed to archive it${nextPhase(a) ? ` and start the ${esc(nextPhase(a).toLowerCase())}` : ""}.</span></p>` : ""}
     ${st.breach ? `<p class="td-news" style="margin:0"><span class="imp High" aria-hidden="true"></span>${esc(st.breach.rule)} reached on ${esc(fmtDate(st.breach.date))} (closed trades). Check your firm dashboard; if the account is lost, mark it as failed to archive it.</p>` : ""}
     ${parts.join("")}
     ${facts.length ? `<div class="pc-facts">${facts.map(f => `<span>${f}</span>`).join("")}</div>` : ""}
     <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns"><button class="btn sm ${st.breach ? "danger" : "ghost"}" type="button" data-fail="${esc(a.id)}">${ico("close")}Mark as failed</button>${st.targetAmt ? `<button class="btn sm ${st.hit && st.daysOk ? "primary" : "ghost"}" type="button" data-pass="${esc(a.id)}">${ico("check")}Mark as passed</button>` : ""}<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
+    ${manage ? manageRow(a) : ""}
   </article>`;
 }
 // Overview banner: any prop account at 70%+ of its daily or max loss, or past a limit. Dismissible
@@ -5269,9 +5396,12 @@ F("propAlerts").addEventListener("click", e => {
 });
 function renderProp() {
   renderPropAlerts();
-  const list = accounts().filter(a => (!acctById(ui.account) || a.id === ui.account) && propStatus(a));
+  const shown = acctById(ui.account) || acctById(defaultAccount()), list = shown && !shown.archived && propStatus(shown) ? [shown] : [];
   F("propPanel").hidden = !list.length;
-  if (list.length) F("propCards").innerHTML = list.map(propCard).join("");
+  if (list.length) F("propCards").innerHTML = list.map(a => propCard(a)).join("");
+  const others = accounts().length - list.length;
+  F("propAll").hidden = others < 1;
+  F("propAll").textContent = `All accounts (${accounts().length}) →`;
 }
 
 function openRules(a) {
@@ -5658,17 +5788,16 @@ F("failWhy").addEventListener("click", e => {
   $$("#failWhy button").forEach(x => x.setAttribute("aria-checked", on && x === b));
 });
 
-// Settings › Accounts › Archive: passed phases, newest first.
+// Accounts › Archive: passed and failed phases, newest first.
 function renderArchive() {
   const every = allAccounts().filter(a => a.archived).sort((x, y) => String(y.archived.date).localeCompare(String(x.archived.date)));
   F("archCard").hidden = !every.length;
   if (!every.length) return;
   const nPass = every.filter(a => propState(a) !== "failed").length, nFail = every.length - nPass;
-  if (!["passed", "failed"].includes(ui.archShow) || !(ui.archShow === "passed" ? nPass : nFail)) ui.archShow = "";
+  const show = ui.acctShow;
+  F("archCard").hidden = !(!show || show === "passed" || show === "failed");
   F("archCount").textContent = [nPass ? `${nPass} passed` : "", nFail ? `${nFail} failed` : ""].filter(Boolean).join(" · ") + " · trades stay in your stats";
-  F("archFilter").hidden = !(nPass && nFail);
-  F("archFilter").innerHTML = [["", `All ${every.length}`], ["passed", `Passed ${nPass}`], ["failed", `Failed ${nFail}`]].map(([v, t]) => `<button type="button" role="radio" data-arch-show="${v}" aria-checked="${(ui.archShow || "") === v}">${t}</button>`).join("");
-  const list = every.filter(a => !ui.archShow || propState(a) === ui.archShow);
+  const list = every.filter(a => !(show === "passed" || show === "failed") || propState(a) === show);
   F("archList").innerHTML = list.map(a => {
     const tr = realTrades.filter(t => t.account === a.id), pnl = sum(tr.map(t => Number(t.pnl) || 0));
     const where = [a.firm, programOf(a) ? programOf(a).name : "", Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
@@ -5681,10 +5810,6 @@ function renderArchive() {
     </li>`;
   }).join("");
 }
-F("archFilter").addEventListener("click", e => {
-  const b = e.target.closest("[data-arch-show]");
-  if (b) { ui.archShow = b.dataset.archShow; saveUi(); renderArchive(); }
-});
 F("archList").addEventListener("click", e => {
   const view = e.target.closest("[data-arch-view]"), back = e.target.closest("[data-arch-restore]");
   if (view) { ui.account = view.dataset.archView; ui.range = "all"; F("fRange").value = "all"; saveUi(); refreshLists(); showTab("journal"); }
