@@ -1,0 +1,25 @@
+name: Fetch prop firm logos
+
+# Run by hand from the Actions tab. Saves each supported prop firm's site icon to site/firm-logos/.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch logos
+        run: python3 site/fetch_firm_logos.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/firm-logos
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Add prop firm logos"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
