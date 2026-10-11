@@ -1,0 +1,12 @@
+name: DNS check (temporary)
+on: workflow_dispatch
+jobs:
+  dig:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for t in A AAAA; do echo "== $t elev8tradingjournal.com"; dig +short $t elev8tradingjournal.com @1.1.1.1; done
+          echo "== CNAME www"; dig +short CNAME www.elev8tradingjournal.com @1.1.1.1
+          echo "== NS"; dig +short NS elev8tradingjournal.com @1.1.1.1
+          echo "== HTTP"; curl -sS -o /dev/null -w "http %{http_code} -> %{redirect_url}\n" http://elev8tradingjournal.com || true
+          curl -sS -o /dev/null -w "https %{http_code}\n" https://elev8tradingjournal.com || true
