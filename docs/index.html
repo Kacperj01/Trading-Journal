@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "94b2b670e7";</script>
+<script>window.ELEV8_BUILD = "1d9627b0b6";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -698,6 +698,12 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .acct-archive { margin-top: 16px; }
 .arch-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 2px 8px 2px 6px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
 .arch-badge .ni { width: 12px; height: 12px; opacity: 1; }
+.arch-badge.failed { background: var(--red-soft); color: var(--red); }
+.arch-note { font-style: italic; }
+.arch-filter { margin: -4px 0 14px; }
+#failWrap .lbl { display: block; margin-bottom: 8px; }
+.btn.primary.danger-fill { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.sm.danger .ni { color: var(--red); }
 .plan-checks { display: flex; flex-wrap: wrap; gap: 6px; }
 .plan-chip { position: relative; cursor: pointer; }
 .plan-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -1854,6 +1860,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         </section>
         <section class="card set-narrow acct-archive" aria-labelledby="archTitle" id="archCard" hidden>
           <div class="card-head"><div><h3 id="archTitle">Archive</h3><div class="sub" id="archCount"></div></div></div>
+          <div class="fp-periods arch-filter" role="radiogroup" aria-label="Show" id="archFilter" hidden></div>
           <ul class="acct-list" id="archList"></ul>
         </section>
       </div>
@@ -2082,6 +2089,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </div>
   <div class="field"><span class="lbl" id="fSessionLbl">Session</span><div class="fp-periods" role="radiogroup" aria-labelledby="fSessionLbl" data-opts="fSession"></div><select id="fSession" hidden tabindex="-1" aria-hidden="true"><option value="">All sessions</option></select></div>
   <div class="field"><span class="lbl" id="fSetupLbl">Setup</span><div class="fp-periods" role="radiogroup" aria-labelledby="fSetupLbl" data-opts="fSetup"></div><select id="fSetup" hidden tabindex="-1" aria-hidden="true"><option value="">All setups</option></select></div>
+  <div class="field" id="fStatusWrap" hidden><span class="lbl" id="fStatusLbl">Prop firm accounts</span><div class="fp-periods" role="radiogroup" aria-labelledby="fStatusLbl" id="fStatus"></div></div>
   <div class="field" id="fAccountWrap" hidden><span class="lbl" id="fAccountLbl">Account</span><div class="fp-periods" role="radiogroup" aria-labelledby="fAccountLbl" data-opts="fAccount"></div><select id="fAccount" hidden tabindex="-1" aria-hidden="true"><option value="">All accounts</option></select></div>
   <div class="fp-btns"><button class="btn ghost" type="button" id="fClear">Reset</button><button class="btn primary" type="button" id="fDone">Done</button></div>
 </div>
@@ -2093,6 +2101,18 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="btn sm ghost" type="button" id="passClose" aria-label="Close">✕</button>
     </div>
     <div class="pass-sum" id="passSum"></div>
+    <div id="failWrap" hidden>
+      <span class="lbl" id="failWhyLbl">What happened?</span>
+      <div class="fp-periods" role="radiogroup" aria-labelledby="failWhyLbl" id="failWhy">
+        <button type="button" role="radio" data-why="Daily loss limit">Daily loss limit</button>
+        <button type="button" role="radio" data-why="Maximum loss">Max loss</button>
+        <button type="button" role="radio" data-why="Time ran out">Time ran out</button>
+        <button type="button" role="radio" data-why="Broke another rule">Broke another rule</button>
+        <button type="button" role="radio" data-why="Gave up">Gave up</button>
+      </div>
+      <div class="field" style="margin:12px 0 0"><label for="failNote">Note (optional)</label><input type="text" id="failNote" maxlength="120" placeholder="What would you do differently?"></div>
+      <label class="toggle" style="margin-top:12px"><input type="checkbox" id="failRetry"> <span id="failRetryText"></span></label>
+    </div>
     <div id="passNextWrap">
       <label class="toggle"><input type="checkbox" id="passNext" checked> <span id="passNextText"></span></label>
       <div class="fields fields-pair" id="passNextFields" style="margin:12px 0 0">
@@ -2100,7 +2120,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <div class="field"><label for="passSize">Account size</label><input type="number" step="any" min="0" id="passSize" inputmode="decimal"></div>
       </div>
     </div>
-    <p class="muted" style="margin:0;font-size:13px">The passed account moves to the Archive in Settings › Accounts. Its trades stay in your journal and in your stats.</p>
+    <p class="muted" style="margin:0;font-size:13px" id="passNote">The account moves to the Archive in Settings › Accounts. Its trades stay in your journal and in your stats.</p>
     <div class="dlg-actions">
       <button class="btn ghost" type="button" id="passCancel">Cancel</button>
       <button class="btn primary" type="submit" id="passOk">Mark as passed</button>
@@ -2936,7 +2956,15 @@ function filtered() {
 const allAccounts = () => Array.isArray(settings.accounts) ? settings.accounts : [];
 const accounts = () => allAccounts().filter(a => !a.archived);
 const acctById = id => (id && allAccounts().find(a => a.id === id)) || null;
-const inAccount = t => !ui.account || t.account === ui.account;
+// Prop firm accounts only: "progress" (evaluation), "funded", or how an archived one ended ("passed" / "failed").
+function propState(a) {
+  if (!a || a.type !== "Prop firm") return "";
+  if (a.archived) return a.archived.status === "failed" ? "failed" : "passed";
+  const r = rulesFor(a);
+  return (r ? !r.target : /funded|master|account$/i.test(a.phase || "")) ? "funded" : "progress";
+}
+const PROP_STATES = { progress: "In progress", funded: "Funded", passed: "Passed", failed: "Failed" };
+const inAccount = t => (!ui.account || t.account === ui.account) && (!ui.propStatus || propState(acctById(t.account)) === ui.propStatus);
 const unassignedTrades = () => realTrades.filter(t => !acctById(t.account));
 const defaultAccount = () => ((a => a && !a.archived ? a : null)(acctById(settings.lastAccount)) || accounts()[0] || {}).id || "";
 const shortSize = n => !(n > 0) ? "" : n >= 1e6 ? +(n / 1e6).toFixed(2) + "M" : n >= 1000 ? +(n / 1000).toFixed(1) + "K" : String(n);
@@ -3037,6 +3065,7 @@ function renderDashboard() {
   if (ui.session) lbl += " · " + ui.session;
   if (ui.setup) lbl += " · " + ui.setup;
   if (acctById(ui.account)) lbl += " · " + acctLabel(acctById(ui.account));
+  if (ui.propStatus) lbl += " · " + PROP_STATES[ui.propStatus] + " prop accounts";
   $("#rangeLabel").textContent = lbl + " · " + plural(list.length, "trade");
 
   const empty = list.length === 0;
@@ -3791,7 +3820,7 @@ function refreshLists() {
   if (ui.account && !acctById(ui.account)) { ui.account = ""; saveUi(); }
   const opts = accts.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
   F("fAccountWrap").hidden = every.length < 2;
-  F("fAccount").innerHTML = `<option value="">All accounts</option>` + opts + every.filter(a => a.archived).map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))} (passed)</option>`).join("");
+  F("fAccount").innerHTML = `<option value="">All accounts</option>` + opts + every.filter(a => a.archived).map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))} (${propState(a)})</option>`).join("");
   F("fAccount").value = ui.account;
   syncFilters();
   for (const [id, extra] of [["tAccount", `<option value="">No account</option>`], ["qAccount", ""]]) {
@@ -3908,7 +3937,7 @@ function loadIntoForm(t) {
   fillSelect(F("tSessionSel"), settings.sessions, { placeholder: "Select session", value: t.session || "" });
   // A trade from a passed (archived) phase keeps its account when edited.
   const own = acctById(t.account);
-  if (own && own.archived && !Array.from(F("tAccount").options).some(o => o.value === own.id)) F("tAccount").insertAdjacentHTML("beforeend", `<option value="${esc(own.id)}">${esc(acctLabel(own))} (passed)</option>`);
+  if (own && own.archived && !Array.from(F("tAccount").options).some(o => o.value === own.id)) F("tAccount").insertAdjacentHTML("beforeend", `<option value="${esc(own.id)}">${esc(acctLabel(own))} (${propState(own) || "archived"})</option>`);
   F("tAccount").value = own ? t.account : t.id ? "" : defaultAccount();
   $$("input[name=tDir]").forEach(r => r.checked = r.value === t.direction);
   F("tSetup").value = t.setup || "";
@@ -4613,13 +4642,19 @@ window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { pu
 
 // Filters: one button opens a panel with every option; changes apply straight away.
 // Function declarations, so the start-up renders can call them before this point runs.
-function filterCount() { return (ui.range !== "all" ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && allAccounts().length > 1 && acctById(ui.account) ? 1 : 0); }
+function filterCount() { return (ui.range !== "all" ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && allAccounts().length > 1 && acctById(ui.account) ? 1 : 0) + (ui.propStatus ? 1 : 0); }
 function syncFilters() {
   const n = filterCount();
   F("filterBadge").hidden = !n; F("filterBadge").textContent = n;
   F("filterBtn").classList.toggle("on", !!n);
   F("filterBtn").setAttribute("aria-label", n ? `Filters, ${n} on` : "Filters");
   $$("#fPeriods button").forEach(b => b.setAttribute("aria-checked", b.dataset.range === ui.range));
+  // Prop firm status: only when there are prop firm accounts; Funded only when one is funded.
+  const states = new Set(allAccounts().map(propState).filter(Boolean));
+  if (ui.propStatus && !states.size) ui.propStatus = "";
+  F("fStatusWrap").hidden = !states.size;
+  const stOpts = [["", "All"], ["progress", "In progress"], ...(states.has("funded") ? [["funded", "Funded"]] : []), ["passed", "Passed"], ["failed", "Failed"]];
+  F("fStatus").innerHTML = stOpts.map(([v, t]) => `<button type="button" role="radio" data-status="${v}" aria-checked="${v === (ui.propStatus || "")}">${t}</button>`).join("");
   // Session, setup and account chips mirror their (hidden) lists; redrawn only when the choices change.
   $$("#filterPanel [data-opts]").forEach(box => {
     const sel = F(box.dataset.opts), opts = Array.from(sel.options).map(o => [o.value, o.text]), key = JSON.stringify(opts);
@@ -4662,6 +4697,12 @@ F("fPeriods").addEventListener("click", e => {
   F("fRange").dispatchEvent(new Event("change"));
   if (b.dataset.range === "custom") setTimeout(() => F("fFrom").focus(), 0);
 });
+F("fStatus").addEventListener("click", e => {
+  const b = e.target.closest("[data-status]");
+  if (!b) return;
+  ui.propStatus = b.dataset.status; saveUi(); renderDashboard();
+  const again = F("fStatus").querySelector(`[data-status="${b.dataset.status}"]`); if (again) again.focus({ preventScroll: true });
+});
 F("filterPanel").addEventListener("click", e => {
   const b = e.target.closest("[data-opts] [data-v]");
   if (!b) return;
@@ -4677,7 +4718,7 @@ F("filterPanel").addEventListener("keydown", e => {
   if (step && i >= 0) { e.preventDefault(); list[(i + step + list.length) % list.length].focus(); }
 });
 F("fClear").addEventListener("click", () => {
-  ui.range = "all"; ui.session = ""; ui.setup = ""; ui.account = ""; ui.calMonth = "";
+  ui.range = "all"; ui.session = ""; ui.setup = ""; ui.account = ""; ui.propStatus = ""; ui.calMonth = "";
   F("fRange").value = "all"; F("fSession").value = ""; F("fSetup").value = ""; F("fAccount").value = "";
   saveUi(); renderDashboard();
 });
@@ -4904,7 +4945,7 @@ function renderAccounts() {
     return `<li class="acct-item">
       ${firmLogo(a) || `<span class="acct-badge ${cls}">${esc(a.type)}</span>`}
       <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(meta)}</span><span>${plural(n, "trade")}</span></div>
-      <div class="acct-btns">${canPass(a) ? `<button class="btn sm ghost" type="button" data-pass="${esc(a.id)}">Mark passed</button>` : ""}${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
+      <div class="acct-btns">${canPass(a) ? `<button class="btn sm ghost" type="button" data-pass="${esc(a.id)}">Mark passed</button>` : ""}${a.type === "Prop firm" ? `<button class="btn sm ghost" type="button" data-fail="${esc(a.id)}">Mark failed</button>` : ""}${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
     </li>`;
   }).join("") : `<li class="acct-empty">No trading accounts yet. Add the live, demo or prop firm account you trade.</li>`;
   const loose = list.length ? unassignedTrades() : [];
@@ -5197,10 +5238,10 @@ function propCard(a) {
   return `<article class="card prop-card">
     <div class="pc-head">${firmLogo(a)}<div class="pc-name"><b>${esc(acctLabel(a))}</b><small>${esc(firm.name)} · ${esc(prog.name)} · ${esc(ph.name)}</small></div><span class="pc-status ${status[1]}">${status[0]}</span></div>
     ${st.hit && st.daysOk && !st.breach ? `<p class="pc-passed">${ico("target")}<span><b>Target reached.</b> Once ${esc(firm.name)} confirms it, mark this ${esc(ph.name.toLowerCase())} as passed to archive it${nextPhase(a) ? ` and start the ${esc(nextPhase(a).toLowerCase())}` : ""}.</span></p>` : ""}
-    ${st.breach ? `<p class="td-news" style="margin:0"><span class="imp High" aria-hidden="true"></span>${esc(st.breach.rule)} reached on ${esc(fmtDate(st.breach.date))} (closed trades). Check your firm dashboard.</p>` : ""}
+    ${st.breach ? `<p class="td-news" style="margin:0"><span class="imp High" aria-hidden="true"></span>${esc(st.breach.rule)} reached on ${esc(fmtDate(st.breach.date))} (closed trades). Check your firm dashboard; if the account is lost, mark it as failed to archive it.</p>` : ""}
     ${parts.join("")}
     ${facts.length ? `<div class="pc-facts">${facts.map(f => `<span>${f}</span>`).join("")}</div>` : ""}
-    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns">${st.targetAmt ? `<button class="btn sm ${st.hit && st.daysOk ? "primary" : "ghost"}" type="button" data-pass="${esc(a.id)}">${ico("check")}Mark as passed</button>` : ""}<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
+    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns"><button class="btn sm ${st.breach ? "danger" : "ghost"}" type="button" data-fail="${esc(a.id)}">${ico("close")}Mark as failed</button>${st.targetAmt ? `<button class="btn sm ${st.hit && st.daysOk ? "primary" : "ghost"}" type="button" data-pass="${esc(a.id)}">${ico("check")}Mark as passed</button>` : ""}<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
   </article>`;
 }
 // Overview banner: any prop account at 70%+ of its daily or max loss, or past a limit. Dismissible
@@ -5564,25 +5605,38 @@ function nextPhase(a) {
 }
 // A phase can be passed when it has a profit target (funded accounts don't).
 function canPass(a) { return !!a && !a.archived && a.type === "Prop firm" && (rulesFor(a) ? !!rulesFor(a).target : nextPhase(a) !== ""); }
-function openPass(a) {
-  if (!canPass(a)) return;
+function openPass(a, mode = "pass") {
+  const fail = mode === "fail";
+  if (fail ? !(a && !a.archived && a.type === "Prop firm") : !canPass(a)) return;
+  F("passForm").dataset.mode = mode;
   const st = propStatus(a), next = nextPhase(a), m = v => money(v, { signed: false, decimals: 0 });
   // This stage's trades: from its start date, the same ones its rules are tracked on.
   const list = realTrades.filter(t => t.account === a.id && (!a.startDate || t.date >= a.startDate)), pnl = sum(list.map(t => Number(t.pnl) || 0));
   const days = new Set(list.map(t => t.date)).size;
   F("passForm").dataset.id = a.id;
-  F("passTitle").innerHTML = `${firmLogo(a, "sm")}<span>Passed the ${esc((phaseOf(a) || { name: a.phase || "phase" }).name.toLowerCase())}?</span>`;
+  const stage = (phaseOf(a) || { name: a.phase || "account" }).name.toLowerCase();
+  F("passTitle").innerHTML = `${firmLogo(a, "sm")}<span>${fail ? "Failed" : "Passed"} the ${esc(stage)}?</span>`;
+  F("failWrap").hidden = !fail;
+  if (fail) {
+    const why = st && st.breach ? st.breach.rule : "";
+    $$("#failWhy button").forEach(b => b.setAttribute("aria-checked", b.dataset.why === why));
+    F("failNote").value = "";
+    const first = programOf(a) ? programOf(a).phases[0].name : "Challenge";
+    F("failRetry").checked = false;
+    F("failRetryText").textContent = `Start a new attempt: a fresh ${first.toLowerCase()} with ${a.firm || "the same firm"}, same size, as the active account`;
+  }
   F("passSub").textContent = acctLabel(a);
   F("passSum").innerHTML = `<div><span>Profit</span><b class="${tone(pnl)}">${money(pnl)}</b></div>
     ${st && st.targetAmt ? `<div><span>Target</span><b>${m(st.targetAmt)}</b></div>` : ""}
     <div><span>Trades</span><b>${list.length}</b></div><div><span>Trading days</span><b>${days}</b></div>`;
-  F("passNextWrap").hidden = !next;
+  F("passNextWrap").hidden = fail || !next;
   F("passNext").checked = !!next;
   F("passNextText").textContent = next ? `Start the ${next.toLowerCase()} as a new account, and make it the active account` : "";
   F("passStart").value = isoDate(new Date());
   F("passSize").value = a.size || "";
   F("passNextFields").hidden = !next;
-  F("passOk").textContent = next ? "Mark as passed" : "Mark as passed and archive";
+  F("passOk").textContent = fail ? "Mark as failed" : next ? "Mark as passed" : "Mark as passed and archive";
+  F("passOk").classList.toggle("danger-fill", fail);
   const dlg = F("passDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
 }
@@ -5594,12 +5648,15 @@ F("passForm").addEventListener("submit", e => {
   if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return; }
   const a = acctById(F("passForm").dataset.id);
   if (!a) return;
-  const next = F("passNext").checked && nextPhase(a), today = isoDate(new Date());
-  const list = allAccounts().map(x => x.id === a.id ? Object.assign({}, x, { archived: { status: "passed", date: today, phase: x.phase } }) : x);
+  const fail = F("passForm").dataset.mode === "fail", today = isoDate(new Date());
+  const why = (($("#failWhy [aria-checked=true]") || {}).dataset || {}).why || "";
+  const next = fail ? (F("failRetry").checked && (programOf(a) ? programOf(a).phases[0].name : "Challenge")) : F("passNext").checked && nextPhase(a);
+  const record = fail ? { status: "failed", date: today, phase: a.phase, reason: why, note: F("failNote").value.trim() } : { status: "passed", date: today, phase: a.phase };
+  const list = allAccounts().map(x => x.id === a.id ? Object.assign({}, x, { archived: record }) : x);
   let fresh = null;
   if (next) {
-    fresh = { id: uid(), type: "Prop firm", firm: a.firm, program: a.program || "", phase: next, size: num(F("passSize").value) || a.size,
-      broker: a.broker || "", platform: a.platform || "", name: "", startDate: F("passStart").value || today };
+    fresh = { id: uid(), type: "Prop firm", firm: a.firm, program: a.program || "", phase: next, size: fail ? a.size : num(F("passSize").value) || a.size,
+      broker: a.broker || "", platform: a.platform || "", name: "", startDate: fail ? today : F("passStart").value || today };
     list.push(fresh);
   }
   settings.accounts = list;
@@ -5608,29 +5665,49 @@ F("passForm").addEventListener("submit", e => {
   if (ui.account === a.id) { ui.account = fresh && accounts().length > 1 ? fresh.id : ""; saveUi(); }
   saveSettings();
   F("passDlg").close();
-  toast(fresh ? `${acctLabel(a)} passed and archived. ${acctLabel(fresh)} started.` : `${acctLabel(a)} passed and archived`);
+  const verb = fail ? "marked as failed" : "passed";
+  toast(fresh ? `${acctLabel(a)} ${verb} and archived. ${acctLabel(fresh)} started.` : `${acctLabel(a)} ${verb} and archived`);
   refreshAll();
   onDataChanged();
 });
-document.addEventListener("click", e => { const b = e.target.closest("[data-pass]"); if (b) openPass(acctById(b.dataset.pass)); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-pass], [data-fail]");
+  if (b) openPass(acctById(b.dataset.pass || b.dataset.fail), b.dataset.fail ? "fail" : "pass");
+});
+F("failWhy").addEventListener("click", e => {
+  const b = e.target.closest("[data-why]");
+  if (!b) return;
+  const on = b.getAttribute("aria-checked") !== "true";
+  $$("#failWhy button").forEach(x => x.setAttribute("aria-checked", on && x === b));
+});
 
 // Settings › Accounts › Archive: passed phases, newest first.
 function renderArchive() {
-  const list = allAccounts().filter(a => a.archived).sort((x, y) => String(y.archived.date).localeCompare(String(x.archived.date)));
-  F("archCard").hidden = !list.length;
-  if (!list.length) return;
-  F("archCount").textContent = `${plural(list.length, "passed phase")} · trades stay in your stats`;
+  const every = allAccounts().filter(a => a.archived).sort((x, y) => String(y.archived.date).localeCompare(String(x.archived.date)));
+  F("archCard").hidden = !every.length;
+  if (!every.length) return;
+  const nPass = every.filter(a => propState(a) !== "failed").length, nFail = every.length - nPass;
+  if (!["passed", "failed"].includes(ui.archShow) || !(ui.archShow === "passed" ? nPass : nFail)) ui.archShow = "";
+  F("archCount").textContent = [nPass ? `${nPass} passed` : "", nFail ? `${nFail} failed` : ""].filter(Boolean).join(" · ") + " · trades stay in your stats";
+  F("archFilter").hidden = !(nPass && nFail);
+  F("archFilter").innerHTML = [["", `All ${every.length}`], ["passed", `Passed ${nPass}`], ["failed", `Failed ${nFail}`]].map(([v, t]) => `<button type="button" role="radio" data-arch-show="${v}" aria-checked="${(ui.archShow || "") === v}">${t}</button>`).join("");
+  const list = every.filter(a => !ui.archShow || propState(a) === ui.archShow);
   F("archList").innerHTML = list.map(a => {
     const tr = realTrades.filter(t => t.account === a.id), pnl = sum(tr.map(t => Number(t.pnl) || 0));
     const where = [a.firm, programOf(a) ? programOf(a).name : "", Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
     return `<li class="acct-item arch-item">
       ${firmLogo(a) || `<span class="acct-badge prop">${esc(a.type)}</span>`}
-      <div class="acct-main"><b>${esc(acctLabel(a))} <span class="arch-badge">${ico("check")}Passed</span></b><span>${esc(where)}</span>
-        <span>Passed ${esc(fmtDate(a.archived.date))} · ${plural(tr.length, "trade")} · <span class="${tone(pnl)}">${money(pnl)}</span></span></div>
+      <div class="acct-main"><b>${esc(acctLabel(a))} ${propState(a) === "failed" ? `<span class="arch-badge failed">${ico("close")}Failed</span>` : `<span class="arch-badge">${ico("check")}Passed</span>`}</b><span>${esc(where)}</span>
+        <span>${propState(a) === "failed" ? "Failed" : "Passed"} ${esc(fmtDate(a.archived.date))}${a.archived.reason ? " · " + esc(a.archived.reason) : ""} · ${plural(tr.length, "trade")} · <span class="${tone(pnl)}">${money(pnl)}</span></span>
+        ${a.archived.note ? `<span class="arch-note">“${esc(a.archived.note)}”</span>` : ""}</div>
       <div class="acct-btns"><button class="btn sm ghost" type="button" data-arch-view="${esc(a.id)}">View trades</button><button class="btn sm ghost" type="button" data-arch-restore="${esc(a.id)}">Restore</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
     </li>`;
   }).join("");
 }
+F("archFilter").addEventListener("click", e => {
+  const b = e.target.closest("[data-arch-show]");
+  if (b) { ui.archShow = b.dataset.archShow; saveUi(); renderArchive(); }
+});
 F("archList").addEventListener("click", e => {
   const view = e.target.closest("[data-arch-view]"), back = e.target.closest("[data-arch-restore]");
   if (view) { ui.account = view.dataset.archView; ui.range = "all"; F("fRange").value = "all"; saveUi(); refreshLists(); showTab("journal"); }
@@ -5650,7 +5727,7 @@ function renderRewards() {
   const list = payAccounts();
   F("rwEmpty").hidden = !!list.length; F("rwMain").hidden = !list.length;
   if (!list.length) return;
-  const opts = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}${a.archived ? " (passed)" : ""}</option>`).join("");
+  const opts = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}${a.archived ? ` (${propState(a) || "archived"})` : ""}</option>`).join("");
   const live = list.filter(a => !a.archived), cur = F("payAccount").value;
   F("payAccount").innerHTML = (live.length ? live : list).map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
   F("payAccount").value = acctById(cur) && !acctById(cur).archived ? cur : ((live.find(a => a.id === defaultAccount()) || live[0] || list[0]).id);
