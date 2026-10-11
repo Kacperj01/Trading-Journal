@@ -115,5 +115,7 @@ docs.mkdir(exist_ok=True)
 (docs / "manifest.webmanifest").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 (docs / "sw.js").write_text(sw, encoding="utf-8")
 (docs / ".nojekyll").write_text("", encoding="utf-8")
+# Custom domain for GitHub Pages (DNS is set up at Cloudflare).
+(docs / "CNAME").write_text("elev8tradingjournal.com\n", encoding="utf-8")
 subprocess.run([sys.executable, str(root / "site" / "make_icons.py"), str(docs / "icons")], check=True)
 print("built docs/ (version", version + ")")
