@@ -420,6 +420,11 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--re
 .insight.bad .emoji { background: var(--red-soft); border-color: rgba(255, 92, 122, 0.35); }
 .insight.warn .emoji { background: var(--warn-soft); border-color: rgba(245, 184, 74, 0.35); }
 .insight.info .emoji { background: var(--blue-soft); border-color: rgba(74, 154, 240, 0.35); }
+.insight .emoji .ni { width: 22px; height: 22px; opacity: 1; color: var(--text-2); }
+.insight.good .emoji .ni { color: var(--green); } .insight.bad .emoji .ni { color: var(--red); } .insight.warn .emoji .ni { color: var(--warn); } .insight.info .emoji .ni { color: var(--blue); }
+.plan-flag .ni { width: 15px; height: 15px; vertical-align: -3px; color: var(--warn); opacity: 1; }
+.seg-tabs button .imp { margin-right: 6px; vertical-align: -1px; }
+#newsRefresh .ni { width: 15px; height: 15px; margin-right: 6px; vertical-align: -3px; }
 .insight h3 { font-size: 15.5px; }
 .insight .tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 .insight.good .tag { color: var(--green); }
@@ -563,7 +568,8 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 
 /* Weekly review */
 .wk-verdict { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 16px; font-size: 15px; line-height: 1.5; }
-.wk-verdict .emoji { font-size: 22px; line-height: 1; margin-top: 2px; }
+.wk-verdict .emoji { line-height: 1; margin-top: 1px; }
+.wk-verdict .emoji .ni { width: 22px; height: 22px; color: var(--accent); opacity: 1; }
 .wk-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 @media (max-width: 1040px) { .wk-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .wk-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -607,7 +613,7 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .firm-input { position: relative; }
 .firm-input .firm-logo { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; }
 .firm-input input.has-logo { padding-left: 44px; }
-#rulesTitle { display: flex; align-items: center; gap: 10px; }
+#rulesTitle, #payTitle { display: flex; align-items: center; gap: 10px; }
 .prop-card { min-width: 0; }
 .prop-card .pc-head { display: flex; gap: 12px; align-items: center; }
 .prop-card .pc-head .pc-name { min-width: 0; flex: 1; overflow-wrap: anywhere; }
@@ -632,6 +638,70 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .pc-facts { display: flex; flex-wrap: wrap; gap: 6px; }
 .pc-facts span { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: var(--tint); border: 1px solid var(--border); color: var(--text-2); }
 .pc-foot { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+.pc-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.plan-checks { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-chip { position: relative; cursor: pointer; }
+.plan-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.plan-chip span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px 6px 9px; border-radius: 999px; font-size: 13px; border: 1px solid rgba(255, 92, 122, 0.45); background: var(--red-soft); color: var(--text-2); transition: background .15s, border-color .15s; }
+.plan-chip input:checked + span { border-color: rgba(52, 210, 123, 0.45); background: var(--green-soft); color: var(--text); }
+.plan-chip input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+.plan-chip .ni { width: 14px; height: 14px; opacity: 1; }
+.plan-chip .pc-ok { display: none; color: var(--green); }
+.plan-chip .pc-no { color: var(--red); }
+.plan-chip input:checked + span .pc-ok { display: block; }
+.plan-chip input:checked + span .pc-no { display: none; }
+.quick-grid .q-full { grid-column: 1 / -1; }
+.rule-stats { display: grid; gap: 4px; }
+.rs-row { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; }
+.rs-row:not(.rs-head) { background: var(--surface-2); border: 1px solid var(--border); }
+.rs-head { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-block: 2px; }
+.rs-row span { min-width: 0; overflow-wrap: anywhere; display: grid; gap: 1px; }
+.rs-row small { color: var(--muted); font-size: 11.5px; }
+@media (max-width: 560px) { .rs-row { grid-template-columns: minmax(0, 1fr) 64px 52px 76px; gap: 8px; } .rs-head span:first-child { visibility: hidden; } .rs-row > span:last-child { text-align: right; } }
+.q-head-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.q-head-btns .ni { width: 16px; height: 16px; opacity: .9; }
+.q-calc-l { margin-left: 6px; }
+@media (max-width: 520px) { .q-calc-l { display: none; } }
+.calc-link { margin: 0 0 12px; }
+.calc-link .ni { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
+.calc-risk { display: flex; gap: 8px; align-items: stretch; }
+.calc-risk input { flex: 1; min-width: 0; }
+.calc-risk .seg { flex-shrink: 0; }
+.calc-risk .seg label { display: grid; place-items: center; padding: 0 13px; }
+.calc-risk .seg label:has(input:checked) { background: var(--blue-soft); color: var(--accent); }
+.calc-out { margin: 14px 0 4px; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: grid; gap: 12px; }
+.calc-big { display: grid; gap: 2px; }
+.calc-big span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.calc-big b { font: 600 28px var(--font-mono); color: var(--accent); }
+.calc-big small { font-size: 12.5px; color: var(--muted); }
+.calc-rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: 8px; }
+.calc-rows div { display: grid; gap: 2px; }
+.calc-rows span { font-size: 12px; color: var(--muted); }
+.calc-rows b { font: 500 14px var(--font-mono); }
+.calc-warn { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 9px 11px; border-radius: var(--radius-sm); font-size: 13px; background: var(--warn-soft); border: 1px solid rgba(245, 184, 74, 0.4); }
+.calc-warn.bad { background: var(--red-soft); border-color: rgba(255, 92, 122, 0.45); }
+.calc-warn .ni { width: 17px; height: 17px; opacity: 1; color: var(--warn); margin-top: 1px; }
+.calc-warn.bad .ni { color: var(--red); }
+.prop-alerts { display: grid; gap: 10px; margin-bottom: 18px; }
+.pa-item { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(245, 184, 74, 0.45); background: var(--warn-soft); }
+.pa-item.bad { border-color: rgba(255, 92, 122, 0.5); background: var(--red-soft); }
+.pa-icon .ni { width: 22px; height: 22px; opacity: 1; color: var(--warn); display: block; }
+.pa-item.bad .pa-icon .ni { color: var(--red); }
+.pa-text { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
+.pa-text b { font-size: 14px; font-weight: 600; }
+.pa-text span { font-size: 13px; color: var(--text-2); overflow-wrap: anywhere; }
+.pa-btns { display: flex; gap: 6px; margin-left: auto; }
+.pa-btns .ni { width: 15px; height: 15px; margin-right: 5px; vertical-align: -3px; opacity: .9; }
+.pa-x { padding-inline: 10px; }
+.pay-total { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 10px; margin: 6px 0 12px; }
+.pay-total > div { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: grid; gap: 2px; }
+.pay-total span { font-size: 12px; color: var(--muted); }
+.pay-total b { font: 600 17px var(--font-mono); }
+.pay-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.pay-list li { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 13.5px; }
+.pay-list .pay-d { color: var(--text-2); white-space: nowrap; }
+.pay-list .pay-n { color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.pay-list b { font: 500 14px var(--font-mono); }
 .rules-dlg { width: min(620px, calc(100vw - 32px)); max-width: none; }
 .rules-dlg .dlg-body { max-height: min(80vh, 760px); overflow-y: auto; overflow-x: hidden; }
 .rules-dlg .td-head > div { min-width: 0; }
@@ -722,7 +792,7 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 #dlgMsg:empty { display: none; }
 .home-points { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 10px; width: 100%; text-align: left; }
 .home-points li { display: flex; gap: 12px; align-items: center; font-size: 14px; color: var(--text-2); }
-.home-points span { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
+.home-points .ni { width: 34px; height: 34px; padding: 8px; box-sizing: border-box; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--accent); opacity: 1; }
 .dlg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .btn.danger-solid { background: var(--red); border-color: transparent; color: #1a0208; font-weight: 600; }
 .sync { display: inline-flex; align-items: center; gap: 6px; }
@@ -863,6 +933,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 @media (min-width: 1041px) and (prefers-reduced-motion: reduce) { header.top::before, .side-toggle, .side-toggle svg { transition: none; } .side-anim * { animation: none !important; } }
 @media (max-width: 1040px) {
   .menu-btn { display: inline-flex; margin-left: auto; font-size: 20px; padding: 6px 12px; }
+  .menu-btn .ni { width: 20px; height: 20px; opacity: .9; }
   #exportJournalTop { display: none; }
   .tabs { position: fixed; top: 0; left: 0; bottom: 0; width: min(290px, 86vw); z-index: 60; margin: 0; border-radius: 0; border: 0;
     border-right: 1px solid var(--border-strong); flex-direction: column; flex-wrap: nowrap; gap: 2px; overflow-y: auto; scroll-snap-type: none;
@@ -1034,7 +1105,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="side-toggle" type="button" id="sideToggle" aria-controls="mainNav" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar ( [ )"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
     </div>
     <button class="btn sm" type="button" id="exportJournalTop" title="Save a copy of your journal, with all your trades, as a file"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11.5M7 10l5 5 5-5M4.5 20.5h15"/></svg>Export journal</button>
-    <button class="btn ghost menu-btn" type="button" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav">☰</button>
+    <button class="btn ghost menu-btn" type="button" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
   <div class="container">
     <nav class="tabs" id="mainNav" aria-label="Main">
@@ -1113,13 +1184,17 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
     <!-- =================== OVERVIEW =================== -->
     <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-analytics>
+      <div class="prop-alerts" id="propAlerts" role="status" aria-live="polite" hidden></div>
       <section class="card accent-teal quick section reveal" style="--d:1" aria-labelledby="qTitle" id="quickLog">
         <div class="card-head">
           <div>
             <h3 id="qTitle">Log a trade</h3>
             <div class="sub" id="qSub">The essentials. Add prices, risk and charts with More details.</div>
           </div>
-          <button class="btn sm ghost" type="button" id="qToggle" aria-expanded="true" aria-controls="quickForm">Hide</button>
+          <div class="q-head-btns">
+            <button class="btn sm ghost" type="button" data-calc-open aria-label="Position size calculator" title="Position size calculator"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2.2"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h3.5"/></svg><span class="q-calc-l">Size calculator</span></button>
+            <button class="btn sm ghost" type="button" id="qToggle" aria-expanded="true" aria-controls="quickForm">Hide</button>
+          </div>
         </div>
         <form id="quickForm" novalidate>
           <div class="quick-grid">
@@ -1138,6 +1213,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
             <div class="field" id="qAccountWrap" hidden><label for="qAccount">Account</label><select id="qAccount"></select></div>
             <div class="field q-wide"><label for="qNotes">Notes</label><input type="text" id="qNotes" placeholder="Why did you take it?"></div>
+            <div class="field q-full" id="qPlanWrap"><span class="lbl" id="qPlanLbl">Plan rules followed <span class="muted">(untick any you broke)</span></span><div class="plan-checks" id="qPlanChecks" role="group" aria-labelledby="qPlanLbl"></div></div>
           </div>
           <p id="qMsg" class="q-msg" role="alert"></p>
           <div class="quick-actions">
@@ -1350,7 +1426,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <h2>Economic calendar</h2>
           <p class="lead" id="newsLead">This week's news events, in your local time.</p>
         </div>
-        <button class="btn sm" type="button" id="newsRefresh">↻ Refresh</button>
+        <button class="btn sm" type="button" id="newsRefresh"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L19.5 9M19.5 4v5h-5"/></svg>Refresh</button>
       </div>
 
       <div class="card news-next reveal" style="--d:1" id="newsNext" hidden></div>
@@ -1359,8 +1435,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <div class="card-head">
           <div><h3 id="newsListTitle">This week</h3><div class="sub" id="newsCount"></div></div>
           <div class="seg-tabs" role="group" aria-label="Impact" id="newsImpact">
-            <button type="button" data-imp="high">🔴 High</button>
-            <button type="button" data-imp="medium">🟠 Medium+</button>
+            <button type="button" data-imp="high"><span class="imp High" aria-hidden="true"></span>High</button>
+            <button type="button" data-imp="medium"><span class="imp Medium" aria-hidden="true"></span>Medium+</button>
             <button type="button" data-imp="all">All</button>
           </div>
         </div>
@@ -1425,6 +1501,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
           <fieldset>
             <legend>Execution</legend>
+            <button type="button" class="btn sm ghost calc-link" data-calc-open><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2.2"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h3.5"/></svg>Work out my position size</button>
             <div class="fields fields-pair">
               <div class="field"><label for="tEntry">Entry price</label><input type="number" step="any" id="tEntry" inputmode="decimal"></div>
               <div class="field"><label for="tStop">Stop loss</label><input type="number" step="any" id="tStop" inputmode="decimal"></div>
@@ -1474,9 +1551,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
                   <output id="tConfOut" for="tConf">3/5</output>
                 </div>
               </div>
-              <div class="field">
-                <span class="lbl">Discipline</span>
-                <label class="toggle"><input type="checkbox" id="tPlan" checked> Followed my trading plan</label>
+              <div class="field wide" id="tPlanWrap">
+                <span class="lbl" id="tPlanLbl">Trading plan</span>
+                <div class="plan-checks" id="tPlanChecks" role="group" aria-labelledby="tPlanLbl" aria-describedby="tPlanHint"></div>
+                <label class="toggle" id="tPlanToggle"><input type="checkbox" id="tPlan" checked> Followed my trading plan</label>
+                <span class="hint" id="tPlanHint">Untick any rule you broke. Edit your rules in Settings › Lists.</span>
               </div>
               <div class="field wide">
                 <label for="tMistakes">Mistakes</label>
@@ -1661,6 +1740,17 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="set-pane" data-pane="data" hidden>
         <div class="set-head"><h3>Data</h3><p>Bring trades in, take a copy out, or start again.</p></div>
         <div class="settings-grid">
+          <section class="card accent-teal" aria-labelledby="mtTitle">
+            <div class="card-head"><div><h3 id="mtTitle">Import from MetaTrader</h3><div class="sub">MT4 or MT5 account statement (.htm or .xlsx)</div></div></div>
+            <div class="stack">
+              <p class="muted" style="margin:0;font-size:13.5px">In MT4 or MT5 on a computer, open the <strong style="color:var(--text)">History</strong> tab, right-click, choose the period, then <strong style="color:var(--text)">Save as Report</strong> (MT5: Report › HTML or Open XML). Your broker or prop firm's client area often has the same statement. Trades already in your journal are skipped.</p>
+              <div class="fields fields-pair" style="margin:0">
+                <div class="field" id="mtAccountWrap"><label for="mtAccount">Add the trades to</label><select id="mtAccount"></select></div>
+                <div class="field"><label for="mtZone">Times in the statement are</label><select id="mtZone"><option value="broker">Broker server time (GMT+2/+3)</option><option value="utc">UTC</option><option value="local">My local time</option></select></div>
+              </div>
+              <div><label class="btn primary file-label"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5V9M7 14l5-5 5 5M4.5 3.5h15"/></svg>Choose statement<input type="file" id="mtFile" accept=".htm,.html,.xlsx" aria-label="Import a MetaTrader statement"></label></div>
+            </div>
+          </section>
           <section class="card accent-blue" aria-labelledby="importTitle">
             <div class="card-head"><div><h3 id="importTitle">Import trades</h3><div class="sub">Excel (.xlsx), CSV or JSON</div></div></div>
             <div class="stack">
@@ -1716,9 +1806,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="btn" type="button" id="dlgSignUp">Create account</button>
     </form>
     <ul class="home-points">
-      <li><span aria-hidden="true">✍️</span>Log every trade with session, setup and emotions</li>
-      <li><span aria-hidden="true">📈</span>See your edge in P&amp;L, win rate and insights</li>
-      <li><span aria-hidden="true">🔄</span>Synced across all your devices</li>
+      <li><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Log every trade with session, setup and emotions</li>
+      <li><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>See your edge in P&amp;L, win rate and insights</li>
+      <li><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 9A8 8 0 0 0 5.2 7.2L4 8.5M4 4.5v4h4M4.5 15a8 8 0 0 0 14.3 1.8l1.2-1.3M20 19.5v-4h-4"/></svg>Synced across all your devices</li>
     </ul>
   </div>
 </section>
@@ -1800,6 +1890,61 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </div>
 </dialog>
 
+<dialog id="payDlg" class="rules-dlg pay-dlg" aria-labelledby="payTitle">
+  <div class="dlg-body">
+    <div class="td-head">
+      <div><h3 id="payTitle"></h3><div class="sub" id="paySub"></div></div>
+      <button class="btn sm ghost" type="button" id="payClose" aria-label="Close">✕</button>
+    </div>
+    <div class="pay-total" id="payTotal"></div>
+    <ul class="pay-list" id="payList"></ul>
+    <form id="payForm" class="rule-phase" novalidate>
+      <h4>Add a payout</h4>
+      <div class="fields fields-pair" style="margin:0">
+        <div class="field"><label for="payDate">Date paid</label><input type="date" id="payDate" required></div>
+        <div class="field"><label for="payAmount">Amount you received</label><input type="number" step="any" min="0" id="payAmount" inputmode="decimal" placeholder="e.g. 1600" required></div>
+        <div class="field wide"><label for="payNote">Note (optional)</label><input type="text" id="payNote" maxlength="80" placeholder="e.g. 80% split, paid by Rise"></div>
+      </div>
+      <p id="payMsg" class="q-msg" role="alert"></p>
+      <div style="display:flex;gap:8px;margin-top:4px"><button class="btn sm primary" type="submit">Add payout</button></div>
+      <p class="muted" style="margin:10px 0 0;font-size:12.5px">After a payout the account's rules are tracked from its starting size again, the way FTMO, Funding Pips and Alpha Capital reset it.</p>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="calcDlg" class="acct-dlg calc-dlg" aria-labelledby="calcTitle">
+  <form id="calcForm" class="dlg-body" novalidate>
+    <div class="td-head">
+      <div><h3 id="calcTitle">Position size calculator</h3><div class="sub">Lot size from your risk and stop loss</div></div>
+      <button class="btn sm ghost" type="button" id="calcClose" aria-label="Close">✕</button>
+    </div>
+    <div class="fields fields-pair" style="margin:0">
+      <div class="field" id="cAccountWrap"><label for="cAccount">Account</label><select id="cAccount"></select></div>
+      <div class="field"><label for="cBalance">Balance</label><input type="number" step="any" id="cBalance" inputmode="decimal"></div>
+      <div class="field"><label for="cPair">Pair / instrument</label><input type="text" id="cPair" list="pairList" autocomplete="off" placeholder="e.g. EURUSD"></div>
+      <div class="field">
+        <span class="lbl" id="cRiskLbl">Risk per trade</span>
+        <div class="calc-risk">
+          <input type="number" step="any" min="0" id="cRisk" inputmode="decimal" aria-labelledby="cRiskLbl">
+          <div class="seg" role="radiogroup" aria-label="Risk as">
+            <label><input type="radio" name="cMode" value="pct" checked> %</label>
+            <label><input type="radio" name="cMode" value="amt"> <span id="cCur">$</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label for="cEntry">Entry price <span class="muted">(optional)</span></label><input type="number" step="any" id="cEntry" inputmode="decimal"></div>
+      <div class="field"><label for="cStopPx">Stop loss price <span class="muted">(optional)</span></label><input type="number" step="any" id="cStopPx" inputmode="decimal"></div>
+      <div class="field"><label for="cPips" id="cPipsLbl">Stop loss (pips)</label><input type="number" step="any" min="0" id="cPips" inputmode="decimal" aria-describedby="cPipsHint"><span class="hint" id="cPipsHint">Or enter entry and stop prices</span></div>
+      <div class="field"><label for="cPipVal" id="cPipValLbl">Value of 1 pip on 1 lot</label><input type="number" step="any" min="0" id="cPipVal" inputmode="decimal" aria-describedby="cPipValHint"><span class="hint" id="cPipValHint"></span></div>
+    </div>
+    <div class="calc-out" id="calcOut" aria-live="polite"></div>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="calcCancel">Close</button>
+      <button class="btn primary" type="submit" id="calcUse">Use in a trade</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="tradeDlg" class="trade-dlg" aria-labelledby="tdTitle">
   <div class="dlg-body">
     <div class="td-head">
@@ -1868,6 +2013,33 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 };
 
+// Line icons (same style as the sidebar), drawn inline: ico("warn").
+const ICONS = {
+  ban: '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>',
+  warn: '<path d="M12 3.8L2.8 19.8h18.4z"/><path d="M12 10v4.2M12 17v.2"/>',
+  up: '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  down: '<path d="M3 7l6 6 4-4 8 8"/><path d="M15 17h6v-6"/>',
+  moon: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12h.01"/>',
+  shield: '<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M8.8 12l2.2 2.2 4.2-4.4"/>',
+  scale: '<path d="M12 4v16M8 20h8M5 7.5h14"/><path d="M5 7.5l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7.5l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
+  pulse: '<path d="M3 12h4l2.5-6 5 12 2.5-6h4"/>',
+  clipboard: '<rect x="5.5" y="4.5" width="13" height="16.5" rx="2"/><path d="M9 4.5V3h6v1.5M9 10.5l1.5 1.5 3-3M9 16h6"/>',
+  updown: '<path d="M8 20V4M4.5 7.5L8 4l3.5 3.5M16 4v16M12.5 16.5L16 20l3.5-3.5"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  flat: '<path d="M4 12h16"/>',
+  pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  sync: '<path d="M19.5 9A8 8 0 0 0 5.2 7.2L4 8.5M4 4.5v4h4M4.5 15a8 8 0 0 0 14.3 1.8l1.2-1.3M20 19.5v-4h-4"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L19.5 9M19.5 4v5h-5"/>',
+  calc: '<rect x="5" y="3" width="14" height="18" rx="2.2"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01M8.5 18h.01M12 18h3.5"/>',
+  wallet: '<path d="M17 4.5H6A2 2 0 0 0 4 6.5v11A2 2 0 0 0 6 19.5h12.5a1.5 1.5 0 0 0 1.5-1.5V9a1.5 1.5 0 0 0-1.5-1.5H4.5"/><path d="M16 13.5h.01"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  upload: '<path d="M12 20.5V9M7 14l5-5 5 5M4.5 3.5h15"/>'
+};
+const ico = (name, cls = "") => `<svg class="ni${cls ? " " + cls : ""}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ""}</svg>`;
+
 const DEFAULT_SETTINGS = {
   balance: 10000,
   currency: "$",
@@ -1877,6 +2049,7 @@ const DEFAULT_SETTINGS = {
   setups: ["Asia Sweep", "PDH/PDL Sweep", "Supply/Demand Zone", "Break & Retest", "Breakout"],
   sessions: ["Asia", "London", "New York", "Overlap"],
   emotions: ["Confident", "Unsure", "Neutral", "Stressed", "FOMO", "Proud", "Disappointed", "Lesson learned", "Angry"],
+  planRules: ["Traded one of my setups", "Waited for confirmation", "Risk within my plan", "Stop loss set before entry", "No red news within 30 min"],
   mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"],
   accounts: [],     // trading accounts: { id, type: Live | Demo | Prop firm, size, broker, firm, phase, platform, name }
   lastAccount: "",  // the active account, chosen in Preferences: new trades start on it
@@ -2979,9 +3152,34 @@ function renderPsych(list) {
     </div>
     <h4 style="margin:0 0 12px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">P&amp;L by emotion before entry</h4>
     ${g.length ? `<div class="bars" role="list">${barRows(g, { sub: x => `${x.n} · ${pct(x.winRate, 0)} WR` })}</div>` : `<p class="none">Log emotions with your trades to see this breakdown.</p>`}
+    ${planTable(list)}
     ${topMistakes.length ? `<h4 style="margin:20px 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Costliest mistakes</h4>
       <ul class="stat-list">${topMistakes.map(([m, v]) => `<li><span>${esc(m)} <span class="muted">×${v.n}</span></span><span class="${tone(v.pnl)}">${money(v.pnl)}</span></li>`).join("")}</ul>` : ""}`;
   animateBars(el);
+}
+
+// Per rule: how trades went when it was kept vs broken (trades logged with the checklist only).
+function ruleStats(list) {
+  const by = {};
+  list.filter(t => t.planChecks).forEach(t => Object.entries(t.planChecks).forEach(([r, kept]) => {
+    const b = by[r] = by[r] || { rule: r, kept: [], broke: [] };
+    (kept === false ? b.broke : b.kept).push(t);
+  }));
+  return Object.values(by).map(b => ({ rule: b.rule, kept: stats(b.kept), broke: stats(b.broke) }))
+    .sort((a, b) => (a.broke.n ? a.broke.total : 1e12) - (b.broke.n ? b.broke.total : 1e12) || b.broke.n - a.broke.n);
+}
+function planTable(list) {
+  const rows = ruleStats(list);
+  const h = `<h4 style="margin:20px 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Your plan rules</h4>`;
+  if (!rows.length) return h + `<p class="none">Tick your plan rules when you log trades to see which ones matter most. Edit the rules in Settings › Lists.</p>`;
+  const wr = s => s.n ? pct(s.winRate, 0) : "—";
+  return h + `<div class="rule-stats" role="table" aria-label="Results by plan rule">
+    <div class="rs-row rs-head" role="row"><span role="columnheader">Rule</span><span role="columnheader">Kept</span><span role="columnheader">Broken</span><span role="columnheader">P&amp;L when broken</span></div>
+    ${rows.map(r => `<div class="rs-row" role="row"><span role="cell" class="rs-rule">${esc(r.rule)}</span>
+      <span role="cell"><b>${pct(r.kept.n / ((r.kept.n + r.broke.n) || 1), 0)}</b><small>${plural(r.kept.n, "trade")}${r.kept.n ? " · " + wr(r.kept) + " WR" : ""}</small></span>
+      <span role="cell"><b>${r.broke.n}</b><small>${r.broke.n ? wr(r.broke) + " WR" : "never"}</small></span>
+      <span role="cell" class="mono ${r.broke.n ? tone(r.broke.total) : ""}">${r.broke.n ? money(r.broke.total) : "—"}</span></div>`).join("")}
+  </div>`;
 }
 
 function renderCalendar(list) {
@@ -3085,11 +3283,11 @@ function buildWeek(start) {
 
   const delta = st.total - prev.total;
   let verdict;
-  if (!list.length) verdict = { emoji: "🗓️", text: "No trades this week." };
-  else if (st.total > 0 && st.pf >= 1.5) verdict = { emoji: "🚀", text: `Strong week. You finished ${N(money(st.total))} across ${plural(st.n, "trade")}${prevList.length ? `, ${delta >= 0 ? "up" : "down"} ${N(money(Math.abs(delta), { signed: false }))} on last week` : ""}.` };
-  else if (st.total > 0) verdict = { emoji: "📈", text: `Positive week: ${N(money(st.total))} from ${plural(st.n, "trade")}. Solid, with room to tighten up.` };
-  else if (st.total === 0) verdict = { emoji: "➖", text: `Flat week across ${plural(st.n, "trade")}.` };
-  else verdict = { emoji: "🧱", text: `Tough week: ${N(money(st.total))} across ${plural(st.n, "trade")}. The notes below show where it went.` };
+  if (!list.length) verdict = { emoji: ico("calendar"), text: "No trades this week." };
+  else if (st.total > 0 && st.pf >= 1.5) verdict = { emoji: ico("up"), text: `Strong week. You finished ${N(money(st.total))} across ${plural(st.n, "trade")}${prevList.length ? `, ${delta >= 0 ? "up" : "down"} ${N(money(Math.abs(delta), { signed: false }))} on last week` : ""}.` };
+  else if (st.total > 0) verdict = { emoji: ico("up"), text: `Positive week: ${N(money(st.total))} from ${plural(st.n, "trade")}. Solid, with room to tighten up.` };
+  else if (st.total === 0) verdict = { emoji: ico("flat"), text: `Flat week across ${plural(st.n, "trade")}.` };
+  else verdict = { emoji: ico("down"), text: `Tough week: ${N(money(st.total))} across ${plural(st.n, "trade")}. The notes below show where it went.` };
 
   const days = Array.from({ length: 7 }, (_, i) => { const d = addDays(start, i); const ts = list.filter(t => t.date === d); return { d, n: ts.length, pnl: sum(ts.map(t => t.pnl)) }; });
   return { start, end: addDays(start, 6), list, prevList, st, prev, followed, verdict, worked, cost, focus: focus.slice(0, 3), days };
@@ -3155,7 +3353,7 @@ function renderInsights(list, st) {
 
   // Setups with 0% win rate → cut.
   setups.filter(s => s.n >= minN && s.wins === 0).sort((a, b) => a.pnl - b.pnl).forEach(s => out.push({
-    icon: "🚫", tone: "bad", tag: "Cut",
+    icon: ico("ban"), tone: "bad", tag: "Cut",
     title: `Stop trading “${s.name}”`,
     text: `${N(s.n)} trades, ${N("0")} wins. This setup has cost ${N(money(s.pnl))} (${N(fmtR(s.avgR))} average).`,
     action: `Remove it from your playbook, or paper-trade it until you can show a positive edge over 20+ samples.`
@@ -3163,7 +3361,7 @@ function renderInsights(list, st) {
 
   // Low win-rate, negative setups → rework.
   setups.filter(s => s.n >= minN && s.wins > 0 && s.winRate < 0.4 && s.pnl < 0).sort((a, b) => a.pnl - b.pnl).slice(0, 2).forEach(s => out.push({
-    icon: "⚠️", tone: "warn", tag: "Rework",
+    icon: ico("warn"), tone: "warn", tag: "Rework",
     title: `“${s.name}” is underperforming`,
     text: `Only ${N(pct(s.winRate, 0))} win rate over ${N(s.n)} trades for ${N(money(s.pnl))}, against ${N(pct(st.winRate, 0))} for the account overall.`,
     action: `Tighten the entry criteria (add a confirmation trigger), or cut size by half until results recover.`
@@ -3174,7 +3372,7 @@ function renderInsights(list, st) {
   if (bestSetup) {
     const share = st.total > 0 ? bestSetup.pnl / st.total : null;
     out.push({
-      icon: "🚀", tone: "good", tag: "Double down",
+      icon: ico("up"), tone: "good", tag: "Double down",
       title: `“${bestSetup.name}” is your A+ setup`,
       text: `${N(money(bestSetup.pnl))} from ${N(bestSetup.n)} trades with a ${N(pct(bestSetup.winRate, 0))} win rate and ${N(fmtR(bestSetup.avgR))} average${share != null && share > 0 ? ` — ${N(pct(Math.min(share, 9.99), 0))} of total profit` : ""}.`,
       action: `Prioritise this setup: build a checklist for it and consider a slightly larger risk allocation (e.g. 1.25×) on textbook examples.`
@@ -3186,7 +3384,7 @@ function renderInsights(list, st) {
   const worstSess = sortedSess.filter(s => s.pnl < 0 && s.n >= minN).pop();
   const bestSess = sortedSess.find(s => s.pnl > 0 && s.n >= minN);
   if (worstSess) out.push({
-    icon: "🌙", tone: "bad", tag: "Session leak",
+    icon: ico("moon"), tone: "bad", tag: "Session leak",
     title: `You're losing money in ${worstSess.name}`,
     text: `${N(worstSess.wins + "W–" + worstSess.losses + "L")} (${N(pct(worstSess.winRate, 0))}) for ${N(money(worstSess.pnl))} across ${N(worstSess.n)} trades.${bestSess ? ` Compare that with ${bestSess.name} at ${N(money(bestSess.pnl))}.` : ""}`,
     action: `Stop trading ${worstSess.name} for the next 2 weeks, or restrict it to your best setup only.`
@@ -3203,7 +3401,7 @@ function renderInsights(list, st) {
   const bestPair = sortedPairs.find(p => p.pnl > 0 && p.n >= minN);
   const worstPair = sortedPairs.filter(p => p.pnl < 0 && p.n >= minN).pop();
   if (bestPair) out.push({
-    icon: "🎯", tone: "good", tag: "Focus",
+    icon: ico("target"), tone: "good", tag: "Focus",
     title: `${bestPair.name} is your best market`,
     text: `${N(money(bestPair.pnl))} over ${N(bestPair.n)} trades at ${N(pct(bestPair.winRate, 0))} win rate.${worstPair ? ` Meanwhile ${worstPair.name} is at ${N(money(worstPair.pnl))}.` : ""}`,
     action: `Narrow your watchlist to your top 2–3 pairs${worstPair ? ` and drop ${worstPair.name} until you review what's going wrong there` : ""}.`
@@ -3214,7 +3412,7 @@ function renderInsights(list, st) {
     const good = st.pf >= 1.5 && (st.payoff || 0) >= 1.2;
     const ok = st.pf >= 1;
     out.push({
-      icon: good ? "🛡️" : ok ? "⚖️" : "🩸", tone: good ? "good" : ok ? "warn" : "bad", tag: "Risk",
+      icon: good ? ico("shield") : ok ? ico("scale") : ico("down"), tone: good ? "good" : ok ? "warn" : "bad", tag: "Risk",
       title: good ? "Risk management is solid" : ok ? "Risk management needs tightening" : "Risk management is costing you",
       text: `Average win ${N(money(st.avgWin))} vs average loss ${N(money(st.avgLoss))} (payoff ${N((st.payoff || 0).toFixed(2) + ":1")}), profit factor ${N(st.pf === Infinity ? "∞" : st.pf.toFixed(2))}, max drawdown ${N(money(st.maxDD))}.`,
       action: good ? `Keep risk per trade fixed. Don't increase size after a winning streak; let the edge compound.`
@@ -3228,10 +3426,19 @@ function renderInsights(list, st) {
   const worstEmo = emos.slice().sort((a, b) => a.pnl - b.pnl)[0];
   const bestEmo = emos.slice().sort((a, b) => b.pnl - a.pnl)[0];
   if (worstEmo && worstEmo.pnl < 0) out.push({
-    icon: "🧠", tone: "warn", tag: "Psychology",
+    icon: ico("pulse"), tone: "warn", tag: "Psychology",
     title: `Trading while “${worstEmo.name}” is expensive`,
     text: `${N(worstEmo.n)} trades entered feeling ${worstEmo.name.toLowerCase()} returned ${N(money(worstEmo.pnl))} at ${N(pct(worstEmo.winRate, 0))} win rate.${bestEmo && bestEmo.pnl > 0 ? ` Trades taken feeling ${bestEmo.name.toLowerCase()} made ${N(money(bestEmo.pnl))}.` : ""}`,
     action: `Add a pre-trade check: if you feel ${worstEmo.name.toLowerCase()}, step away for 15 minutes before placing an order.`
+  });
+
+  // The plan rule that costs the most when broken.
+  const worstRule = ruleStats(list).find(r => r.broke.n >= 2 && r.broke.total < 0);
+  if (worstRule) out.push({
+    icon: ico("clipboard"), tone: "bad", tag: "Plan rule",
+    title: `Breaking “${worstRule.rule}” is your most expensive habit`,
+    text: `${N(worstRule.broke.n)} trades broke it for ${N(money(worstRule.broke.total))} at ${N(pct(worstRule.broke.winRate, 0))} win rate. When you kept it: ${N(pct(worstRule.kept.winRate, 0))} win rate over ${N(worstRule.kept.n)} trades.`,
+    action: `Make this rule a hard stop: if it isn't met, there's no trade.`
   });
 
   // Plan adherence.
@@ -3240,7 +3447,7 @@ function renderInsights(list, st) {
     const bp = sum(broke.map(t => t.pnl));
     const fp = sum(list.filter(t => t.followedPlan !== false).map(t => t.pnl));
     out.push({
-      icon: "📋", tone: bp < 0 ? "bad" : "info", tag: "Discipline",
+      icon: ico("clipboard"), tone: bp < 0 ? "bad" : "info", tag: "Discipline",
       title: bp < 0 ? "Breaking your plan is costing you" : "Plan deviations",
       text: `${N(broke.length)} trades broke your plan for ${N(money(bp))}. Trades that followed it made ${N(money(fp))}.`,
       action: `Write your rules on a card next to your screen and tick them off before every entry.`
@@ -3252,7 +3459,7 @@ function renderInsights(list, st) {
   if (dirs.length === 2) {
     const [a, b] = dirs.slice().sort((x, y) => y.pnl - x.pnl);
     if (b.pnl < 0 && a.pnl > 0 && b.n >= minN) out.push({
-      icon: "↕️", tone: "info", tag: "Bias",
+      icon: ico("updown"), tone: "info", tag: "Bias",
       title: `Your ${a.name.toLowerCase()}s outperform your ${b.name.toLowerCase()}s`,
       text: `${a.name}: ${N(money(a.pnl))} (${N(pct(a.winRate, 0))}). ${b.name}: ${N(money(b.pnl))} (${N(pct(b.winRate, 0))}).`,
       action: `Require extra confirmation, such as higher-timeframe alignment, before taking ${b.name.toLowerCase()} trades.`
@@ -3260,13 +3467,13 @@ function renderInsights(list, st) {
   }
 
   if (st.longestLoss >= 4) out.push({
-    icon: "🧯", tone: "warn", tag: "Drawdown",
+    icon: ico("down"), tone: "warn", tag: "Drawdown",
     title: `Losing streaks of up to ${st.longestLoss} trades`,
     text: `Your longest losing streak is ${N(st.longestLoss)} trades, against a longest winning streak of ${N(st.longestWin)}.`,
     action: `Set a daily stop: after 2 consecutive losses, stop trading for the day.`
   });
 
-  if (!out.length) out.push({ icon: "📈", tone: "info", tag: "Keep logging", title: "Not enough data yet", text: `Insights appear once you have at least ${N(minN)} trades per setup, session or pair.`, action: "Keep journaling every trade, including the boring ones." });
+  if (!out.length) out.push({ icon: ico("pen"), tone: "info", tag: "Keep logging", title: "Not enough data yet", text: `Insights appear once you have at least ${N(minN)} trades per setup, session or pair.`, action: "Keep journaling every trade, including the boring ones." });
 
   const card = i => `
     <article class="card insight ${i.tone} accent-${{ good: "green", bad: "red", warn: "warn", info: "blue" }[i.tone]}">
@@ -3327,7 +3534,7 @@ function renderTable(list) {
       <td class="num ${tone(r)}" data-label="R multiple">${fmtR(r)}</td>
       <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${money(t.pnl)}</strong></td>
       <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
-      <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span title="Plan broken" aria-label="Plan broken">⚠️</span>` : ""}</td>
+      <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span class="plan-flag" title="${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}" role="img" aria-label="Plan broken">${ico("warn")}</span>` : ""}</td>
       <td class="notes${t.notes || t.mistakes || beforeChart(t) || afterChart(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
         <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">View</button>
@@ -3356,6 +3563,7 @@ function refreshLists() {
   $("#setupList").innerHTML = settings.setups.map(p => `<option value="${esc(p)}">`).join("");
   $("#mistakeList").innerHTML = settings.mistakes.map(p => `<option value="${esc(p)}">`).join("");
   fillSelect($("#tSessionSel"), settings.sessions, { placeholder: "Select session", value: $("#tSessionSel").value });
+  refreshPlanChecks();
   fillSelect($("#tEmoBefore"), settings.emotions, { placeholder: "—", value: $("#tEmoBefore").value });
   fillSelect($("#tEmoAfter"), settings.emotions, { placeholder: "—", value: $("#tEmoAfter").value });
   fillSelect($("#qSession"), settings.sessions, { placeholder: "Select", value: $("#qSession").value });
@@ -3399,6 +3607,7 @@ function resetForm(keepDate, keepDraft) {
   F("tRisk").value = settings.defaultRisk || "";
   F("tAccount").value = defaultAccount();
   F("tConfOut").textContent = "3/5";
+  syncPlanForm(null);
   F("formTitle").textContent = "Log a trade";
   F("formSubmit").textContent = "Save trade";
   F("formCancel").hidden = true;
@@ -3407,6 +3616,46 @@ function resetForm(keepDate, keepDraft) {
   refreshLists();
   updatePreview();
 }
+
+/* ---------- Trading plan checklist ---------- */
+// A trade's checklist: { rule: true (kept) | false (broken) }. Rules removed from Settings stay on old trades.
+const planRules = () => (Array.isArray(settings.planRules) ? settings.planRules : []).filter(Boolean);
+function renderPlanChecks(id, checks, followed = true) {
+  const rules = planRules().slice();
+  if (checks) Object.keys(checks).forEach(r => { if (!rules.includes(r)) rules.push(r); });
+  F(id).dataset.ruleset = JSON.stringify(planRules());
+  F(id).innerHTML = rules.map(r => `<label class="plan-chip"><input type="checkbox" value="${esc(r)}"${(checks && r in checks ? checks[r] !== false : followed) ? " checked" : ""}><span>${ico("check", "pc-ok")}${ico("close", "pc-no")}${esc(r)}</span></label>`).join("");
+  return rules.length;
+}
+function readPlanChecks(id) {
+  const boxes = $$("input[type=checkbox]", F(id));
+  if (!boxes.length) return null;
+  const out = {};
+  boxes.forEach(b => out[b.value] = b.checked);
+  return out;
+}
+function syncPlanForm(t) {
+  const n = renderPlanChecks("tPlanChecks", t && t.planChecks, !t || t.followedPlan !== false);
+  F("tPlanChecks").hidden = !n; F("tPlanHint").hidden = !n;
+  F("tPlanToggle").hidden = !!n;
+  F("tPlan").checked = !t || t.followedPlan !== false;
+}
+function syncPlanQuick() {
+  F("qPlanWrap").hidden = !renderPlanChecks("qPlanChecks", null, true);
+}
+// When the rule list changes (Settings, or a sync from another device), redraw the checklists
+// and keep whatever was already ticked.
+function refreshPlanChecks() {
+  const key = JSON.stringify(planRules()), rules = planRules();
+  const only = c => c && Object.fromEntries(Object.entries(c).filter(([r]) => rules.includes(r)));
+  if (F("qPlanChecks").dataset.ruleset !== key) F("qPlanWrap").hidden = !renderPlanChecks("qPlanChecks", only(readPlanChecks("qPlanChecks")), true);
+  if (F("tPlanChecks").dataset.ruleset !== key) {
+    const editing = realTrades.some(t => t.id === F("tId").value);
+    const cur = readPlanChecks("tPlanChecks"), n = renderPlanChecks("tPlanChecks", editing ? cur : only(cur), F("tPlan").checked);
+    F("tPlanChecks").hidden = !n; F("tPlanHint").hidden = !n; F("tPlanToggle").hidden = !!n;
+  }
+}
+const brokenRules = t => t.planChecks ? Object.keys(t.planChecks).filter(r => t.planChecks[r] === false) : [];
 
 function readForm() {
   return {
@@ -3423,7 +3672,8 @@ function readForm() {
     pnl: num(F("tPnl").value), r: num(F("tR").value), fees: num(F("tFees").value),
     emotionBefore: F("tEmoBefore").value, emotionAfter: F("tEmoAfter").value,
     confidence: Number(F("tConf").value),
-    followedPlan: F("tPlan").checked,
+    planChecks: readPlanChecks("tPlanChecks"),
+    followedPlan: (c => c ? Object.values(c).every(Boolean) : F("tPlan").checked)(readPlanChecks("tPlanChecks")),
     mistakes: F("tMistakes").value.trim(),
     notes: F("tNotes").value.trim(),
     chartBefore: safeLink(F("tBefore").value),
@@ -3448,7 +3698,7 @@ function loadIntoForm(t) {
   fillSelect(F("tEmoBefore"), settings.emotions, { placeholder: "—", value: t.emotionBefore || "" });
   fillSelect(F("tEmoAfter"), settings.emotions, { placeholder: "—", value: t.emotionAfter || "" });
   F("tConf").value = t.confidence || 3; F("tConfOut").textContent = (t.confidence || 3) + "/5";
-  F("tPlan").checked = t.followedPlan !== false;
+  syncPlanForm(t);
   F("tMistakes").value = t.mistakes || "";
   F("tNotes").value = t.notes || "";
   F("tBefore").value = beforeChart(t);
@@ -3526,12 +3776,13 @@ const LISTS = [
   { key: "setups", title: "Setups", placeholder: "Add a setup, e.g. FVG Retest" },
   { key: "sessions", title: "Sessions", placeholder: "Add a session, e.g. London Close" },
   { key: "emotions", title: "Emotions", placeholder: "Add an emotion, e.g. Overconfident" },
-  { key: "mistakes", title: "Common mistakes", placeholder: "Add a mistake, e.g. Ignored HTF bias" }
+  { key: "mistakes", title: "Common mistakes", placeholder: "Add a mistake, e.g. Ignored HTF bias" },
+  { key: "planRules", title: "Trading plan rules", placeholder: "Add a rule, e.g. Only trade the London open", sub: "ticked off on every trade" }
 ];
 function renderListEditors() {
   F("listEditors").innerHTML = LISTS.map((l, i) => `
     <section class="card" aria-labelledby="le-${l.key}">
-      <div class="card-head"><div><h3 id="le-${l.key}">${l.title}</h3><div class="sub">${settings[l.key].length} items · shown in the log form</div></div></div>
+      <div class="card-head"><div><h3 id="le-${l.key}">${l.title}</h3><div class="sub">${settings[l.key].length} items · ${l.sub || "shown in the log form"}</div></div></div>
       <ul class="chips" aria-label="${l.title}" style="list-style:none;padding:0">
         ${settings[l.key].map((v, j) => `<li class="chip">${esc(v)}<button type="button" data-rm="${l.key}" data-j="${j}" aria-label="Remove ${esc(v)}">×</button></li>`).join("") || `<li class="muted">No items</li>`}
       </ul>
@@ -3653,7 +3904,7 @@ const SHEET_COLS = [
   ["P&L", t => t.pnl], ["R", t => { const r = rOf(t); return r == null ? "" : Math.round(r * 100) / 100; }], ["Risk", t => t.risk],
   ["Entry", t => t.entry], ["Stop", t => t.stop], ["Target", t => t.target], ["Exit", t => t.exit], ["Size", t => t.size], ["Fees", t => t.fees],
   ["Emotion before", t => t.emotionBefore || ""], ["Emotion after", t => t.emotionAfter || ""], ["Confidence", t => t.confidence],
-  ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Mistakes", t => t.mistakes || ""], ["Notes", t => t.notes || ""],
+  ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Rules broken", t => brokenRules(t).join(", ")], ["Mistakes", t => t.mistakes || ""], ["Notes", t => t.notes || ""],
   ["Before chart", t => beforeChart(t)], ["After chart", t => afterChart(t)], ["Source", t => t.sourceUrl || ""]
 ];
 function sheetRows(list) {
@@ -3911,6 +4162,123 @@ function rowsToTrades(rows) {
   return out;
 }
 
+/* ---------- MetaTrader 4 / 5 statements ---------- */
+// MT5 saves its HTML report as UTF-16, so decode by the byte-order mark rather than assuming UTF-8.
+async function fileText(file) {
+  const buf = await file.arrayBuffer(), b = new Uint8Array(buf.slice(0, 2));
+  const enc = b[0] === 0xFF && b[1] === 0xFE ? "utf-16le" : b[0] === 0xFE && b[1] === 0xFF ? "utf-16be" : "utf-8";
+  return new TextDecoder(enc).decode(buf);
+}
+// Table rows as arrays of cell text; a cell spanning n columns fills n slots so columns line up.
+function htmlRows(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return Array.from(doc.querySelectorAll("tr")).map(tr => {
+    const out = [];
+    Array.from(tr.cells).forEach(td => { const n = Math.max(1, Math.min(50, Number(td.colSpan) || 1)); out.push(td.textContent.replace(/\s+/g, " ").trim()); for (let i = 1; i < n; i++) out.push(""); });
+    return out;
+  });
+}
+const mtKey = c => String(c == null ? "" : c).toLowerCase().replace(/[^a-z]/g, "");
+// The header row of the closed-trades table: MT4 "Ticket … Item … Profit", MT5 "Position … Symbol … Profit".
+const mtHeaderIndex = rows => rows.findIndex(r => { const k = r.map(mtKey); return k.includes("profit") && k.includes("type") && (k.includes("symbol") || k.includes("item")) && k.filter(x => x === "price").length >= 2; });
+// Broker server time is usually GMT+2, GMT+3 while US daylight saving is on.
+function usDst(y, mo, d) {
+  const nth = (month, n) => { const first = new Date(Date.UTC(y, month, 1)).getUTCDay(); return 1 + (7 - first) % 7 + (n - 1) * 7; };
+  const start = Date.UTC(y, 2, nth(2, 2)), end = Date.UTC(y, 10, nth(10, 1)), t = Date.UTC(y, mo, d);
+  return t >= start && t < end;
+}
+// Turn a statement time into the journal's date + time (UTC or local, as set in Preferences).
+function mtWhen(v, zone) {
+  let y, mo, d, h = 0, mi = 0;
+  if (typeof v === "number") { const x = excelDate(v); if (!x.date) return null; [y, mo, d] = x.date.split("-").map(Number); if (x.time) [h, mi] = x.time.split(":").map(Number); }
+  else {
+    const m = String(v || "").match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (!m) return null;
+    [y, mo, d, h, mi] = [m[1], m[2], m[3], m[4] || 0, m[5] || 0].map(Number);
+  }
+  const off = zone === "utc" ? 0 : zone === "local" ? null : usDst(y, mo - 1, d) ? 3 : 2;
+  const at = off == null ? new Date(y, mo - 1, d, h, mi) : new Date(Date.UTC(y, mo - 1, d, h - off, mi));
+  const local = settings.sessionMode === "local", z = n => String(n).padStart(2, "0");
+  const parts = local ? [at.getFullYear(), at.getMonth() + 1, at.getDate(), at.getHours(), at.getMinutes()] : [at.getUTCFullYear(), at.getUTCMonth() + 1, at.getUTCDate(), at.getUTCHours(), at.getUTCMinutes()];
+  return { date: `${parts[0]}-${z(parts[1])}-${z(parts[2])}`, time: `${z(parts[3])}:${z(parts[4])}` };
+}
+// "EURUSD.r", "XAUUSDm", "GER40.cash" → EURUSD, XAUUSD, GER40 (or a pair you already use).
+function mtSymbol(sym) {
+  let p = String(sym || "").toUpperCase().trim().split(/[.\-_#+!/ ]/)[0].replace(/[^A-Z0-9]/g, "");
+  const known = settings.pairs.filter(k => p.startsWith(k)).sort((a, b) => b.length - a.length)[0];
+  if (known) return known;
+  const fx = p.match(/^([A-Z]{3})([A-Z]{3})[A-Z]{1,4}$/);
+  if (fx && FX_CCY.includes(fx[1]) && FX_CCY.includes(fx[2])) return fx[1] + fx[2];
+  const metal = p.match(/^(XAU|XAG)(USD|EUR|GBP|AUD)/);
+  return metal ? metal[0] : p;
+}
+function mtTrades(rows, accountId, zone, platform) {
+  const hi = mtHeaderIndex(rows);
+  if (hi < 0) throw new Error("This doesn't look like an MT4 or MT5 statement. Save the History report as HTML or Excel and try again");
+  const head = rows[hi].map(mtKey), find = (names, nth = 0) => { let seen = 0; for (let i = 0; i < head.length; i++) if (names.includes(head[i]) && seen++ === nth) return i; return -1; };
+  const c = {
+    ticket: find(["ticket", "position", "order", "deal"]), open: find(["opentime", "time"]), type: find(["type"]), size: find(["size", "volume", "lots"]),
+    sym: find(["item", "symbol"]), openPx: find(["price", "openprice"]), sl: find(["sl"]), tp: find(["tp"]),
+    close: head.includes("closetime") ? find(["closetime"]) : find(["time"], 1), closePx: head.includes("closeprice") ? find(["closeprice"]) : find(["price"], 1),
+    comm: find(["commission"]), fee: find(["fee", "taxes"]), swap: find(["swap"]), profit: find(["profit"])
+  };
+  const out = [];
+  for (const r of rows.slice(hi + 1)) {
+    const filled = r.filter(Boolean);
+    // The closed-trades table ends where the next section (open trades, orders, deals, summary) starts.
+    if (filled.length && filled.length <= 2 && /^(open (trades|positions)|working orders|orders|deals|summary|results|closed p\/l|balance)/i.test(filled[0])) break;
+    const g = i => i >= 0 ? r[i] : "";
+    const type = String(g(c.type)).toLowerCase().trim();
+    if (type !== "buy" && type !== "sell") continue;
+    if (!String(g(c.close)).trim() || g(c.closePx) === "") continue; // still open
+    const when = mtWhen(g(c.open), zone);
+    if (!when) continue;
+    const money2 = v => { const n = parseMoney(v); return n == null ? 0 : n; };
+    const profit = parseMoney(g(c.profit));
+    if (profit == null) continue;
+    const costs = money2(g(c.comm)) + money2(g(c.fee)) + money2(g(c.swap));
+    const pair = mtSymbol(g(c.sym)), size = parseMoney(String(g(c.size)).split("/")[0]);
+    const entry = parseMoney(g(c.openPx)), stop = parseMoney(g(c.sl)) || null, exit = parseMoney(g(c.closePx)), target = parseMoney(g(c.tp)) || null;
+    const ticket = String(g(c.ticket)).replace(/[^0-9A-Za-z]/g, "").slice(0, 40);
+    // Risk from the stop loss, when there was one (approximate for pairs quoted in another currency).
+    const ins = instrument(pair), pv = pipValuePerLot(ins);
+    const risk = ins && pv && stop && entry && size ? Math.round(Math.abs(entry - stop) / ins.pip * pv * size * 100) / 100 : null;
+    out.push({
+      id: "mt-" + (ticket || uid()) + (accountId ? "-" + accountId.slice(0, 20) : ""), date: when.date, time: when.time, pair, account: accountId || "",
+      session: guessSession(when.time, when.date) || "Unspecified", direction: type === "buy" ? "Long" : "Short", setup: "Unspecified",
+      entry, stop, target, exit, size, risk: risk || null, pnl: Math.round((profit + costs) * 100) / 100, r: risk ? Math.round((profit + costs) / risk * 100) / 100 : null,
+      fees: costs ? Math.round(-costs * 100) / 100 : null, emotionBefore: "", emotionAfter: "", confidence: null, followedPlan: true, mistakes: "",
+      notes: `Imported from ${platform}${ticket ? " #" + ticket : ""}`, chartBefore: "", chartAfter: "", screenshot: ""
+    });
+  }
+  return out;
+}
+async function importMt(file, accountId, zone) {
+  const name = file.name.toLowerCase();
+  const rows = name.endsWith(".xlsx") ? await readXlsx(await file.arrayBuffer()) : htmlRows(await fileText(file));
+  const text = rows.slice(0, 12).map(r => r.join(" ")).join(" ");
+  const platform = /metatrader 5|mt5|trade history report/i.test(text) || rows.some(r => r.map(mtKey).includes("position")) ? "MT5" : "MT4";
+  await loadRates();
+  const found = mtTrades(rows, accountId, zone, platform);
+  if (!found.length) throw new Error("No closed trades found in that statement");
+  // Skip trades already in the journal: imported before, or logged by hand (same account, day, pair, side and P&L).
+  const have = new Set(realTrades.map(t => t.id));
+  const same = (a, b) => (a.account || "") === (b.account || "") && a.date === b.date && a.pair === b.pair && a.direction === b.direction && Math.abs((Number(a.pnl) || 0) - b.pnl) < 0.015;
+  const fresh = found.filter(t => !have.has(t.id) && !realTrades.some(x => same(x, t)));
+  const dates = found.map(t => t.date).sort(), a = acctById(accountId);
+  if (!fresh.length) { toast(`All ${plural(found.length, "trade")} in that statement are already in your journal`); return; }
+  const ok = await askConfirm(`${plural(fresh.length, "new trade")} from ${fmtDate(dates[0])} to ${fmtDate(dates[dates.length - 1])}${found.length > fresh.length ? ` (${found.length - fresh.length} already in your journal are skipped)` : ""}, adding up to ${money(sum(fresh.map(t => t.pnl)))}. They'll go to ${a ? acctLabel(a) : "your journal"}, with setup "Unspecified" for you to fill in.`, { title: `Import from ${platform}?`, ok: "Import" });
+  if (!ok) return;
+  learnLists(fresh);
+  saveSettings();
+  fresh.forEach(putTrade);
+  syncView();
+  ui.calMonth = "";
+  refreshAll();
+  onDataChanged();
+  toast(`Imported ${plural(fresh.length, "trade")} from ${platform}`);
+}
+
 async function importFile(file) {
   const name = file.name.toLowerCase();
   let imported;
@@ -3918,7 +4286,7 @@ async function importFile(file) {
     // A journal saved with "Export journal": read the trades embedded in it.
     const doc = new DOMParser().parseFromString(await file.text(), "text/html");
     const el = doc.getElementById("embedded-data");
-    if (!el) throw new Error("This file isn't an exported journal");
+    if (!el) return importMt(file, defaultAccount(), "broker");
     const data = JSON.parse(el.textContent);
     imported = (data.trades || []).map(t => Object.assign({}, t, { id: safeId(t.id), pnl: Number(t.pnl) || 0 }));
   } else if (name.endsWith(".json")) {
@@ -3928,7 +4296,9 @@ async function importFile(file) {
     imported = arr.map(t => Object.assign({}, t, { id: safeId(t.id), pnl: Number(t.pnl) || 0, demo: undefined }));
     if (data.settings && typeof data.settings === "object") { settings = Object.assign({}, settings, data.settings); saveSettings(); }
   } else if (name.endsWith(".xlsx")) {
-    imported = rowsToTrades(await readXlsx(await file.arrayBuffer()));
+    const rows = await readXlsx(await file.arrayBuffer());
+    if (mtHeaderIndex(rows) >= 0) return importMt(file, defaultAccount(), "broker");
+    imported = rowsToTrades(rows);
   } else {
     imported = rowsToTrades(parseCsv(await file.text()));
   }
@@ -4141,7 +4511,8 @@ function quickTrade() {
     id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value, account: F("qAccount").value,
     direction: ($("input[name=qDir]:checked") || {}).value || "Long", setup: F("qSetup").value.trim(),
     entry: null, stop: null, target: null, exit: null, size: null, risk, pnl, r: null, fees: null,
-    emotionBefore: F("qEmo").value, emotionAfter: "", confidence: null, followedPlan: true, mistakes: "",
+    emotionBefore: F("qEmo").value, emotionAfter: "", confidence: null, planChecks: readPlanChecks("qPlanChecks"),
+    followedPlan: (c => c ? Object.values(c).every(Boolean) : true)(readPlanChecks("qPlanChecks")), mistakes: "",
     notes: F("qNotes").value.trim(), chartBefore: "", chartAfter: "", screenshot: ""
   };
 }
@@ -4152,6 +4523,7 @@ function resetQuick() {
   $$("[aria-invalid]", F("quickForm")).forEach(el => el.removeAttribute("aria-invalid"));
   F("qMsg").textContent = "";
   refreshLists();
+  syncPlanQuick();
   F("qAccount").value = defaultAccount();
 }
 function setQuickOpen(open) {
@@ -4215,6 +4587,7 @@ function openTrade(t) {
       ${item("Emotion before", esc(t.emotionBefore || ""))}${item("Emotion after", esc(t.emotionAfter || ""))}
       ${t.confidence ? item("Confidence", esc(t.confidence) + "/5") : ""}
       ${item("Followed plan", t.followedPlan === false ? "No" : "Yes", t.followedPlan === false ? "neg" : "")}
+      ${brokenRules(t).length ? item("Rules broken", esc(brokenRules(t).join(", ")), "neg") : ""}
       ${item("Mistakes", esc(t.mistakes || ""), "warn-text")}
     </div>
     ${newsNear(t).length ? `<p class="td-news"><span class="imp High" aria-hidden="true"></span> High-impact news within an hour: ${newsNear(t).map(e => `${esc(e.cur)} ${esc(e.title)} (${fmtTime(new Date(e.t))})`).join(", ")}</p>` : ""}
@@ -4233,12 +4606,13 @@ function renderAccounts() {
   F("acctList").innerHTML = list.length ? list.map(a => {
     const n = realTrades.filter(t => t.account === a.id).length;
     const where = a.type === "Prop firm" ? [a.firm, a.phase, a.broker] : [a.broker];
-    const meta = [...where, a.platform, Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
+    const paid = sum(payoutsOf(a).map(p => Number(p.amount) || 0));
+    const meta = [...where, a.platform, Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : "", paid ? "paid out " + money(paid, { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
     const cls = a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : "live";
     return `<li class="acct-item">
       ${firmLogo(a) || `<span class="acct-badge ${cls}">${esc(a.type)}</span>`}
       <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(meta)}</span><span>${plural(n, "trade")}</span></div>
-      <div class="acct-btns">${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
+      <div class="acct-btns">${a.type === "Prop firm" ? `<button class="btn sm ghost" type="button" data-payouts="${esc(a.id)}">Payouts</button>` : ""}${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
     </li>`;
   }).join("") : `<li class="acct-empty">No trading accounts yet. Add the live, demo or prop firm account you trade.</li>`;
   const loose = list.length ? unassignedTrades() : [];
@@ -4250,6 +4624,10 @@ function renderAccounts() {
     F("acctAssignSel").value = acctById(cur) ? cur : defaultAccount();
   }
   renderActive();
+  F("mtAccountWrap").hidden = !list.length;
+  const mtCur = F("mtAccount").value;
+  F("mtAccount").innerHTML = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+  F("mtAccount").value = acctById(mtCur) ? mtCur : defaultAccount();
 }
 
 // Preferences › Active account: pick the account new trades go to; the dashboard follows it.
@@ -4357,7 +4735,8 @@ F("acctDlgForm").addEventListener("submit", e => {
   const bad = checks.filter(c => c[1]);
   if (bad.length) { F("aMsg").textContent = "Add the " + bad.map(c => c[2]).join(", ") + "."; F(bad[0][0]).focus(); return; }
   const id = F("aId").value || uid();
-  const acct = { id, type, size, broker, firm: prop ? firm : "", phase: prop ? F("aPhase").value : "", platform: F("aPlatform").value, name: F("aName").value.trim(),
+  // Keep what the form doesn't edit (adjusted limits, payouts).
+  const acct = { ...(acctById(id) || {}), id, type, size, broker, firm: prop ? firm : "", phase: prop ? F("aPhase").value : "", platform: F("aPlatform").value, name: F("aName").value.trim(),
     program: prop && !F("aProgramWrap").hidden ? F("aProgram").value : "", startDate: prop ? F("aStart").value : "" };
   const list = accounts().slice(), i = list.findIndex(a => a.id === id);
   if (i >= 0) list[i] = acct; else list.push(acct);
@@ -4446,7 +4825,12 @@ function propStatus(a) {
   const list = sortChrono(realTrades.filter(t => t.account === a.id && (!a.startDate || t.date >= a.startDate)));
   const byDay = new Map();
   list.forEach(t => byDay.set(t.date, (byDay.get(t.date) || 0) + (Number(t.pnl) || 0)));
-  const days = Array.from(byDay.keys()).sort();
+  const allDays = Array.from(byDay.keys()).sort();
+  // A payout resets the account to its starting size (FTMO, Funding Pips, Alpha Capital), so the
+  // profit target, trading days and consistency count again from the day after it.
+  const pays = payoutsOf(a), payDays = new Set(pays.map(p => p.date));
+  const timeline = Array.from(new Set([...allDays, ...payDays])).sort();
+  let days = [];
   let bal = size, peak = size, breach = null, worstDaily = 0;
   const maxAllow = r.max ? r.max.pct / 100 * size : null;
   const floorAt = pk => {
@@ -4455,7 +4839,9 @@ function propStatus(a) {
     const f = pk - maxAllow;
     return r.max.lockAt === "initial" ? Math.min(f, size) : f;
   };
-  for (const d of days) {
+  for (const d of timeline) {
+    if (!byDay.has(d)) { if (payDays.has(d)) { bal = size; peak = size; days = []; } continue; }
+    days.push(d);
     const start = bal, pnl = byDay.get(d);
     bal += pnl;
     if (r.daily) {
@@ -4465,6 +4851,7 @@ function propStatus(a) {
     }
     if (bal <= floorAt(peak) + 1e-9 && !breach) breach = { rule: "Maximum loss", date: d };
     peak = Math.max(peak, bal);
+    if (payDays.has(d)) { bal = size; peak = size; days = []; }
   }
   const today = isoDate(new Date()), todayPnl = byDay.get(today) || 0, sod = bal - todayPnl;
   const dailyLimit = r.daily ? r.daily.pct / 100 * (r.daily.of === "startOfDay" ? sod : size) : null;
@@ -4472,17 +4859,20 @@ function propStatus(a) {
   const profit = bal - size, targetAmt = r.target ? r.target / 100 * size : null;
   const positiveDays = days.map(d => byDay.get(d)).filter(v => v > 0);
   const bestDay = positiveDays.length ? Math.max(...positiveDays) : 0;
-  const started = a.startDate || days[0] || today;
+  const started = a.startDate || allDays[0] || today;
   const elapsed = Math.floor((parseIso(today) - parseIso(started)) / 864e5) + 1;
   const daysOk = !r.minDays || days.length >= r.minDays;
   const hit = targetAmt != null && profit >= targetAmt;
   return {
     r, size, bal, profit, targetAmt, hit, breach, daysOk, tradingDays: days.length, elapsed,
     todayPnl, dailyLimit, dailyUsed: Math.max(0, -todayPnl), floor, maxRoom: bal - floor, maxAllow,
-    bestDay, bestShare: r.consistency && profit > 0 ? bestDay / sum(positiveDays) : null
+    bestDay, bestShare: r.consistency && profit > 0 ? bestDay / sum(positiveDays) : null,
+    paidOut: sum(pays.map(p => Number(p.amount) || 0)), payouts: pays.length
   };
 }
 
+// Payouts received from a funded account: { id, date, amount, note }, newest last.
+const payoutsOf = a => (a && Array.isArray(a.payouts) ? a.payouts.filter(p => p && p.date) : []).slice().sort((x, y) => x.date.localeCompare(y.date));
 const pctOf = (a, b) => b ? Math.max(0, Math.min(1, a / b)) : 0;
 function meter(label, value, frac, cls, note) {
   return `<div class="meter ${cls}"><div class="m-top"><span>${label}</span><b>${value}</b></div><div class="m-bar"><i style="width:${(frac * 100).toFixed(1)}%"></i></div>${note ? `<small>${note}</small>` : ""}</div>`;
@@ -4507,15 +4897,63 @@ function propCard(a) {
   if (st.bestShare != null) facts.push(`Best day ${pct(st.bestShare, 0)} of profit (max ${st.r.consistency.pct}%)`);
   if (ph.newsMins) facts.push(`No trades ±${ph.newsMins} min around red news`);
   if (ph.weekend) facts.push(esc(ph.weekend));
+  if (st.payouts) facts.push(`Paid out ${m(st.paidOut)} · ${plural(st.payouts, "payout")}`);
   return `<article class="card prop-card">
     <div class="pc-head">${firmLogo(a)}<div class="pc-name"><b>${esc(acctLabel(a))}</b><small>${esc(firm.name)} · ${esc(prog.name)} · ${esc(ph.name)}</small></div><span class="pc-status ${status[1]}">${status[0]}</span></div>
     ${st.breach ? `<p class="td-news" style="margin:0"><span class="imp High" aria-hidden="true"></span>${esc(st.breach.rule)} reached on ${esc(fmtDate(st.breach.date))} (closed trades). Check your firm dashboard.</p>` : ""}
     ${parts.join("")}
     ${facts.length ? `<div class="pc-facts">${facts.map(f => `<span>${f}</span>`).join("")}</div>` : ""}
-    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></div>
+    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><span class="pc-btns"><button class="btn sm ghost" type="button" data-payouts="${esc(a.id)}">Payouts</button><button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></span></div>
   </article>`;
 }
+// Overview banner: any prop account at 70%+ of its daily or max loss, or past a limit. Dismissible
+// per account and day (a breach stays dismissed); it comes back if it gets worse.
+const ALERT_AT = .7;
+function propAlerts() {
+  const today = isoDate(new Date()), out = [];
+  accounts().forEach(a => {
+    const st = propStatus(a);
+    if (!st) return;
+    const m = v => money(v, { signed: false, decimals: 0 });
+    const d = st.dailyLimit ? st.dailyUsed / st.dailyLimit : 0, x = st.maxAllow ? (st.maxAllow - st.maxRoom) / st.maxAllow : 0;
+    let lvl = "", title = "", text = "", key = "";
+    if (st.breach) {
+      lvl = "bad"; key = "b" + st.breach.date;
+      title = `${st.breach.rule} reached`;
+      text = `On ${fmtDate(st.breach.date)}, from your closed trades. Check your ${findFirm(a.firm).name} dashboard before trading this account again.`;
+    } else if (d >= ALERT_AT && d >= x) {
+      lvl = d >= .9 ? "bad" : "warn"; key = today + "d" + lvl;
+      title = `${pct(d, 0)} of today's daily loss used`;
+      text = `${m(Math.max(0, st.dailyLimit - st.dailyUsed))} left before the ${m(st.dailyLimit)} limit. Consider stopping for the day.`;
+    } else if (x >= ALERT_AT) {
+      lvl = x >= .9 ? "bad" : "warn"; key = today + "m" + lvl;
+      title = `${pct(x, 0)} of the max loss used`;
+      text = `${m(Math.max(0, st.maxRoom))} left. The balance must stay above ${m(st.floor)}. Size down until you've built a buffer.`;
+    }
+    if (lvl) out.push({ a, lvl, title, text, key: a.id + ":" + key });
+  });
+  return out;
+}
+function renderPropAlerts() {
+  const hidden = Array.isArray(ui.alertsHidden) ? ui.alertsHidden : [];
+  const list = propAlerts().filter(x => !hidden.includes(x.key));
+  F("propAlerts").hidden = !list.length;
+  F("propAlerts").innerHTML = list.map(x => `<div class="pa-item ${x.lvl}">
+      <span class="pa-icon">${ico("warn")}</span>
+      <div class="pa-text"><b>${esc(acctLabel(x.a))}: ${esc(x.title)}</b><span>${esc(x.text)}</span></div>
+      <div class="pa-btns"><button class="btn sm ghost" type="button" data-calc-open="${esc(x.a.id)}">${ico("calc")}Size</button><button class="btn sm ghost" type="button" data-rules="${esc(x.a.id)}">Rules</button><button class="btn sm ghost pa-x" type="button" data-alert-x="${esc(x.key)}" aria-label="Dismiss">✕</button></div>
+    </div>`).join("");
+}
+F("propAlerts").addEventListener("click", e => {
+  const b = e.target.closest("[data-alert-x]");
+  if (!b) return;
+  const live = new Set(propAlerts().map(x => x.key));
+  ui.alertsHidden = [...(ui.alertsHidden || []).filter(k => live.has(k)), b.dataset.alertX];
+  saveUi();
+  renderPropAlerts();
+});
 function renderProp() {
+  renderPropAlerts();
   const list = accounts().filter(a => (!acctById(ui.account) || a.id === ui.account) && propStatus(a));
   F("propPanel").hidden = !list.length;
   if (list.length) F("propCards").innerHTML = list.map(propCard).join("");
@@ -4576,7 +5014,217 @@ F("rulesBody").addEventListener("submit", e => {
 });
 F("rulesBody").addEventListener("click", e => { if (e.target.id === "rjReset") saveAdjust(F("rulesAdjust").dataset.id, {}); });
 F("rulesClose").addEventListener("click", () => F("rulesDlg").close());
-document.addEventListener("click", e => { const b = e.target.closest("[data-rules]"); if (b) openRules(acctById(b.dataset.rules)); });
+document.addEventListener("click", e => { const b = e.target.closest("button[data-rules]"); if (b && acctById(b.dataset.rules)) openRules(acctById(b.dataset.rules)); });
+
+/* ======================================================================
+   Position size calculator
+   ====================================================================== */
+const KEY_RATES = "tj.rates.v1";
+const RATE_URLS = ["rates.json", "https://raw.githubusercontent.com/Kacperj01/Trading-Journal/HEAD/docs/rates.json"];
+// Units per 1 US dollar, used only until the ECB's daily rates (docs/rates.json) have loaded.
+const FX_FALLBACK = { USD: 1, EUR: .86, GBP: .75, JPY: 150, AUD: 1.53, NZD: 1.72, CAD: 1.38, CHF: .8, HKD: 7.8, SGD: 1.29, SEK: 9.5, NOK: 10.1, DKK: 6.4, PLN: 3.65, MXN: 18.5, ZAR: 17.5, TRY: 41, CNY: 7.1, HUF: 335, CZK: 21 };
+let fx = store.get(KEY_RATES, null), fxLoading = null;
+async function loadRates() {
+  if (fxLoading) return fxLoading;
+  if (fx && Date.now() - (fx.fetchedAt || 0) < 6 * 3600e3) return;
+  fxLoading = (async () => {
+    const urls = /^https?:$/.test(location.protocol) && !inViewer() ? RATE_URLS : RATE_URLS.slice(1);
+    for (const u of urls) {
+      try {
+        const r = await fetch(u + "?t=" + Math.floor(Date.now() / 3600e3), { cache: "no-store" });
+        const d = r.ok ? await r.json() : null;
+        if (d && d.rates && d.rates.USD) { fx = { date: d.date, rates: d.rates, fetchedAt: Date.now() }; store.set(KEY_RATES, fx); return; }
+      } catch (e) { /* try the next copy */ }
+    }
+  })().finally(() => { fxLoading = null; if (F("calcDlg").open) calcUpdate(); });
+  return fxLoading;
+}
+const fxRate = c => (fx && fx.rates && fx.rates[c]) || FX_FALLBACK[c] || null;
+function fxConvert(v, from, to) { const a = fxRate(from), b = fxRate(to); return a && b ? v / a * b : null; }
+// The account currency from the symbol in Preferences ($, £, €, or a code like CHF).
+function acctCcy() {
+  const c = String(settings.currency || "$").trim();
+  return { "$": "USD", "US$": "USD", "£": "GBP", "€": "EUR", "¥": "JPY", "A$": "AUD", "AU$": "AUD", "C$": "CAD", "CA$": "CAD", "NZ$": "NZD", "Fr": "CHF", "R": "ZAR", "zł": "PLN", "kr": "SEK" }[c] || (/^[A-Za-z]{3}$/.test(c) ? c.toUpperCase() : "USD");
+}
+const FX_CCY = ["USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF", "HKD", "SGD", "SEK", "NOK", "DKK", "PLN", "MXN", "ZAR", "TRY", "CNH", "CNY", "HUF", "CZK"];
+const INDEX_SPEC = { US30: "USD", DJ30: "USD", WS30: "USD", NAS100: "USD", US100: "USD", USTEC: "USD", NDX100: "USD", US500: "USD", SPX500: "USD", SP500: "USD", US2000: "USD", GER40: "EUR", DE40: "EUR", GER30: "EUR", DAX40: "EUR", FRA40: "EUR", EU50: "EUR", STOXX50: "EUR", UK100: "GBP", FTSE100: "GBP", JP225: "JPY", JPN225: "JPY", AUS200: "AUD", HK50: "HKD" };
+// Contract size and pip size per lot, from the symbol (broker suffixes like .r or m are ignored).
+function instrument(pair) {
+  const p = String(pair || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  let m = p.match(/^(XAU|XAG|XPT|XPD)(USD|EUR|GBP|AUD|JPY|CHF)/);
+  if (m) {
+    const [contract, pip, pipTxt] = { XAU: [100, .1, "0.10"], XAG: [5000, .01, "0.01"], XPT: [100, .1, "0.10"], XPD: [100, .1, "0.10"] }[m[1]];
+    return { contract, pip, quote: m[2], unit: "pip", note: `1 pip = ${pipTxt}, ${contract.toLocaleString()} oz per lot` };
+  }
+  m = p.match(/^(BTC|ETH)(USDT|USD|EUR)?/);
+  if (m) return { contract: 1, pip: 1, quote: m[2] === "EUR" ? "EUR" : "USD", unit: "point", note: "1 point = 1.00, 1 coin per lot" };
+  const idx = Object.keys(INDEX_SPEC).find(k => p.startsWith(k));
+  if (idx) return { contract: 1, pip: 1, quote: INDEX_SPEC[idx], unit: "point", note: "1 point = 1.0, 1 contract per lot. Brokers differ, so check yours" };
+  m = p.match(/^([A-Z]{3})([A-Z]{3})/);
+  if (m && FX_CCY.includes(m[1]) && FX_CCY.includes(m[2])) {
+    const q = m[2] === "CNH" ? "CNY" : m[2], two = q === "JPY" || q === "HUF";
+    return { contract: 1e5, pip: two ? .01 : 1e-4, quote: q, unit: "pip", note: `1 pip = ${two ? "0.01" : "0.0001"}, 100,000 units per lot` };
+  }
+  return null;
+}
+const pipValuePerLot = ins => ins ? fxConvert(ins.contract * ins.pip, ins.quote, acctCcy()) : null;
+function acctBalance(a) {
+  if (!a) return (Number(settings.balance) || 0) + sum(realTrades.filter(t => !t.account).map(t => Number(t.pnl) || 0));
+  const st = propStatus(a);
+  return st ? st.bal : (Number(a.size) || 0) + sum(realTrades.filter(t => t.account === a.id).map(t => Number(t.pnl) || 0));
+}
+
+let calcFrom = "";
+function openCalc({ account, from } = {}) {
+  calcFrom = from || "";
+  const list = accounts();
+  F("cAccountWrap").hidden = !list.length;
+  F("cAccount").innerHTML = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
+  const src = from === "log" ? { pair: F("tPair").value, acct: F("tAccount").value, entry: F("tEntry").value, stop: F("tStop").value }
+    : { pair: F("qPair").value, acct: F("qAccount").value, entry: "", stop: "" };
+  F("cAccount").value = acctById(account) ? account : acctById(src.acct) ? src.acct : defaultAccount();
+  F("cPair").value = src.pair.trim().toUpperCase() || F("cPair").value;
+  F("cEntry").value = src.entry; F("cStopPx").value = src.stop;
+  if (src.entry && src.stop) F("cPips").value = "";
+  $$("input[name=cMode]").forEach(r => r.checked = r.value === (ui.calcMode || "pct"));
+  F("cRisk").value = ui.calcMode === "amt" ? (ui.calcAmt ?? settings.defaultRisk ?? "") : (ui.calcPct ?? 1);
+  F("cCur").textContent = settings.currency || "$";
+  F("cBalance").value = Math.round(acctBalance(acctById(F("cAccount").value)) * 100) / 100;
+  delete F("cPipVal").dataset.manual;
+  F("calcUse").textContent = from === "log" ? "Use in this trade" : "Log a trade with this";
+  calcUpdate();
+  loadRates();
+  const dlg = F("calcDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+let calcResult = null;
+function calcUpdate() {
+  const a = acctById(F("cAccount").value), ins = instrument(F("cPair").value);
+  const mode = ($("input[name=cMode]:checked") || {}).value || "pct", bal = num(F("cBalance").value), riskIn = num(F("cRisk").value);
+  const unit = ins ? ins.unit : "pip";
+  F("cPipsLbl").textContent = `Stop loss (${unit}s)`;
+  F("cPipValLbl").textContent = `Value of 1 ${unit} on 1 lot (${settings.currency || "$"})`;
+  const e = num(F("cEntry").value), sp = num(F("cStopPx").value);
+  if (ins && e != null && sp != null && e !== sp) F("cPips").value = Math.round(Math.abs(e - sp) / ins.pip * 10) / 10;
+  if (!F("cPipVal").dataset.manual) { const v = pipValuePerLot(ins); F("cPipVal").value = v == null ? "" : Math.round(v * 1e4) / 1e4; }
+  const ccy = acctCcy(), live = fx && fx.date;
+  F("cPipValHint").textContent = !ins ? "Not a symbol I know. Enter it from your platform's contract specification."
+    : F("cPipVal").dataset.manual ? "Your own value" : ins.quote === ccy ? ins.note : `${ins.note} · ${ins.quote}→${ccy} at ${live ? "ECB rate of " + fmtDate(fx.date) : "an approximate rate"}`;
+  const pips = num(F("cPips").value), pv = num(F("cPipVal").value);
+  const riskAmt = mode === "pct" ? (bal > 0 && riskIn > 0 ? bal * riskIn / 100 : null) : riskIn > 0 ? riskIn : null;
+  calcResult = null;
+  const out = F("calcOut");
+  if (!(riskAmt > 0) || !(pips > 0) || !(pv > 0)) {
+    out.innerHTML = `<p class="muted" style="margin:0">Enter your risk, the stop loss${ins ? "" : ", the pip value"} and a pair to see the lot size.</p>`;
+    return;
+  }
+  const raw = riskAmt / (pips * pv), lots = Math.floor(raw * 100 + 1e-9) / 100, actual = lots * pips * pv;
+  calcResult = { lots, risk: Math.round(actual * 100) / 100, pips, pair: F("cPair").value.trim().toUpperCase(), entry: e, stop: sp, account: a ? a.id : "" };
+  const m = v => money(v, { signed: false });
+  const warns = [];
+  const st = a && propStatus(a);
+  if (st && lots > 0) {
+    const dailyLeft = st.dailyLimit != null ? Math.max(0, st.dailyLimit - st.dailyUsed) : null;
+    const room = st.maxAllow ? Math.max(0, st.maxRoom) : null;
+    if (dailyLeft != null && actual >= dailyLeft) warns.push(["bad", `A full stop-out (${m(actual)}) would break today's daily loss limit. Only ${m(dailyLeft)} is left today.`]);
+    else if (room != null && actual >= room) warns.push(["bad", `A full stop-out (${m(actual)}) would break the max loss limit. Only ${m(room)} is left.`]);
+    else if (dailyLeft != null && actual >= dailyLeft * .5) warns.push([actual >= dailyLeft * .8 ? "bad" : "warn", `This uses ${pct(actual / dailyLeft, 0)} of the ${m(dailyLeft)} daily loss you have left today.`]);
+    else if (room != null && actual >= room * .5) warns.push([actual >= room * .8 ? "bad" : "warn", `This uses ${pct(actual / room, 0)} of the ${m(room)} left before the max loss limit.`]);
+  }
+  if (mode === "pct" && riskIn > 3) warns.push(["warn", `${riskIn}% per trade is high. Most funded traders risk 0.5–1%.`]);
+  out.innerHTML = `
+    <div class="calc-big"><span>Position size</span><b>${lots > 0 ? lots.toFixed(2) + " lots" : "Under 0.01 lots"}</b>${ins && lots > 0 ? `<small>${Math.round(lots * ins.contract).toLocaleString()} ${ins.contract === 1e5 ? "units" : ins.contract === 1 ? "contracts" : "oz"}</small>` : ""}</div>
+    <div class="calc-rows">
+      <div><span>Money at risk</span><b>${m(lots > 0 ? actual : riskAmt)}</b></div>
+      <div><span>Of balance</span><b>${bal > 0 ? pct((lots > 0 ? actual : riskAmt) / bal, 2) : "—"}</b></div>
+      <div><span>Stop</span><b>${pips} ${unit}${pips === 1 ? "" : "s"}</b></div>
+      <div><span>Profit at 2R</span><b class="pos">${m(2 * (lots > 0 ? actual : riskAmt))}</b></div>
+    </div>
+    ${warns.map(([c, t]) => `<p class="calc-warn ${c}">${ico("warn")}<span>${esc(t)}</span></p>`).join("")}`;
+}
+F("calcForm").addEventListener("input", e => {
+  if (e.target.id === "cPipVal") F("cPipVal").dataset.manual = "1";
+  if (e.target.id === "cPair") delete F("cPipVal").dataset.manual;
+  if (e.target.id === "cPips") { F("cEntry").value = ""; F("cStopPx").value = ""; }
+  if (e.target.id === "cRisk" || e.target.name === "cMode") {
+    const mode = ($("input[name=cMode]:checked") || {}).value;
+    if (e.target.name === "cMode") F("cRisk").value = mode === "amt" ? (ui.calcAmt ?? settings.defaultRisk ?? "") : (ui.calcPct ?? 1);
+    ui.calcMode = mode;
+    if (mode === "amt") ui.calcAmt = num(F("cRisk").value); else ui.calcPct = num(F("cRisk").value);
+    saveUi();
+  }
+  calcUpdate();
+});
+F("cAccount").addEventListener("change", () => { F("cBalance").value = Math.round(acctBalance(acctById(F("cAccount").value)) * 100) / 100; calcUpdate(); });
+F("calcClose").addEventListener("click", () => F("calcDlg").close());
+F("calcCancel").addEventListener("click", () => F("calcDlg").close());
+F("calcForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const r = calcResult;
+  if (!r || !(r.lots > 0)) { toast("Fill in the calculator first"); return; }
+  F("calcDlg").close();
+  if (calcFrom !== "log") showTab("log");
+  if (r.pair) F("tPair").value = r.pair;
+  if (acctById(r.account)) F("tAccount").value = r.account;
+  F("tSize").value = r.lots; F("tRisk").value = r.risk;
+  if (r.entry != null) F("tEntry").value = r.entry;
+  if (r.stop != null) F("tStop").value = r.stop;
+  updatePreview();
+  toast(`${r.lots.toFixed(2)} lots, risking ${money(r.risk, { signed: false })}`);
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-calc-open]");
+  if (b) openCalc({ account: b.dataset.calcOpen, from: b.closest("#tradeForm") ? "log" : "" });
+});
+
+/* ---------- Payouts (funded prop accounts) ---------- */
+function openPayouts(a) {
+  if (!a) return;
+  F("payDlg").dataset.id = a.id;
+  F("payTitle").innerHTML = `${firmLogo(a, "sm")}<span>${esc(acctLabel(a))} payouts</span>`;
+  F("paySub").textContent = [a.firm, programOf(a) ? programOf(a).name : "", a.phase].filter(Boolean).join(" · ");
+  renderPayouts();
+  F("payDate").value = isoDate(new Date()); F("payAmount").value = ""; F("payNote").value = ""; F("payMsg").textContent = "";
+  const dlg = F("payDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+function renderPayouts() {
+  const a = acctById(F("payDlg").dataset.id);
+  if (!a) return;
+  const list = payoutsOf(a), total = sum(list.map(p => Number(p.amount) || 0));
+  const size = Number(a.size) || 0;
+  F("payTotal").innerHTML = list.length
+    ? `<div><span>Total received</span><b class="pos">${money(total, { signed: false })}</b></div><div><span>Payouts</span><b>${list.length}</b></div>${size ? `<div><span>Return on account size</span><b>${pct(total / size, 1)}</b></div>` : ""}`
+    : `<p class="muted" style="margin:0">No payouts recorded yet. Add each one when it lands, and see your total here and on the Overview card.</p>`;
+  F("payList").innerHTML = list.slice().reverse().map(p => `<li><span class="pay-d">${esc(fmtDate(p.date))}</span><span class="pay-n">${esc(p.note || "")}</span><b class="pos">${money(Number(p.amount) || 0, { signed: false })}</b><button class="btn sm ghost" type="button" data-pay-rm="${esc(p.id)}" aria-label="Remove payout of ${esc(money(Number(p.amount) || 0, { signed: false }))} on ${esc(fmtDate(p.date))}">✕</button></li>`).join("");
+}
+function savePayouts(id, list) {
+  const all = accounts().slice(), i = all.findIndex(x => x.id === id);
+  if (i < 0) return;
+  all[i] = Object.assign({}, all[i], { payouts: list });
+  settings.accounts = all;
+  saveSettings();
+  renderPayouts();
+  renderAccounts();
+  if (isAnalytics(currentTab())) renderDashboard();
+}
+F("payForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return; }
+  const a = acctById(F("payDlg").dataset.id), amount = num(F("payAmount").value), date = F("payDate").value;
+  if (!date || !(amount > 0)) { F("payMsg").textContent = !date ? "Add the date it was paid." : "Add the amount you received."; (date ? F("payAmount") : F("payDate")).focus(); return; }
+  savePayouts(a.id, [...payoutsOf(a), { id: uid(), date, amount, note: F("payNote").value.trim() }]);
+  F("payAmount").value = ""; F("payNote").value = ""; F("payMsg").textContent = "";
+  toast(`Payout of ${money(amount, { signed: false })} added`);
+});
+F("payList").addEventListener("click", async e => {
+  const b = e.target.closest("[data-pay-rm]");
+  if (!b) return;
+  const a = acctById(F("payDlg").dataset.id);
+  savePayouts(a.id, payoutsOf(a).filter(p => p.id !== b.dataset.payRm));
+});
+F("payClose").addEventListener("click", () => F("payDlg").close());
+document.addEventListener("click", e => { const b = e.target.closest("[data-payouts]"); if (b) openPayouts(acctById(b.dataset.payouts)); });
 
 // After a trade is saved: warn when a prop account gets close to, or past, a limit.
 function propWarn(t) {
@@ -4584,10 +5232,10 @@ function propWarn(t) {
   if (!st) return;
   const firm = findFirm(a.firm).name;
   let msg = "";
-  if (st.breach) msg = `⚠ ${firm}: ${st.breach.rule.toLowerCase()} reached on closed trades. Check your dashboard.`;
-  else if (st.dailyLimit && st.dailyUsed / st.dailyLimit >= .6) msg = `⚠ ${firm}: ${money(st.dailyUsed, { signed: false, decimals: 0 })} of ${money(st.dailyLimit, { signed: false, decimals: 0 })} daily loss used.`;
-  else if (st.maxAllow && st.maxRoom / st.maxAllow <= .4) msg = `⚠ ${firm}: ${money(st.maxRoom, { signed: false, decimals: 0 })} left before the max loss limit.`;
-  else if (st.hit && t.pnl > 0) msg = st.daysOk ? `🎯 ${firm} profit target reached!` : `🎯 ${firm} target reached. ${plural(st.r.minDays - st.tradingDays, "more trading day")} needed.`;
+  if (st.breach) msg = `${firm}: ${st.breach.rule.toLowerCase()} reached on closed trades. Check your dashboard.`;
+  else if (st.dailyLimit && st.dailyUsed / st.dailyLimit >= .6) msg = `${firm}: ${money(st.dailyUsed, { signed: false, decimals: 0 })} of ${money(st.dailyLimit, { signed: false, decimals: 0 })} daily loss used.`;
+  else if (st.maxAllow && st.maxRoom / st.maxAllow <= .4) msg = `${firm}: ${money(st.maxRoom, { signed: false, decimals: 0 })} left before the max loss limit.`;
+  else if (st.hit && t.pnl > 0) msg = st.daysOk ? `${firm} profit target reached!` : `${firm} target reached. ${plural(st.r.minDays - st.tradingDays, "more trading day")} needed.`;
   if (msg) setTimeout(() => toast(msg), 2200);
 }
 
@@ -4879,6 +5527,13 @@ F("listEditors").addEventListener("submit", e => {
   saveSettings(); renderListEditors(); refreshLists();
   if (added.length) toast(`Added ${added.join(", ")}`);
   F("add-" + key).focus();
+});
+F("mtFile").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); e.target.value = ""; return; }
+  try { await importMt(file, F("mtAccount").value, F("mtZone").value); } catch (err) { toast("Import failed: " + err.message); }
+  e.target.value = "";
 });
 F("importFile").addEventListener("change", async e => {
   const file = e.target.files[0];
