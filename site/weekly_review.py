@@ -259,7 +259,8 @@ def main():
             skipped += 1  # nothing logged this week: no email
             continue
         name = (u.get("user_metadata") or {}).get("full_name", "")
-        preview = PREVIEW_ALL and not s.get("weeklyEmail")
+        # A test to one address with preview on always shows the preview version.
+        preview = PREVIEW_ALL and (bool(ONLY) or not s.get("weeklyEmail"))
         subject = ("Preview: " if preview else "") + f"Your ELEV8 week: {w['money'](w['st']['total'])} · {w['st']['n']} trades · {w['st']['win_rate']:.0%} win rate"
         try:
             send(u["email"], subject, render(w, name, preview))
