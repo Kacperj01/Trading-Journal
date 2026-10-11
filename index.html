@@ -759,6 +759,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .acct-empty { padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); color: var(--muted); font-size: 13.5px; }
 .acct-unassigned { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--warn-soft); font-size: 13.5px; }
 .acct-unassigned p { margin: 0 0 8px; }
+.active-sum { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+.active-sum .acct-main { min-width: 160px; }
+.active-sum .acct-btns { width: auto; margin: 0 0 0 auto; }
 .acct-assign { display: flex; gap: 8px; flex-wrap: wrap; }
 .acct-assign select { flex: 1; min-width: 160px; }
 .seg-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
@@ -1539,9 +1542,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         </section>
         <form id="acctForm" class="set-narrow stack">
           <section class="card accent-blue" aria-labelledby="acctTitle">
-            <div class="card-head"><div><h3 id="acctTitle">Money</h3><div class="sub">Balance, currency and risk</div></div></div>
-            <div class="fields fields-pair" style="margin:0">
-              <div class="field"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint" hidden>Worked out from your trading account sizes</span></div>
+            <div class="card-head"><div><h3 id="acctTitle">Active account</h3><div class="sub">New trades go to this account, and the dashboard shows it</div></div></div>
+            <div class="stack" id="activeWrap" hidden>
+              <div class="field"><label for="sActive">Account</label><select id="sActive"></select></div>
+              <div class="active-sum" id="activeSum"></div>
+            </div>
+            <div class="fields fields-pair" style="margin:14px 0 0">
+              <div class="field" id="sBalanceWrap"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint">Add a trading account to use its size instead</span></div>
               <div class="field"><label for="sCurrency">Currency symbol</label><input type="text" id="sCurrency" maxlength="4"></div>
               <div class="field"><label for="sRisk">Default risk per trade</label><input type="number" step="any" id="sRisk" inputmode="decimal"></div>
             </div>
@@ -1774,7 +1781,7 @@ const DEFAULT_SETTINGS = {
   emotions: ["Confident", "Unsure", "Neutral", "Stressed", "FOMO", "Proud", "Disappointed", "Lesson learned", "Angry"],
   mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"],
   accounts: [],     // trading accounts: { id, type: Live | Demo | Prop firm, size, broker, firm, phase, platform, name }
-  lastAccount: ""   // account picked for the last trade; new trades start on it
+  lastAccount: ""   // the active account, chosen in Preferences: new trades start on it
 };
 
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
@@ -3904,10 +3911,7 @@ function commitTrade(t) {
   const newPair = !settings.pairs.includes(t.pair), newSetup = !settings.setups.includes(t.setup);
   if (newPair) settings.pairs.push(t.pair);
   if (newSetup) settings.setups.push(t.setup);
-  // New trades start on the account used last.
-  const newAcct = !!acctById(t.account) && settings.lastAccount !== t.account;
-  if (newAcct) settings.lastAccount = t.account;
-  if (newPair || newSetup || newAcct) saveSettings();
+  if (newPair || newSetup) saveSettings();
   renderRecent();
   renderListEditors();
   return true;
@@ -4028,11 +4032,38 @@ function renderAccounts() {
     F("acctAssignSel").innerHTML = list.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
     F("acctAssignSel").value = acctById(cur) ? cur : defaultAccount();
   }
-  const sized = list.some(a => Number(a.size) > 0);
-  F("sBalance").disabled = sized;
-  F("sBalanceHint").hidden = !sized;
-  if (sized) F("sBalance").value = startingBalance("");
+  renderActive();
 }
+
+// Preferences › Active account: pick the account new trades go to; the dashboard follows it.
+function renderActive() {
+  const list = accounts(), a = acctById(defaultAccount());
+  F("activeWrap").hidden = !list.length;
+  F("sBalanceWrap").hidden = !!list.length;
+  if (!a) return;
+  F("sActive").innerHTML = list.map(x => `<option value="${esc(x.id)}">${esc(acctLabel(x))}</option>`).join("");
+  F("sActive").value = a.id;
+  const n = realTrades.filter(t => t.account === a.id), bal = (Number(a.size) || 0) + sum(n.map(t => Number(t.pnl) || 0));
+  const where = a.type === "Prop firm" ? [a.firm, programOf(a) ? programOf(a).name : "", a.phase] : [a.broker, a.platform];
+  const cls = a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : "live";
+  F("activeSum").innerHTML = `<span class="acct-badge ${cls}">${esc(a.type)}</span>
+    <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(where.filter(Boolean).join(" · "))}</span>
+    <span>${Number(a.size) > 0 ? `Size ${money(Number(a.size), { signed: false, decimals: 0 })} · balance ${money(bal, { signed: false })} · ` : ""}${plural(n.length, "trade")}</span></div>
+    <div class="acct-btns">${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" id="activeEdit">Edit account</button></div>`;
+}
+F("sActive").addEventListener("change", e => {
+  const a = acctById(e.target.value);
+  if (!a) return;
+  settings.lastAccount = a.id;
+  saveSettings();
+  if (accounts().length > 1) { ui.account = a.id; saveUi(); }
+  toast(`Active account: ${acctLabel(a)}`);
+  refreshAll();
+  // Point both trade forms at it (unless a saved trade is open for editing).
+  F("qAccount").value = a.id;
+  if (!trades.some(t => t.id === F("tId").value)) F("tAccount").value = a.id;
+});
+F("activeSum").addEventListener("click", e => { if (e.target.id === "activeEdit") openAccountDlg(acctById(defaultAccount()), false); });
 
 function linkTrades(list, accountId) {
   list.forEach(t => putTrade(Object.assign({}, t, { account: accountId })));
@@ -4582,7 +4613,7 @@ F("setNav").addEventListener("click", e => {
 });
 F("acctForm").addEventListener("submit", e => {
   e.preventDefault();
-  if (!F("sBalance").disabled) settings.balance = num(F("sBalance").value) ?? 0;
+  if (!accounts().length) settings.balance = num(F("sBalance").value) ?? 0;
   settings.currency = F("sCurrency").value.trim() || "$";
   settings.defaultRisk = num(F("sRisk").value) ?? 0;
   settings.sessionMode = F("sSessionMode").value;
