@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "8058084dcf";</script>
+<script>window.ELEV8_BUILD = "53189a14e2";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -789,6 +789,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .side-link.danger:hover { background: var(--red-soft); }
 .bug-dlg { width: min(480px, calc(100vw - 32px)); }
 .bug-dlg textarea { min-height: 0; }
+.link-btn { appearance: none; border: 0; background: none; padding: 0; color: var(--accent); font: 500 13px var(--font-sans); cursor: pointer; }
+.link-btn:hover { text-decoration: underline; }
+.pw-label { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.home-card .msg-action { display: inline; margin-left: 4px; }
 /* Trading accounts */
 .acct-dlg { width: min(540px, calc(100vw - 32px)); }
 .acct-dlg:not(.is-prop) .prop-only { display: none; }
@@ -1602,6 +1606,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div id="syncSignedIn" class="stack" hidden>
               <div class="set-row"><span class="muted">Signed in as</span><strong id="syncWho"></strong></div>
               <div class="set-row"><span class="muted">Status</span><span id="syncLast"></span></div>
+              <div class="set-row"><span class="muted">Password</span><button type="button" class="link-btn" id="pwChange">Change password</button></div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
                 <button class="btn primary" type="button" id="syncNow">Sync now</button>
                 <button class="btn danger" type="button" id="syncSignOut">Sign out</button>
@@ -1727,7 +1732,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="field signup-only" hidden><label for="dlgName">Full name</label><input type="text" id="dlgName" autocomplete="name" autocapitalize="words"></div>
       <div class="field signup-only" hidden><label for="dlgDob">Date of birth</label><input type="date" id="dlgDob" autocomplete="bday"></div>
       <div class="field"><label for="dlgEmail">Email</label><input type="email" id="dlgEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
-      <div class="field"><label for="dlgPassword">Password</label><input type="password" id="dlgPassword" autocomplete="current-password" minlength="6" required></div>
+      <div class="field"><div class="pw-label"><label for="dlgPassword">Password</label><button type="button" class="link-btn signin-only" id="dlgForgot">Forgot password?</button></div><input type="password" id="dlgPassword" autocomplete="current-password" minlength="6" required></div>
       <p id="dlgMsg" role="status" aria-live="polite"></p>
       <button class="btn primary" type="submit" id="dlgSubmit">Sign in</button>
       <button class="btn" type="button" id="dlgSignUp">Create account</button>
@@ -1739,6 +1744,20 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     </ul>
   </div>
 </section>
+
+<dialog id="pwDlg" class="bug-dlg" aria-labelledby="pwTitle" aria-describedby="pwIntro">
+  <form id="pwForm" class="dlg-body" novalidate>
+    <h3 id="pwTitle">Change password</h3>
+    <p id="pwIntro">Choose a new password of at least 6 characters.</p>
+    <div class="field"><label for="pwNew">New password</label><input type="password" id="pwNew" autocomplete="new-password" minlength="6"></div>
+    <div class="field"><label for="pwNew2">Confirm new password</label><input type="password" id="pwNew2" autocomplete="new-password" minlength="6"></div>
+    <p id="pwMsg" class="q-msg" role="alert"></p>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="pwCancel">Cancel</button>
+      <button class="btn primary" type="submit" id="pwSave">Save password</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="bugDlg" class="bug-dlg" aria-labelledby="bugTitle" aria-describedby="bugIntro">
   <form id="bugForm" class="dlg-body" novalidate>
@@ -1986,7 +2005,7 @@ function sbQueue(entry) {
 async function sbAuth(path, body) {
   const res = await fetch(SB.url + "/auth/v1/" + path, { method: "POST", headers: { apikey: SB.key, "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.msg || json.error_description || json.message || json.error || "Sign-in failed");
+  if (!res.ok) { const err = new Error(json.msg || json.error_description || json.message || json.error || "Sign-in failed"); err.code = json.error_code || json.error || ""; throw err; }
   return json;
 }
 function sbSaveSession(s) {
@@ -2136,7 +2155,9 @@ async function sbFromLink() {
     const user = await res.json();
     if (!res.ok || !user.id) throw new Error("bad link");
     sbSaveSession({ access_token: h.get("access_token"), refresh_token: h.get("refresh_token"), expires_in: Number(h.get("expires_in")) || 3600, expires_at: Number(h.get("expires_at")) || 0, user });
-    toast("Email confirmed. You're signed in.");
+    const kind = h.get("type");
+    if (kind === "recovery") setTimeout(() => openPasswordDlg(true), 600);
+    else toast(kind === "email_change" ? "Email address updated." : "Email confirmed. You're signed in.");
   } catch (e) {
     sb.note = "Your email is confirmed. Sign in below.";
   }
@@ -2224,6 +2245,7 @@ function setHomeMode(mode) {
   homeMode = mode;
   const up = mode === "signup";
   $$(".signup-only", F("homeForm")).forEach(el => el.hidden = !up);
+  $$(".signin-only", F("homeForm")).forEach(el => el.hidden = up);
   F("homeTitle").textContent = up ? "Create your ELEV8 account" : "Sign in to ELEV8";
   F("dlgSubmit").textContent = up ? "Create account" : "Sign in";
   F("dlgSignUp").textContent = up ? "I already have an account" : "Create account";
@@ -2251,7 +2273,7 @@ async function sbSignIn(signUp, from = "card") {
       : await sbAuth("token?grant_type=password", { email, password });
     if (!res.access_token) {
       if (from === "dialog") setHomeMode("signin");
-      msg.textContent = "Account created. Open the confirmation email we sent to " + email + ", then come back here and sign in.";
+      msg.innerHTML = `Account created. Open the confirmation email we sent to ${esc(email)}, then come back here and sign in. <button type="button" class="link-btn msg-action" data-resend="${esc(email)}">Resend email</button>`;
       return;
     }
     sbSaveSession(res);
@@ -2262,9 +2284,68 @@ async function sbSignIn(signUp, from = "card") {
     toast(signUp ? `Welcome to ELEV8${first ? ", " + first : ""}!` : `Welcome back${first ? ", " + first : ""}!`);
     sbStart();
   } catch (e) {
-    msg.textContent = e instanceof TypeError ? "Couldn't reach the sync service. Check your connection and try again." : e.message;
+    if (e instanceof TypeError) msg.textContent = "Couldn't reach the sync service. Check your connection and try again.";
+    else if (e.code === "email_not_confirmed" || /email not confirmed/i.test(e.message)) {
+      // Signed up but never opened the confirmation email.
+      msg.innerHTML = `<strong>Email not confirmed.</strong> Open the link we emailed to ${esc(email)}, then sign in. <button type="button" class="link-btn msg-action" data-resend="${esc(email)}">Resend confirmation email</button>`;
+    } else if (/invalid login credentials|invalid_grant/i.test(e.message + " " + e.code)) {
+      msg.innerHTML = `Wrong email or password. <button type="button" class="link-btn msg-action" data-forgot="1">Forgot password?</button>`;
+    } else msg.textContent = e.message;
   }
 }
+
+// Confirmation and password emails send people back to this page.
+const backUrl = () => encodeURIComponent(location.origin + location.pathname);
+async function resendConfirmation(email, msg) {
+  msg.textContent = "Sending…";
+  try {
+    await sbAuth("resend?redirect_to=" + backUrl(), { type: "signup", email });
+    msg.textContent = `Sent. Check ${email} (and your spam folder) for the confirmation link.`;
+  } catch (e) { msg.textContent = e instanceof TypeError ? "Couldn't reach the sync service. Try again." : e.message; }
+}
+async function sendPasswordReset(email, msg) {
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Enter your email above, then tap Forgot password."; F("dlgEmail").focus(); return; }
+  msg.textContent = "Sending…";
+  try {
+    await sbAuth("recover?redirect_to=" + backUrl(), { email });
+    msg.textContent = `If there's an account for ${email}, we've emailed it a link to set a new password.`;
+  } catch (e) { msg.textContent = e instanceof TypeError ? "Couldn't reach the sync service. Try again." : e.message; }
+}
+document.getElementById("dlgForgot").addEventListener("click", () => sendPasswordReset(F("dlgEmail").value.trim(), F("dlgMsg")));
+document.getElementById("dlgMsg").addEventListener("click", e => {
+  const r = e.target.closest("[data-resend]"), f = e.target.closest("[data-forgot]");
+  if (r) resendConfirmation(r.dataset.resend, F("dlgMsg"));
+  if (f) sendPasswordReset(F("dlgEmail").value.trim(), F("dlgMsg"));
+});
+
+// New password: from Settings, or after opening a reset link (which signs you in first).
+function openPasswordDlg(fromReset) {
+  F("pwForm").reset(); F("pwMsg").textContent = "";
+  F("pwTitle").textContent = fromReset ? "Set a new password" : "Change password";
+  F("pwIntro").textContent = fromReset ? "You opened a password reset link. Choose a new password to finish." : "Choose a new password of at least 6 characters.";
+  const dlg = F("pwDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  F("pwNew").focus();
+}
+document.getElementById("pwCancel").addEventListener("click", () => F("pwDlg").close());
+document.getElementById("pwChange").addEventListener("click", () => openPasswordDlg(false));
+document.getElementById("pwForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const a = F("pwNew").value, b = F("pwNew2").value, msg = F("pwMsg");
+  if (a.length < 6) { msg.textContent = "Use at least 6 characters."; F("pwNew").focus(); return; }
+  if (a !== b) { msg.textContent = "The two passwords don't match."; F("pwNew2").focus(); return; }
+  msg.textContent = "Saving…";
+  try {
+    const res = await fetch(SB.url + "/auth/v1/user", { method: "PUT", headers: { apikey: SB.key, Authorization: "Bearer " + await sbToken(), "Content-Type": "application/json" }, body: JSON.stringify({ password: a }) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const m = out.msg || out.message || out.error_description || "Couldn't change your password";
+      throw new Error(/reauthenticat/i.test(m) ? "For security, sign out and use Forgot password on the sign-in page to set a new one." : /same|different from the old/i.test(m) ? "Choose a password that's different from your current one." : m);
+    }
+    F("pwDlg").close();
+    toast("Password updated");
+  } catch (err) { msg.textContent = err instanceof TypeError ? "Couldn't reach the sync service. Try again when you're online." : err.message; }
+});
 
 async function connectCloud() {
   if (!window.claude || typeof window.claude.use !== "function") { finishLoading("local"); return; }
@@ -4936,7 +5017,8 @@ if (!first) document.documentElement.classList.add("calm");
 ui.opened = true; saveUi();
 restoreDraft();
 restoring = true;
-showTab("overview");
+showTab("overview", { push: false }); // leave the address alone: email links carry sign-in details after "#"
+if (TABS.includes(location.hash.slice(1))) { try { history.replaceState(null, "", "#overview"); } catch (e) { /* sandboxed */ } }
 restoring = false;
 requestAnimationFrame(() => window.scrollTo(0, 0));
 if (first) setTimeout(() => document.documentElement.classList.add("calm"), 2500);
