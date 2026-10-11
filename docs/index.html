@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "5d50ab830b";</script>
+<script>window.ELEV8_BUILD = "2259dee02d";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -276,8 +276,18 @@ main { padding: 28px 0 80px; overflow: clip; position: relative; } /* the backgr
 .toolbar .left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .toolbar h2 { margin: 0; font-size: 24px; font-weight: 600; }
 .toolbar .lead { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
-.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
-.filters label { font-size: 11px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; letter-spacing: .3px; }
+/* Analytics filters: one slim row of pill chips under the page title. */
+.chip-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.fchip { position: relative; display: inline-flex; align-items: center; margin: 0; }
+.fchip select { -webkit-appearance: none; appearance: none; width: auto; height: 34px; padding: 0 30px 0 14px; border-radius: 999px; font-size: 13.5px; font-weight: 500; color: var(--text-2);
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238394ad' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; border: 1px solid var(--border); cursor: pointer; transition: border-color .15s, background-color .15s, color .15s; text-overflow: ellipsis; }
+.fchip select:hover { border-color: var(--border-strong); color: var(--text); }
+.fchip.on select { color: var(--accent); border-color: var(--accent); background-color: var(--blue-soft); }
+.fdate { gap: 4px; height: 34px; box-sizing: border-box; padding: 0 4px 0 13px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; color: var(--muted); }
+.fdate input { border: 0; background: transparent; padding: 0 6px; height: 30px; width: auto; font-size: 13.5px; color: var(--text); min-width: 0; box-shadow: none; }
+.fchip-clear { all: unset; cursor: pointer; font-size: 13px; color: var(--muted); padding: 6px 8px; border-radius: 8px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-strong); white-space: nowrap; }
+.fchip-clear:hover { color: var(--text); }
+.fchip-clear:focus-visible { outline: 2px solid var(--focus); }
 
 .banner {
   display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;
@@ -324,7 +334,6 @@ textarea { resize: vertical; min-height: 96px; }
 input[type="checkbox"], input[type="radio"] { width: auto; accent-color: var(--blue); }
 input[type="range"] { padding: 0; accent-color: var(--brand-2); background: transparent; border: 0; }
 ::-webkit-calendar-picker-indicator { filter: invert(0.8); }
-.filters select, .filters input { padding: 6px 10px; width: auto; font-size: 13.5px; border-radius: 9px; }
 input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--red); }
 
 /* ---------- KPI ---------- */
@@ -1114,7 +1123,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .week-strip .ws-l { font-size: 15px; }
   .field label, .field .lbl { font-size: 14px; }
   input, select, textarea { font-size: 15px; }
-  .filters select, .filters input { font-size: 13.5px; }
 }
 @media (min-width: 1680px) { .kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
@@ -1122,7 +1130,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
    and many stacked backdrop blurs can stall scrolling or leave parts of the page blank. */
 @media (max-width: 760px), (pointer: coarse) {
   input, select, textarea { font-size: 16px; }
-  .filters select, .filters input, .table-tools input, .table-tools select { font-size: 16px; }
+  .fchip select, .fdate input, .table-tools input, .table-tools select { font-size: 16px; }
   .glow { display: none; }
   body::before { position: absolute; }
   .card, .tooltip, header.top { backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -1137,18 +1145,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .fields.fields-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .brand-logo { height: 38px; }
   .brand .wordmark { font-size: 19px; }
-  /* Phones: the three filters share one compact row; labels stay for screen readers only. */
-  .filters { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .filters label:not(#fFromWrap):not(#fToWrap) { font-size: 0; gap: 0; }
-  #fFromWrap, #fToWrap { grid-column: span 3; flex-direction: row; align-items: center; gap: 10px; font-size: 13px; }
-  #fFromWrap { order: 4; } #fToWrap { order: 5; }
-  .filters { gap: 6px; }
-  .filters select { -webkit-appearance: none; appearance: none; width: 100%; height: 34px; padding: 0 26px 0 12px; border-radius: 999px;
-    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238394ad' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center;
-    border: 1px solid var(--border); color: var(--text-2); text-overflow: ellipsis; }
-  .filters input { width: 100%; padding: 6px 10px; border-radius: 9px; }
-  /* The home-screen app stops iPhone zooming into fields, so its filter text can be smaller. */
-  .hosted .filters select { font-size: 13.5px; }
+  /* Phones: the filter chips stay on one line and scroll sideways. */
+  .chip-bar { flex-wrap: nowrap; overflow-x: auto; margin: 12px -24px 0; padding: 2px 24px 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+  .chip-bar::-webkit-scrollbar { display: none; }
+  .fchip, .fchip-clear { flex-shrink: 0; }
+  /* The home-screen app stops iPhone zooming into fields, so its chip text can be smaller. */
+  .hosted .fchip select, .hosted .fdate input { font-size: 14px; }
   .table-tools .seg-tabs { width: 100%; }
   .table-tools .seg-tabs button { flex: 1; justify-content: center; padding: 8px 6px; font-size: 13.5px; }
   .table-tools { width: 100%; }
@@ -1180,6 +1183,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .table-scroll tbody td[colspan] { grid-column: 1 / -1; }
   .table-scroll tbody td[colspan]::before { display: none; }
 }
+@media (max-width: 640px) { .chip-bar { margin-inline: -16px; padding-inline: 16px; } }
 @media (min-width: 761px) { .mobile-only { display: none; } }
 
 /* After the first visit the journal opens as you left it: no entrance animations or growing charts. */
@@ -1249,8 +1253,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <h2 id="pageTitle">Overview</h2>
           <p class="lead" id="rangeLabel">All trades</p>
         </div>
-        <div class="filters" role="group" aria-label="Filters for all analytics tabs">
-          <label>Period
+      </div>
+      <div class="filters chip-bar reveal" style="--d:0" role="group" aria-label="Filters for all analytics tabs">
+          <label class="fchip"><span class="sr-only">Period</span>
             <select id="fRange">
               <option value="all">All time</option>
               <option value="week">This week</option>
@@ -1262,18 +1267,18 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <option value="custom">Custom range</option>
             </select>
           </label>
-          <label id="fFromWrap" hidden>From <input type="date" id="fFrom"></label>
-          <label id="fToWrap" hidden>To <input type="date" id="fTo"></label>
-          <label>Session
+          <label class="fchip fdate" id="fFromWrap" hidden><span>From</span><input type="date" id="fFrom"></label>
+          <label class="fchip fdate" id="fToWrap" hidden><span>To</span><input type="date" id="fTo"></label>
+          <label class="fchip"><span class="sr-only">Session</span>
             <select id="fSession"><option value="">All sessions</option></select>
           </label>
-          <label>Setup
+          <label class="fchip"><span class="sr-only">Setup</span>
             <select id="fSetup"><option value="">All setups</option></select>
           </label>
-          <label id="fAccountWrap" hidden>Account
+          <label class="fchip" id="fAccountWrap" hidden><span class="sr-only">Account</span>
             <select id="fAccount"><option value="">All accounts</option></select>
           </label>
-        </div>
+          <button class="fchip-clear" type="button" id="fClear" hidden>Clear filters</button>
       </div>
 
       <div id="dashEmpty" class="card empty reveal" style="--d:1; margin-top:22px" hidden>
@@ -2957,6 +2962,7 @@ function stats(list) {
    Rendering — Dashboard
    ====================================================================== */
 function renderDashboard() {
+  syncFilterChips();
   renderWeekly();
   const list = filtered();
   const hasAny = trades.length > 0;
@@ -3724,6 +3730,7 @@ function refreshLists() {
   F("fAccountWrap").hidden = accts.length < 2;
   F("fAccount").innerHTML = `<option value="">All accounts</option>` + opts;
   F("fAccount").value = ui.account;
+  syncFilterChips();
   for (const [id, extra] of [["tAccount", `<option value="">No account</option>`], ["qAccount", ""]]) {
     const sel = F(id), cur = sel.value, had = Array.from(sel.options).some(o => o.value === cur);
     sel.innerHTML = opts + (accts.length ? extra : "");
@@ -4537,7 +4544,29 @@ document.addEventListener("click", e => {
 });
 window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { push: false }));
 
-// Filters
+// Filters: each chip is as wide as its current choice, and lights up when it narrows the view.
+// (Function declarations only, so the early renders at start-up can call them.)
+function fitChip(sel) {
+  const chipCtx = fitChip.ctx || (fitChip.ctx = document.createElement("canvas").getContext("2d"));
+  const cs = getComputedStyle(sel), t = (sel.options[sel.selectedIndex] || {}).text || "";
+  chipCtx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  sel.style.width = Math.ceil(chipCtx.measureText(t).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 4) + "px";
+}
+function syncFilterChips() {
+  [["fRange", v => v !== "all"], ["fSession", Boolean], ["fSetup", Boolean], ["fAccount", Boolean]].forEach(([id, on]) => {
+    const el = F(id);
+    el.closest(".fchip").classList.toggle("on", on(el.value));
+    fitChip(el);
+  });
+  F("fClear").hidden = ui.range === "all" && !ui.session && !ui.setup && !(ui.account && !F("fAccountWrap").hidden);
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncFilterChips);
+F("fClear").addEventListener("click", () => {
+  ui.range = "all"; ui.session = ""; ui.setup = ""; ui.account = ""; ui.calMonth = "";
+  F("fRange").value = "all"; F("fSession").value = ""; F("fSetup").value = ""; F("fAccount").value = "";
+  F("fFromWrap").hidden = F("fToWrap").hidden = true;
+  saveUi(); renderDashboard();
+});
 F("fRange").addEventListener("change", e => {
   ui.range = e.target.value;
   F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
