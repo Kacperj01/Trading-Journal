@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -64,6 +65,7 @@ def main():
     old = json.loads(HASHES.read_text(encoding="utf-8")) if HASHES.exists() else {}
     new, changed, failed = {}, {}, []
     for url, progs in sources().items():
+        time.sleep(2)  # be gentle: some firms rate-limit quick requests
         try:
             digest = hashlib.sha256(page_text(url).encode()).hexdigest()
         except Exception as exc:  # blocked or down: keep the old hash, try again tomorrow
