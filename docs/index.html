@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "c93d422670";</script>
+<script>window.ELEV8_BUILD = "bbc85a7e61";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -345,6 +345,42 @@ dialog .dlg-body { min-width: 0; }
 input::placeholder, textarea::placeholder { color: var(--placeholder); }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(74, 154, 240, 0.2); }
 select option { background: var(--popup-bg); color: var(--text); }
+/* ELEV8 dropdowns (see enhanceSelect) */
+select.dd-native { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; border: 0 !important; min-height: 0 !important; opacity: 0 !important; pointer-events: none !important; overflow: hidden; clip-path: inset(50%); }
+.field, .acct-assign, .table-tools { position: relative; }
+.dd { box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; min-height: 42px; padding: 10px 12px; text-align: left; cursor: pointer;
+  font: 400 14px var(--font-sans); color: var(--text); background: var(--input-bg); border: 1px solid var(--border-strong); border-radius: 10px; transition: border-color .2s, box-shadow .2s; }
+.dd:hover { border-color: var(--accent); }
+.dd:focus-visible, .dd[aria-expanded="true"] { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(74, 154, 240, 0.2); }
+.dd[aria-invalid="true"] { border-color: var(--red); }
+.dd:disabled { opacity: .55; cursor: default; }
+.dd[hidden] { display: none; }
+.dd .dd-v { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dd.placeholder .dd-v { color: var(--placeholder); }
+.dd-chev { width: 16px; height: 16px; flex-shrink: 0; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.dd[aria-expanded="true"] .dd-chev { transform: rotate(180deg); }
+.table-tools .dd { width: auto; min-height: 38px; padding: 8px 12px; }
+.acct-assign .dd { flex: 1 1 160px; min-width: 0; max-width: 100%; width: auto; }
+.dd-pop { position: fixed; inset: 0; z-index: 90; margin: 0; padding: 0; border: 0; background: transparent; width: auto; height: auto; max-width: none; max-height: none; overflow: visible; color: var(--text); pointer-events: none; }
+.dd-pop[hidden] { display: none; }
+.dd-pop:popover-open { display: block; }
+.dd-sheet { position: fixed; pointer-events: auto; box-sizing: border-box; padding: 6px; border-radius: 12px; background: var(--card-solid); border: 1px solid var(--border-strong); box-shadow: 0 20px 50px rgba(0, 0, 0, .45); overflow-y: auto; overscroll-behavior: contain; }
+.dd-sheet:focus { outline: none; }
+.dd-grab, .dd-title { display: none; }
+.dd-list { display: grid; gap: 2px; }
+.dd-opt { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 8px; font: 400 14px var(--font-sans); color: var(--text); }
+.dd-opt > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.dd-opt.muted { color: var(--muted); }
+.dd-opt:hover, .dd-opt:focus-visible { background: var(--surface-2); outline: none; }
+.dd-opt[aria-selected="true"] { background: var(--blue-soft); color: var(--accent); font-weight: 500; }
+.dd-opt .ni { width: 16px; height: 16px; opacity: 1; color: var(--accent); }
+.dd-opt[disabled] { opacity: .45; cursor: default; }
+/* Phones: the list slides up from the bottom over a dimmed page. */
+.dd-pop.phone { pointer-events: auto; background: rgba(2, 8, 18, .55); }
+.dd-pop.phone .dd-sheet { left: 0; right: 0; bottom: 0; top: auto; max-height: 75vh; border-radius: 20px 20px 0 0; border-width: 1px 0 0; padding: 10px 14px calc(18px + env(safe-area-inset-bottom, 0px)); animation: sheetUp .26s cubic-bezier(.2, .7, .2, 1); }
+.dd-pop.phone .dd-grab { display: block; width: 40px; height: 5px; border-radius: 99px; background: var(--border-strong); margin: 0 auto 10px; }
+.dd-pop.phone .dd-title { display: block; font-size: 16px; font-weight: 600; margin: 0 4px 10px; }
+.dd-pop.phone .dd-opt { padding: 13px 12px; font-size: 16px; }
 textarea { resize: vertical; min-height: 96px; }
 input[type="checkbox"], input[type="radio"] { width: auto; accent-color: var(--blue); }
 input[type="range"] { padding: 0; accent-color: var(--brand-2); background: transparent; border: 0; }
@@ -5098,7 +5134,7 @@ function openAccountDlg(a, first) {
   syncProgramFields(a ? a.program : "", a ? a.phase : "");
   F("acctDlgTitle").textContent = first ? "Register your trading account" : a ? "Edit account" : "Add a trading account";
   F("acctDlgIntro").textContent = first
-    ? "Tell us which account you trade so your balance and stats match it. You can add more accounts later in Settings."
+    ? "Tell us which account you trade so your balance and stats match it. You can add more accounts later on the Accounts page."
     : a ? "Changes apply to every trade linked to this account." : "Add another live, demo or prop firm account.";
   F("aCancel").hidden = first;
   F("aSubmit").textContent = first ? "Register account" : "Save account";
@@ -6371,6 +6407,151 @@ setSync("", "Connecting…");
 F("fRange").value = ui.range;
 F("fFrom").value = ui.from; F("fTo").value = ui.to;
 F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
+/* ======================================================================
+   Dropdowns: every visible <select> gets an ELEV8-styled button and list (a sheet on phones).
+   The real <select> stays in the page (hidden) and keeps its value, so forms and saving don't change.
+   ====================================================================== */
+const DD_CHEV = '<svg class="dd-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>';
+let ddOpen = null; // { sel, btn }
+const ddPop = (() => {
+  const el = document.createElement("div");
+  el.id = "ddPop"; el.className = "dd-pop"; el.hidden = true;
+  if ("popover" in HTMLElement.prototype) el.setAttribute("popover", "manual"); // top layer: shows above open dialogs too
+  el.innerHTML = `<div class="dd-sheet" role="listbox" tabindex="-1"><div class="dd-grab" aria-hidden="true"></div><div class="dd-title"></div><div class="dd-list"></div></div>`;
+  document.body.appendChild(el);
+  return el;
+})();
+const ddPhone = () => window.matchMedia("(max-width: 760px)").matches;
+function ddLabelText(sel) {
+  const lab = sel.id && document.querySelector(`label[for="${sel.id}"], label[data-dd-for="${sel.id}"]`);
+  return (lab ? lab.textContent : sel.getAttribute("aria-label") || "").replace(/\s*\*\s*$/, "").trim();
+}
+function ddSync(sel) {
+  const btn = sel._dd;
+  if (!btn) return;
+  const o = sel.options[sel.selectedIndex];
+  const empty = !o || (o.value === "" && sel.options[0] === o && /^(select|—|-|choose)/i.test(o.text.trim()));
+  btn.querySelector(".dd-v").textContent = o ? o.text : "";
+  btn.classList.toggle("placeholder", !!empty);
+  btn.disabled = sel.disabled;
+  btn.hidden = sel.hidden;
+  if (sel.hasAttribute("aria-invalid")) btn.setAttribute("aria-invalid", sel.getAttribute("aria-invalid")); else btn.removeAttribute("aria-invalid");
+}
+function enhanceSelect(sel) {
+  if (sel._dd || sel.hidden || sel.multiple) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "dd " + sel.className;
+  btn.setAttribute("aria-haspopup", "listbox");
+  btn.setAttribute("aria-expanded", "false");
+  btn.innerHTML = `<span class="dd-v"></span>${DD_CHEV}`;
+  if (sel.id) {
+    btn.id = sel.id + "Dd";
+    // Labels now point at the button; the select is skipped by keyboard and screen readers.
+    document.querySelectorAll(`label[for="${sel.id}"]`).forEach(l => { l.htmlFor = btn.id; l.dataset.ddFor = sel.id; });
+  }
+  if (sel.getAttribute("aria-label")) btn.setAttribute("aria-label", sel.getAttribute("aria-label"));
+  sel.classList.add("dd-native");
+  sel.tabIndex = -1;
+  sel.setAttribute("aria-hidden", "true");
+  sel.after(btn);
+  sel._dd = btn;
+  // Keep the button in step when code changes the value or the options.
+  const proto = HTMLSelectElement.prototype;
+  for (const prop of ["value", "selectedIndex"]) {
+    const d = Object.getOwnPropertyDescriptor(proto, prop);
+    Object.defineProperty(sel, prop, { configurable: true, get() { return d.get.call(this); }, set(v) { d.set.call(this, v); ddSync(this); } });
+  }
+  sel.focus = () => btn.focus();
+  new MutationObserver(() => ddSync(sel)).observe(sel, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled", "hidden", "aria-invalid"] });
+  sel.addEventListener("change", () => ddSync(sel));
+  if (sel.form) sel.form.addEventListener("reset", () => setTimeout(() => ddSync(sel), 0));
+  btn.addEventListener("click", () => (ddOpen && ddOpen.sel === sel ? ddClose(true) : ddShow(sel)));
+  btn.addEventListener("keydown", e => {
+    if (["ArrowDown", "ArrowUp", "Enter", " "].includes(e.key)) { e.preventDefault(); ddShow(sel); }
+  });
+  ddSync(sel);
+}
+function ddShow(sel) {
+  if (ddOpen) ddClose(false);
+  const btn = sel._dd;
+  ddOpen = { sel, btn };
+  btn.setAttribute("aria-expanded", "true");
+  // An open modal dialog makes everything outside it unclickable, so the list lives inside that dialog.
+  const host = btn.closest("dialog[open]") || document.body;
+  if (ddPop.parentNode !== host) host.appendChild(ddPop);
+  const phone = ddPhone();
+  ddPop.classList.toggle("phone", phone);
+  ddPop.querySelector(".dd-title").textContent = ddLabelText(sel);
+  ddPop.querySelector(".dd-list").innerHTML = Array.from(sel.options).map((o, i) =>
+    `<button type="button" role="option" class="dd-opt${o.value === "" ? " muted" : ""}" data-i="${i}" aria-selected="${i === sel.selectedIndex}"${o.disabled ? " disabled" : ""}><span>${esc(o.text)}</span>${i === sel.selectedIndex ? ico("check") : ""}</button>`).join("");
+  ddPop.hidden = false;
+  if (ddPop.showPopover) { try { ddPop.showPopover(); } catch (e) { /* already open */ } }
+  const sheet = ddPop.querySelector(".dd-sheet");
+  if (!phone) ddPlace();
+  else {
+    sheet.style.width = sheet.style.left = sheet.style.top = sheet.style.bottom = sheet.style.maxHeight = "";
+    document.documentElement.classList.add("sheet-open");
+  }
+  const cur = ddPop.querySelector('[aria-selected="true"]') || ddPop.querySelector(".dd-opt");
+  if (cur) { cur.focus({ preventScroll: true }); cur.scrollIntoView({ block: "nearest" }); }
+}
+// Desktop: the list sits under its field (or above it near the bottom of the screen) and follows it when the page scrolls.
+function ddPlace() {
+  if (!ddOpen) return;
+  const btn = ddOpen.btn, sheet = ddPop.querySelector(".dd-sheet");
+  {
+    const r = btn.getBoundingClientRect(), w = Math.max(r.width, 200);
+    sheet.style.width = w + "px";
+    const below = window.innerHeight - r.bottom - 12, above = r.top - 12;
+    const up = below < 220 && above > below;
+    sheet.style.maxHeight = Math.max(160, Math.min(360, up ? above : below)) + "px";
+    sheet.style.left = Math.max(8, Math.min(r.left, document.documentElement.clientWidth - w - 8)) + "px";
+    sheet.style.top = up ? "" : (r.bottom + 6) + "px";
+    sheet.style.bottom = up ? (window.innerHeight - r.top + 6) + "px" : "";
+    if (r.bottom < 0 || r.top > window.innerHeight) ddClose(false);
+  }
+}
+function ddClose(focusBtn) {
+  if (!ddOpen) return;
+  const { btn } = ddOpen;
+  ddOpen = null;
+  btn.setAttribute("aria-expanded", "false");
+  if (ddPop.hidePopover) { try { ddPop.hidePopover(); } catch (e) { /* not open */ } }
+  ddPop.hidden = true;
+  document.documentElement.classList.remove("sheet-open");
+  if (focusBtn) btn.focus({ preventScroll: true });
+}
+function ddPick(i) {
+  if (!ddOpen) return;
+  const { sel } = ddOpen;
+  if (sel.selectedIndex !== i) {
+    sel.selectedIndex = i;
+    sel.dispatchEvent(new Event("input", { bubbles: true }));
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  ddClose(true);
+}
+ddPop.addEventListener("click", e => {
+  const o = e.target.closest(".dd-opt");
+  if (o) { ddPick(Number(o.dataset.i)); return; }
+  if (!e.target.closest(".dd-sheet")) ddClose(true); // tap on the dimmed backdrop (phones)
+});
+ddPop.addEventListener("keydown", e => {
+  const items = $$(".dd-opt:not([disabled])", ddPop), i = items.indexOf(document.activeElement);
+  if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); ddClose(true); }
+  else if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const n = items[Math.max(0, Math.min(items.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))]; if (n) n.focus(); }
+  else if (e.key === "Home" || e.key === "End") { e.preventDefault(); items[e.key === "Home" ? 0 : items.length - 1].focus(); }
+  else if (e.key === "Tab") ddClose(false);
+});
+document.addEventListener("pointerdown", e => { if (ddOpen && !e.target.closest("#ddPop") && e.target !== ddOpen.btn && !ddOpen.btn.contains(e.target)) ddClose(false); }, true);
+window.addEventListener("resize", () => ddClose(false));
+document.addEventListener("scroll", e => { if (ddOpen && !ddPhone() && !(e.target instanceof Element && e.target.closest("#ddPop"))) ddPlace(); }, true);
+// Dialogs closing (Escape, Done) take any open list with them.
+document.addEventListener("close", () => ddClose(false), true);
+function enhanceSelects(root = document) { $$("select", root).forEach(enhanceSelect); }
+enhanceSelects();
+
 resetForm(false, true);
 F("qDate").value = isoDate(new Date());
 setQuickOpen(ui.quickOpen !== false);
