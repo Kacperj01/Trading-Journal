@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "462223ce10";</script>
+<script>window.ELEV8_BUILD = "c93d422670";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -771,13 +771,6 @@ html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.si
 .plan-chip input:checked + span .pc-ok { display: block; }
 .plan-chip input:checked + span .pc-no { display: none; }
 .quick-grid .q-full { grid-column: 1 / -1; }
-.rule-stats { display: grid; gap: 4px; }
-.rs-row { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; }
-.rs-row:not(.rs-head) { background: var(--surface-2); border: 1px solid var(--border); }
-.rs-head { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-block: 2px; }
-.rs-row span { min-width: 0; overflow-wrap: anywhere; display: grid; gap: 1px; }
-.rs-row small { color: var(--muted); font-size: 11.5px; }
-@media (max-width: 560px) { .rs-row { grid-template-columns: minmax(0, 1fr) 64px 52px 76px; gap: 8px; } .rs-head span:first-child { visibility: hidden; } .rs-row > span:last-child { text-align: right; } }
 .q-head-btns { display: flex; gap: 6px; flex-shrink: 0; }
 .q-head-btns .ni { width: 16px; height: 16px; opacity: .9; }
 .q-calc-l { margin-left: 6px; }
@@ -1309,7 +1302,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="nav-label" aria-hidden="true">Analyse</div>
       <button class="tab" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" data-tab="overview"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Overview</span></button>
       <button class="tab" role="tab" id="tab-analytics" aria-controls="panel-analytics" aria-selected="false" tabindex="-1" data-tab="analytics"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Analytics</span></button>
-      <button class="tab" role="tab" id="tab-psychology" aria-controls="panel-psychology" aria-selected="false" tabindex="-1" data-tab="psychology"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2.5-6 5 12 2.5-6h4"/></svg><span>Psychology</span></button>
       <button class="tab" role="tab" id="tab-calendar" aria-controls="panel-calendar" aria-selected="false" tabindex="-1" data-tab="calendar"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg><span>Calendar</span></button>
       <button class="tab" role="tab" id="tab-insights" aria-controls="panel-insights" aria-selected="false" tabindex="-1" data-tab="insights"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 18h5M10.5 21.5h3"/><path d="M12 2.5a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2V16h6v-.1c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5z"/></svg><span>Insights</span></button>
       <div class="nav-label" aria-hidden="true">Market</div>
@@ -1492,20 +1484,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
     </section>
 
-    <!-- =================== PSYCHOLOGY =================== -->
-    <section id="panel-psychology" role="tabpanel" aria-labelledby="tab-psychology" data-analytics hidden>
-      <div class="needs-data section">
-        <section class="card reveal" style="--d:2" aria-labelledby="psyTitle">
-          <div class="card-head">
-            <div>
-              <h3 id="psyTitle">Psychology &amp; discipline</h3>
-              <div class="sub">P&amp;L by emotion, plan adherence and costliest mistakes</div>
-            </div>
-          </div>
-          <div id="psych"></div>
-        </section>
-      </div>
-    </section>
 
     <!-- =================== CALENDAR =================== -->
     <section id="panel-calendar" role="tabpanel" aria-labelledby="tab-calendar" data-analytics hidden>
@@ -3145,7 +3123,6 @@ function renderDashboard() {
   renderPairs(list);
   renderSetups(list);
   renderSessions(list);
-  renderPsych(list);
   renderDirDow(list);
   renderCalendar(list);
   renderInsights(list, st);
@@ -3429,36 +3406,6 @@ function renderSessions(list) {
   nextFrame(() => $$(".prog", el).forEach(c => c.setAttribute("stroke-dashoffset", c.dataset.off)));
 }
 
-function renderPsych(list) {
-  const withEmo = list.filter(t => t.emotionBefore);
-  const g = group(withEmo, "emotionBefore").sort((a, b) => b.pnl - a.pnl);
-  const followed = list.filter(t => t.followedPlan !== false);
-  const broke = list.filter(t => t.followedPlan === false);
-  const fs = stats(followed), bs = stats(broke);
-  const adherence = list.length ? followed.length / list.length : 0;
-  const mistakes = {};
-  list.forEach(t => (t.mistakes || "").split(",").map(s => s.trim()).filter(Boolean).forEach(m => {
-    mistakes[m] = mistakes[m] || { n: 0, pnl: 0 };
-    mistakes[m].n++; mistakes[m].pnl += t.pnl;
-  }));
-  const topMistakes = Object.entries(mistakes).sort((a, b) => a[1].pnl - b[1].pnl).slice(0, 4);
-  const el = $("#psych");
-  el.innerHTML = `
-    <div class="mini-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:18px">
-      <div class="mini win"><h4>Plan followed</h4><div class="big ${tone(fs.total)}">${money(fs.total)}</div>
-        <div class="row"><span>${plural(fs.n, "trade")}</span><b class="${fs.winRate >= 0.5 ? "pos" : "neg"}">${pct(fs.winRate, 0)} WR</b></div></div>
-      <div class="mini loss"><h4>Plan broken</h4><div class="big ${tone(bs.total)}">${money(bs.total)}</div>
-        <div class="row"><span>${plural(bs.n, "trade")}</span><b class="${bs.winRate >= 0.5 ? "pos" : "neg"}">${bs.n ? pct(bs.winRate, 0) + " WR" : "—"}</b></div></div>
-      <div class="mini"><h4>Discipline</h4><div class="big hl">${pct(adherence, 0)}</div>
-        <div class="row"><span>Plan adherence</span></div></div>
-    </div>
-    <h4 style="margin:0 0 12px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">P&amp;L by emotion before entry</h4>
-    ${g.length ? `<div class="bars" role="list">${barRows(g, { sub: x => `${x.n} · ${pct(x.winRate, 0)} WR` })}</div>` : `<p class="none">Log emotions with your trades to see this breakdown.</p>`}
-    ${planTable(list)}
-    ${topMistakes.length ? `<h4 style="margin:20px 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Costliest mistakes</h4>
-      <ul class="stat-list">${topMistakes.map(([m, v]) => `<li><span>${esc(m)} <span class="muted">×${v.n}</span></span><span class="${tone(v.pnl)}">${money(v.pnl)}</span></li>`).join("")}</ul>` : ""}`;
-  animateBars(el);
-}
 
 // Per rule: how trades went when it was kept vs broken (trades logged with the checklist only).
 function ruleStats(list) {
@@ -3469,19 +3416,6 @@ function ruleStats(list) {
   }));
   return Object.values(by).map(b => ({ rule: b.rule, kept: stats(b.kept), broke: stats(b.broke) }))
     .sort((a, b) => (a.broke.n ? a.broke.total : 1e12) - (b.broke.n ? b.broke.total : 1e12) || b.broke.n - a.broke.n);
-}
-function planTable(list) {
-  const rows = ruleStats(list);
-  const h = `<h4 style="margin:20px 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:500">Your plan rules</h4>`;
-  if (!rows.length) return h + `<p class="none">Tick your plan rules when you log trades to see which ones matter most. Edit the rules in Settings › Lists.</p>`;
-  const wr = s => s.n ? pct(s.winRate, 0) : "—";
-  return h + `<div class="rule-stats" role="table" aria-label="Results by plan rule">
-    <div class="rs-row rs-head" role="row"><span role="columnheader">Rule</span><span role="columnheader">Kept</span><span role="columnheader">Broken</span><span role="columnheader">P&amp;L when broken</span></div>
-    ${rows.map(r => `<div class="rs-row" role="row"><span role="cell" class="rs-rule">${esc(r.rule)}</span>
-      <span role="cell"><b>${pct(r.kept.n / ((r.kept.n + r.broke.n) || 1), 0)}</b><small>${plural(r.kept.n, "trade")}${r.kept.n ? " · " + wr(r.kept) + " WR" : ""}</small></span>
-      <span role="cell"><b>${r.broke.n}</b><small>${r.broke.n ? wr(r.broke) + " WR" : "never"}</small></span>
-      <span role="cell" class="mono ${r.broke.n ? tone(r.broke.total) : ""}">${r.broke.n ? money(r.broke.total) : "—"}</span></div>`).join("")}
-  </div>`;
 }
 
 function renderCalendar(list) {
@@ -4626,11 +4560,11 @@ async function importFile(file) {
 /* ======================================================================
    Tabs
    ====================================================================== */
-const TABS = ["overview", "analytics", "psychology", "calendar", "insights", "news", "journal", "log", "accounts", "rewards", "settings"];
-const TAB_TITLES = { overview: "Performance overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", journal: "Trade log" };
+const TABS = ["overview", "analytics", "calendar", "insights", "news", "journal", "log", "accounts", "rewards", "settings"];
+const TAB_TITLES = { overview: "Performance overview", analytics: "Analytics", calendar: "Calendar", insights: "Insights", journal: "Trade log" };
 const isAnalytics = name => name in TAB_TITLES;
 // Browser tab titles, e.g. "Calendar - ELEV8".
-const TAB_NAMES = { overview: "Overview", analytics: "Analytics", psychology: "Psychology", calendar: "Calendar", insights: "Insights", news: "News", journal: "Trade Log", log: "Log Trade", accounts: "Accounts", rewards: "Rewards", settings: "Settings" };
+const TAB_NAMES = { overview: "Overview", analytics: "Analytics", calendar: "Calendar", insights: "Insights", news: "News", journal: "Trade Log", log: "Log Trade", accounts: "Accounts", rewards: "Rewards", settings: "Settings" };
 const currentTab = () => TABS.find(t => !F("panel-" + t).hidden);
 function showTab(name, { focus = false, push = true } = {}) {
   if (!TABS.includes(name)) name = "overview";
