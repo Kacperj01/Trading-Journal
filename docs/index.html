@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "f6efddf4f2";</script>
+<script>window.ELEV8_BUILD = "0d29f8f3db";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -163,18 +163,19 @@ body::before {
     radial-gradient(900px 700px at 0% 100%, var(--glow-3), transparent 60%),
     linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
 }
+/* Soft background glows. Drawn as wide, gently fading gradients rather than blurred circles:
+   same look, but a blur filter this size made scrolling and the sidebar animation stutter (worst in Safari). */
 .glow {
   position: absolute;
   z-index: -1;
-  width: 520px;
-  height: 520px;
-  border-radius: 50%;
-  filter: blur(90px);
+  width: 700px;
+  height: 700px;
+  margin: -90px 0 0 -90px;
   opacity: var(--glow-opacity);
   pointer-events: none;
 }
-.glow.blue { background: radial-gradient(circle, rgba(31, 111, 196, 0.6), transparent 70%); }
-.glow.green { background: radial-gradient(circle, rgba(37, 192, 192, 0.42), transparent 70%); }
+.glow.blue { background: radial-gradient(circle closest-side, rgba(31, 111, 196, 0.42), rgba(31, 111, 196, 0.2) 45%, rgba(31, 111, 196, 0.06) 75%, transparent); }
+.glow.green { background: radial-gradient(circle closest-side, rgba(37, 192, 192, 0.3), rgba(37, 192, 192, 0.14) 45%, rgba(37, 192, 192, 0.04) 75%, transparent); }
 
 .mono, .num { font-family: var(--font-mono); font-feature-settings: "tnum" 1; }
 .pos { color: var(--green); }
@@ -829,26 +830,31 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   main, footer { margin-left: 244px; }
   /* Collapsible sidebar: a slim icon rail; the round button on its edge toggles it. */
   /* The sidebar is opaque on desktop, so it needs no blur (blur makes the collapse animation stutter). */
-  header.top { backdrop-filter: none; -webkit-backdrop-filter: none; transition: width .24s cubic-bezier(.2, .8, .2, 1); will-change: width; }
-  #exportJournalTop { width: 176px; transition: width .24s cubic-bezier(.2, .8, .2, 1); }
-  /* Small arrow beside Export journal; flips to point right when collapsed. */
-  .side-toggle { display: flex; position: fixed; left: 196px; bottom: 20px; z-index: 45; width: 34px; height: 32px; padding: 0; border: 0; border-radius: 8px;
-    background: transparent; color: var(--muted); align-items: center; justify-content: center; cursor: pointer; transition: left .24s cubic-bezier(.2, .8, .2, 1), bottom .24s cubic-bezier(.2, .8, .2, 1), color .15s, background .15s; }
+  /* Collapsing never animates layout: the sidebar snaps to its new width while its background panel
+     (::before) and the page slide into place with transforms, so the motion runs on the GPU. */
+  header.top { backdrop-filter: none; -webkit-backdrop-filter: none; background: transparent; border-right: 0; }
+  header.top::before { content: ""; position: fixed; top: 0; left: 0; bottom: 0; width: 244px; z-index: -1; background: var(--sidebar-bg);
+    border-right: 1px solid var(--border); transition: transform .26s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
+  .side-collapsed header.top::before { transform: translateX(-172px); }
+  @keyframes sideFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .side-anim .tabs .tab > span, .side-anim .side-link > span, .side-anim .brand h1, .side-anim .brand .sync, .side-anim #exportJournalTop { animation: sideFadeIn .22s ease .08s both; }
+  /* Small arrow at the top, beside the sync status; flips to point right when collapsed. */
+  .side-toggle { grid-area: toggle; display: flex; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px;
+    background: transparent; color: var(--muted); align-items: center; justify-content: center; cursor: pointer; transition: color .15s, background .15s; }
   .side-toggle:hover { color: var(--text); background: var(--surface-hover); }
   .side-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .side-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .24s cubic-bezier(.2, .8, .2, 1); }
   .side-collapsed header.top { width: 72px; overflow-x: hidden; }
   .side-collapsed main, .side-collapsed footer { margin-left: 72px; }
-  .side-collapsed .side-toggle { left: 19px; bottom: 60px; }
   .side-collapsed .side-toggle svg { transform: rotate(180deg); }
   .side-collapsed header.top .container { padding: 0 10px; }
   .side-collapsed .top-inner { padding: 0 0 14px; align-items: center; }
-  .side-collapsed .brand { grid-template-columns: 1fr; justify-items: center; row-gap: 12px; }
-  .side-collapsed .brand h1 { display: none; }
-  .side-collapsed .brand-logo { height: auto; width: 42px; max-width: 100%; justify-self: center; }
-  .side-collapsed .brand { width: 52px; margin: 0 auto; }
-  .side-collapsed .brand .sync { width: 26px; height: 26px; padding: 0; font-size: 0; display: flex; align-items: center; justify-content: center; }
-  .side-collapsed .brand .sync::before { margin: 0; }
+  html.side-collapsed .brand { grid-template-columns: 1fr; grid-template-areas: "logo" "sync" "toggle"; justify-items: center; row-gap: 10px; }
+  html.side-collapsed .brand h1 { display: none; }
+  html.side-collapsed .brand-logo { height: auto; width: 42px; max-width: 100%; justify-self: center; }
+  html.side-collapsed .brand { width: 52px; margin: 0 auto; }
+  html.side-collapsed .brand .sync { width: 26px; height: 26px; padding: 0; font-size: 0; display: flex; align-items: center; justify-content: center; }
+  html.side-collapsed .brand .sync::before { margin: 0; }
   .side-collapsed .nav-label { font-size: 0; height: 1px; padding: 0; margin: 12px 8px; background: var(--border); opacity: 1; }
   .side-collapsed .tablist > .nav-label:first-child { display: none; }
   .side-collapsed .tablist { padding-top: 8px; }
@@ -856,11 +862,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .side-collapsed .tabs .tab > span, .side-collapsed .side-link > span { display: none; }
   .side-collapsed .side-actions { margin-top: 12px; }
   .side-collapsed #exportJournalTop { width: 48px; left: 12px; padding: 8px 0; font-size: 0; gap: 0; }
-  .side-collapsed header.top { padding-bottom: 110px; }
   .side-collapsed #exportJournalTop .ni { width: 17px; height: 17px; }
 }
 @media (max-width: 1040px) { .side-toggle { display: none; } }
-@media (min-width: 1041px) and (prefers-reduced-motion: reduce) { header.top, #exportJournalTop, .side-toggle, .side-toggle svg { transition: none; } }
+@media (min-width: 1041px) and (prefers-reduced-motion: reduce) { header.top::before, .side-toggle, .side-toggle svg { transition: none; } .side-anim * { animation: none !important; } }
 @media (max-width: 1040px) {
   .menu-btn { display: inline-flex; margin-left: auto; font-size: 20px; padding: 6px 12px; }
   #exportJournalTop { display: none; }
@@ -887,12 +892,16 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 @media (min-width: 1041px) {
   main .container { max-width: 1560px; padding: 0 36px; }
   /* Sidebar header: logo beside the wordmark, sync status on its own row below. */
-  .brand { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 14px; width: 100%; margin: 0; }
+  .brand { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "logo name name" "sync sync toggle"; align-items: center; column-gap: 12px; row-gap: 14px; width: 100%; margin: 0; }
+  .brand-logo { grid-area: logo; }
+  .brand h1 { grid-area: name; }
+  .brand p { grid-area: sync; }
+  .brand .side-toggle { grid-area: toggle; margin-left: -4px; }
   .brand > div { display: contents; }
   .brand-logo { height: 46px; }
   .brand .wordmark { font-size: 22px; }
   .brand .sub-title { letter-spacing: 2px; white-space: nowrap; font-size: 10px; }
-  .brand p { grid-column: 1 / -1; margin: 0; min-width: 0; }
+  .brand p { margin: 0; min-width: 0; }
   .brand .sync { display: block; max-width: 100%; padding: 7px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border);
     font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .brand .sync::before { display: inline-block; margin-right: 7px; vertical-align: 1px; }
@@ -1029,9 +1038,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <h1><span class="wordmark">ELEV8</span><span class="sub-title">Trading Journal</span></h1>
         <p><span id="syncChip" class="sync" title="Where your trades are saved">Loading…</span></p>
       </div>
+      <button class="side-toggle" type="button" id="sideToggle" aria-controls="mainNav" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar ( [ )"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
     </div>
     <button class="btn sm" type="button" id="exportJournalTop" title="Save a copy of your journal, with all your trades, as a file"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11.5M7 10l5 5 5-5M4.5 20.5h15"/></svg>Export journal</button>
-    <button class="side-toggle" type="button" id="sideToggle" aria-controls="mainNav" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar ( [ )"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
     <button class="btn ghost menu-btn" type="button" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav">☰</button>
   </div>
   <div class="container">
@@ -3449,12 +3458,18 @@ function setSideCollapsed(on, save) {
   const moving = save && window.innerWidth > 1040 && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)
     ? [document.querySelector("main"), document.querySelector("footer")].filter(Boolean) : [];
   const before = moving.map(el => el.getBoundingClientRect().left);
-  document.documentElement.classList.toggle("side-collapsed", on);
+  const root = document.documentElement;
+  root.classList.toggle("side-collapsed", on);
   // The page lays out once at its new width, then slides from where it was (transform only, so it stays smooth).
-  moving.forEach((el, i) => {
-    const dx = before[i] - el.getBoundingClientRect().left;
-    if (dx && el.animate) el.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2, .8, .2, 1)" });
-  });
+  if (moving.length) {
+    root.classList.add("side-anim");
+    clearTimeout(setSideCollapsed.t);
+    setSideCollapsed.t = setTimeout(() => root.classList.remove("side-anim"), 360);
+    moving.forEach((el, i) => {
+      const dx = before[i] - el.getBoundingClientRect().left;
+      if (dx && el.animate) el.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(.2, .8, .2, 1)" });
+    });
+  }
   const b = F("sideToggle");
   b.setAttribute("aria-expanded", String(!on));
   b.setAttribute("aria-label", on ? "Expand sidebar" : "Collapse sidebar");
