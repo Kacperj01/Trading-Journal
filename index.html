@@ -1550,12 +1550,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <div class="set-head"><h3>Profile</h3><p>Who you are and how this journal syncs between your devices.</p></div>
         <div class="settings-grid">
           <section class="card accent-blue" aria-labelledby="profTitle" id="profileCard" hidden>
-            <div class="card-head"><div><h3 id="profTitle">Your details</h3><div class="sub">Used for your welcome message</div></div></div>
+            <div class="card-head"><div><h3 id="profTitle">Your details</h3><div class="sub">Your name, birthday and sign-in email</div></div></div>
             <form id="profileForm" class="stack" novalidate>
               <div class="fields fields-pair" style="margin:0">
                 <div class="field"><label for="profName">Full name</label><input type="text" id="profName" autocomplete="name" autocapitalize="words"></div>
-                <div class="field"><label for="profAge">Age</label><input type="number" id="profAge" inputmode="numeric" min="13" max="120" step="1"></div>
+                <div class="field"><label for="profDob">Date of birth</label><input type="date" id="profDob" autocomplete="bday"></div>
               </div>
+              <div class="field"><label for="profEmail">Email</label><input type="email" id="profEmail" autocomplete="email" inputmode="email" autocapitalize="off" aria-describedby="profEmailHint"><span class="hint" id="profEmailHint">Changing it sends a confirmation link to the new address</span></div>
               <div><button class="btn primary" type="submit">Save details</button></div>
             </form>
           </section>
@@ -1700,7 +1701,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <form id="homeForm" class="card home-card" novalidate>
       <h1 id="homeTitle">Sign in to ELEV8</h1>
       <div class="field signup-only" hidden><label for="dlgName">Full name</label><input type="text" id="dlgName" autocomplete="name" autocapitalize="words"></div>
-      <div class="field signup-only" hidden><label for="dlgAge">Age</label><input type="number" id="dlgAge" inputmode="numeric" min="13" max="120" step="1"></div>
+      <div class="field signup-only" hidden><label for="dlgDob">Date of birth</label><input type="date" id="dlgDob" autocomplete="bday"></div>
       <div class="field"><label for="dlgEmail">Email</label><input type="email" id="dlgEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
       <div class="field"><label for="dlgPassword">Password</label><input type="password" id="dlgPassword" autocomplete="current-password" minlength="6" required></div>
       <p id="dlgMsg" role="status" aria-live="polite"></p>
@@ -1969,7 +1970,7 @@ function sbSaveSession(s) {
     s.expires_at = s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
     const meta = s.user.user_metadata || {};
     sb.session = { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at,
-      user: { id: s.user.id, email: s.user.email, name: meta.full_name || "", age: meta.age || null } };
+      user: { id: s.user.id, email: s.user.email, name: meta.full_name || "", dob: meta.dob || "", age: meta.age || null } };
     sb.lastEmail = s.user.email;
     store.set("tj.sb.email.v1", s.user.email);
   } else { sb.session = null; sb.synced = false; }
@@ -2086,9 +2087,11 @@ function sbRender() {
   F("profileCard").hidden = !on;
   F("syncSignedOut").hidden = on;
   F("syncSignedIn").hidden = !on;
-  if (on && document.activeElement !== F("profName") && document.activeElement !== F("profAge")) {
+  if (on && !F("profileForm").contains(document.activeElement)) {
     F("profName").value = sb.session.user.name || "";
-    F("profAge").value = sb.session.user.age || "";
+    F("profDob").value = sb.session.user.dob || "";
+    F("profEmail").value = sb.session.user.email || "";
+    F("profEmailHint").textContent = sb.pendingEmail ? `Waiting for you to confirm ${sb.pendingEmail}` : "Changing it sends a confirmation link to the new address";
   }
   if (on) {
     F("syncWho").textContent = sb.session.user.email;
@@ -2149,17 +2152,43 @@ function hideHome() {
   showTab("overview");
 }
 
+// Age in whole years from a YYYY-MM-DD date of birth (null if missing or invalid).
+function ageFromDob(dob) {
+  const d = parseIso(dob || ""), now = new Date();
+  if (!dob || isNaN(d)) return null;
+  let age = now.getFullYear() - d.getFullYear();
+  if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--;
+  return age;
+}
+function dobProblem(dob) {
+  const age = ageFromDob(dob);
+  if (age == null) return "Enter your date of birth.";
+  if (age < 13) return "You need to be 13 or over to use ELEV8.";
+  if (age > 120) return "Check your date of birth.";
+  return "";
+}
 async function saveProfile() {
-  const name = F("profName").value.trim().replace(/\s+/g, " "), ageRaw = F("profAge").value, age = ageRaw === "" ? null : Number(ageRaw);
+  const name = F("profName").value.trim().replace(/\s+/g, " "), dob = F("profDob").value, email = F("profEmail").value.trim().toLowerCase();
   if (!name) return toast("Enter your full name");
-  if (age != null && (!Number.isInteger(age) || age < 13 || age > 120)) return toast("Enter your age as a whole number (13 or over)");
+  if (dob && dobProblem(dob)) return toast(dobProblem(dob));
+  const emailChanged = email && email !== String(sb.session.user.email || "").toLowerCase();
+  if (emailChanged && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast("Enter a valid email address");
   try {
-    const res = await fetch(SB.url + "/auth/v1/user", { method: "PUT", headers: { apikey: SB.key, Authorization: "Bearer " + await sbToken(), "Content-Type": "application/json" }, body: JSON.stringify({ data: { full_name: name, age } }) });
+    const data = { full_name: name, dob: dob || null, age: ageFromDob(dob) };
+    const body = emailChanged ? { email, data } : { data };
+    const back = encodeURIComponent(location.origin + location.pathname);
+    const res = await fetch(SB.url + "/auth/v1/user?redirect_to=" + back, { method: "PUT", headers: { apikey: SB.key, Authorization: "Bearer " + await sbToken(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const user = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(user.msg || user.message || "Couldn't save your profile");
-    sb.session.user.name = name; sb.session.user.age = age;
+    if (!res.ok) throw new Error(user.msg || user.message || user.error_description || "Couldn't save your profile");
+    sb.session.user.name = name; sb.session.user.dob = dob; sb.session.user.age = data.age;
+    // The sign-in email only changes once the link sent to the new address is opened.
+    if (user.email && user.email !== sb.session.user.email) { sb.session.user.email = user.email; sb.lastEmail = user.email; store.set("tj.sb.email.v1", user.email); }
+    sb.pendingEmail = emailChanged && user.email !== email ? email : "";
     store.set(KEY_SB_SESSION, sb.session);
-    toast(`Profile saved. Hi, ${firstName()}!`);
+    sbRender();
+    F("profEmail").value = sb.session.user.email || "";
+    F("profEmailHint").textContent = sb.pendingEmail ? `Waiting for you to confirm ${sb.pendingEmail}` : "Changing it sends a confirmation link to the new address";
+    toast(emailChanged && sb.pendingEmail ? `Saved. Check ${email} for a link to confirm your new email.` : `Profile saved. Hi, ${firstName()}!`);
     if (currentTab() === "overview") F("pageTitle").textContent = `Welcome back, ${firstName()}`;
   } catch (e) {
     toast(e instanceof TypeError ? "Couldn't reach the sync service. Try again when you're online." : e.message);
@@ -2185,10 +2214,10 @@ async function sbSignIn(signUp, from = "card") {
   const msg = F(ids[2]);
   let profile = null;
   if (signUp && from === "dialog") {
-    const name = F("dlgName").value.trim().replace(/\s+/g, " "), age = Number(F("dlgAge").value);
+    const name = F("dlgName").value.trim().replace(/\s+/g, " "), dob = F("dlgDob").value;
     if (!name) { msg.textContent = "Enter your full name."; F("dlgName").focus(); return; }
-    if (!Number.isInteger(age) || age < 13 || age > 120) { msg.textContent = "Enter your age as a whole number (13 or over)."; F("dlgAge").focus(); return; }
-    profile = { full_name: name, age };
+    if (dobProblem(dob)) { msg.textContent = dobProblem(dob); F("dlgDob").focus(); return; }
+    profile = { full_name: name, dob, age: ageFromDob(dob) };
   }
   if (!email || password.length < 6) { msg.textContent = "Enter your email and a password of at least 6 characters."; return; }
   msg.textContent = signUp ? "Creating your account…" : "Signing in…";
@@ -4892,6 +4921,7 @@ window.addEventListener("scroll", () => {
   clearTimeout(scrollTimer);
   scrollTimer = setTimeout(() => { ui.scrollY = Math.round(window.scrollY); saveUi(); }, 250);
 }, { passive: true });
+["dlgDob", "profDob"].forEach(id => { F(id).max = isoDate(new Date()); F(id).min = "1900-01-01"; });
 connectCloud();
 sbStart();
 if (SB) {
