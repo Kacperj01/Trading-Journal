@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "8b96bfcb90";</script>
+<script>window.ELEV8_BUILD = "8058084dcf";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -864,7 +864,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   html.side-collapsed .brand-logo { height: auto; width: 42px; max-width: 100%; justify-self: center; }
   html.side-collapsed .brand { width: 52px; margin: 0 auto; }
   html.side-collapsed .brand .sync { width: 26px; height: 26px; padding: 0; font-size: 0; display: flex; align-items: center; justify-content: center; }
-  html.side-collapsed .brand .sync::before { margin: 0; }
+  html.side-collapsed .brand .sync::before { margin: 0; width: 8px; height: 8px; }
+  html.side-collapsed .brand .sync { gap: 0; } /* the hidden status text left a gap that pushed the dot off-centre */
   .side-collapsed .nav-label { font-size: 0; height: 1px; padding: 0; margin: 12px 8px; background: var(--border); opacity: 1; }
   .side-collapsed .tablist > .nav-label:first-child { display: none; }
   html.side-collapsed .tablist .nav-bottom { margin: auto 8px 8px; padding: 18px 0 0; height: auto; background: none; }
