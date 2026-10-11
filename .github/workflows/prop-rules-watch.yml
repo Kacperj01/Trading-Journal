@@ -1,0 +1,36 @@
+name: Watch prop firm rules
+
+# Once a day, checks the FTMO, Funding Pips and Alpha Capital rules pages the journal's
+# prop rules come from. When one changes, it opens (or comments on) a "prop-rules" issue
+# so the numbers can be reviewed. It never changes the rules by itself.
+on:
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: prop-rules-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check rules pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 site/watch_prop_rules.py
+      - name: Save page fingerprints
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/prop-rules-hashes.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Update prop rules page fingerprints"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"

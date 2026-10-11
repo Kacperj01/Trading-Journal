@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "5c49906774";</script>
+<script>window.ELEV8_BUILD = "befabf5a7a";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -612,6 +612,40 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .week-strip { appearance: none; font: inherit; color: inherit; text-align: left; box-sizing: border-box; display: flex; width: 100%; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; cursor: pointer; padding: 14px 20px; }
 .week-strip:hover { background: var(--surface); }
 .news-strip { margin-top: 12px; }
+/* Prop firm tracking */
+.prop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; }
+.prop-card { display: grid; gap: 14px; }
+.prop-card .pc-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.prop-card .pc-head b { font-size: 16px; font-weight: 600; display: block; }
+.prop-card .pc-head small { color: var(--muted); font-size: 12.5px; }
+.pc-status { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; white-space: nowrap; background: var(--blue-soft); color: var(--blue); }
+.pc-status.ok { background: var(--green-soft); color: var(--green); }
+.pc-status.warn { background: var(--warn-soft); color: var(--warn); }
+.pc-status.bad { background: var(--red-soft); color: var(--red); }
+.meter { display: grid; gap: 6px; }
+.meter .m-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--text-2); }
+.meter .m-top b { font: 500 13px var(--font-mono); color: var(--text); }
+.meter .m-bar { height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.meter .m-bar i { display: block; height: 100%; border-radius: 999px; background: var(--brand-grad); max-width: 100%; }
+.meter.good .m-bar i { background: var(--green); }
+.meter.warn .m-bar i { background: var(--warn); }
+.meter.bad .m-bar i { background: var(--red); }
+.meter small { font-size: 12px; color: var(--muted); }
+.pc-facts { display: flex; flex-wrap: wrap; gap: 6px; }
+.pc-facts span { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: var(--tint); border: 1px solid var(--border); color: var(--text-2); }
+.pc-foot { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+.rules-dlg { width: min(620px, calc(100vw - 32px)); max-width: none; }
+.rules-dlg .dlg-body { max-height: min(80vh, 760px); overflow-y: auto; }
+.rule-phase { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 10px; }
+.rule-phase h4 { margin: 0 0 8px; font-size: 14px; }
+.rule-phase.current { box-shadow: inset 0 0 0 1px var(--active-ring); background: var(--active-bg); }
+.rule-row { display: flex; justify-content: space-between; gap: 14px; font-size: 13.5px; padding: 5px 0; border-top: 1px solid var(--border); }
+.rule-row:first-of-type { border-top: 0; }
+.rule-row span:first-child { color: var(--muted); flex-shrink: 0; }
+.rule-row span:last-child { text-align: right; }
+.rule-notes { margin: 12px 0 0; padding-left: 18px; font-size: 13px; color: var(--text-2); }
+.rule-src { margin-top: 12px; font-size: 12.5px; color: var(--muted); }
+.rule-src a { color: var(--accent); }
 .news-strip .ws-l .imp { align-self: center; }
 /* Economic calendar */
 .news-next { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 10px 0 18px; padding: 16px 20px; }
@@ -1050,6 +1084,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="needs-data">
         <!-- 1. KPIs -->
         <section class="kpis" id="kpis" aria-label="Key performance indicators"></section>
+
+        <section class="section reveal" style="--d:3" aria-labelledby="propTitle" id="propPanel" hidden>
+          <div class="section-head"><h3 id="propTitle">Prop firm accounts</h3><span class="muted" style="font-size:13px">Tracked against each firm's rules · closed trades</span></div>
+          <div class="prop-grid" id="propCards"></div>
+        </section>
 
         <!-- 2 + 3. Equity & Win/Loss -->
         <div class="grid grid-main section">
@@ -1640,9 +1679,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     </div>
     <div class="acct-grid">
       <div class="field prop-only"><label for="aFirm">Prop firm</label><input type="text" id="aFirm" list="firmList" autocomplete="off" placeholder="e.g. FTMO"></div>
+      <div class="field prop-only" id="aProgramWrap" hidden><label for="aProgram">Account type at the firm</label><select id="aProgram"></select></div>
       <div class="field prop-only"><label for="aPhase">Stage</label>
         <select id="aPhase"><option>Challenge</option><option>Verification</option><option>Funded</option></select>
       </div>
+      <div class="field prop-only"><label for="aStart">Stage started</label><input type="date" id="aStart"></div>
       <div class="field"><label for="aSize">Account size</label><input type="number" id="aSize" inputmode="decimal" min="0" step="any" placeholder="e.g. 10000"></div>
       <div class="field"><label for="aBroker">Broker<span class="prop-only"> (optional)</span></label><input type="text" id="aBroker" list="brokerList" autocomplete="off" placeholder="e.g. IC Markets"></div>
       <div class="field"><label for="aPlatform">Platform</label>
@@ -1659,6 +1700,16 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="btn primary" type="submit" id="aSubmit">Save account</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="rulesDlg" class="rules-dlg" aria-labelledby="rulesTitle">
+  <div class="dlg-body">
+    <div class="td-head">
+      <div><h3 id="rulesTitle"></h3><div class="sub" id="rulesSub"></div></div>
+      <button class="btn sm ghost" type="button" id="rulesClose" aria-label="Close">✕</button>
+    </div>
+    <div id="rulesBody"></div>
+  </div>
 </dialog>
 
 <dialog id="tradeDlg" class="trade-dlg" aria-labelledby="tdTitle">
@@ -1698,6 +1749,14 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     </div>
   </form>
 </dialog>
+
+<!-- Prop firm rules: hand-checked against each firm's official pages (links in "sources").
+     A daily GitHub Action (.github/workflows/prop-rules-watch.yml) opens an issue when one of
+     those pages changes, so the numbers here get reviewed. Percentages are of the initial balance
+     unless "of" says otherwise. -->
+<script type="application/json" id="propRules">
+{"checked":"2026-10-11","firms":[{"id":"ftmo","name":"FTMO","match":["ftmo"],"reset":"00:00 CE(S)T (Prague)","programs":[{"id":"ftmo-2step","name":"2-Step Challenge (Standard)","sizes":"$10K–$200K","split":"80%, up to 90% with scaling","phases":[{"name":"Challenge","target":10,"daily":{"pct":5,"of":"initial","note":"of initial balance, from the balance at midnight CE(S)T (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":4,"weekend":"Allowed during evaluation"},{"name":"Verification","target":5,"daily":{"pct":5,"of":"initial","note":"of initial balance, from the balance at midnight CE(S)T (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":4,"weekend":"Allowed during evaluation"},{"name":"FTMO Account","target":null,"daily":{"pct":5,"of":"initial","note":"of initial balance, from the balance at midnight CE(S)T (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"newsMins":2,"news":"No opening or closing trades 2 min before to 2 min after selected high-impact news on affected instruments","weekend":"Close positions before the weekend"}],"notes":["No time limit on either phase.","Leverage up to 1:100."],"sources":["https://ftmo.com/en/trading-objectives/","https://ftmo.com/en/2-step-challenge/","https://ftmo.com/en/faq/can-i-trade-news/","https://ftmo.com/en/faq/do-i-have-to-close-my-positions-overnight-or-before-the-weekend/"]},{"id":"ftmo-2step-swing","name":"2-Step Challenge (Swing)","sizes":"$10K–$200K","split":"80%, up to 90% with scaling","phases":[{"name":"Challenge","target":10,"daily":{"pct":5,"of":"initial","note":"of initial balance, from the balance at midnight CE(S)T (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":4,"weekend":"Allowed"},{"name":"Verification","target":5,"daily":{"pct":5,"of":"initial","note":"of initial balance, from the balance at midnight CE(S)T (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":4,"weekend":"Allowed"},{"name":"FTMO Account","target":null,"daily":{"pct":5,"of":"initial","note":"of initial balance, from the balance at midnight CE(S)T (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"news":"No news restriction on Swing","weekend":"Allowed"}],"notes":["Swing is chosen at purchase and can't be switched later.","Leverage up to 1:30."],"sources":["https://ftmo.com/en/trading-objectives/","https://ftmo.com/en/faq/ftmo-swing-account-type/"]},{"id":"ftmo-1step","name":"1-Step Challenge","sizes":"$10K–$200K","split":"90%","phases":[{"name":"Challenge","target":10,"daily":{"pct":3,"of":"initial","note":"of initial balance (open trades count)"},"max":{"pct":10,"type":"trailing","note":"trails the highest end-of-day balance (or initial balance if higher) by 10% of initial; only moves up"},"consistency":{"pct":50,"note":"Best day must be at most 50% of total positive days' profit (keep trading until it is; not a breach)"},"weekend":"Allowed during evaluation","unverified":["minimum trading days","time limit"]},{"name":"FTMO Account","target":null,"daily":{"pct":3,"of":"initial","note":"of initial balance (open trades count)"},"max":{"pct":10,"type":"trailing","note":"trailing; resets to 90% of initial when a reward is withdrawn"},"consistency":{"pct":50,"note":"Best day at most 50% of positive days' profit to qualify for a reward"},"newsMins":2,"news":"No opening or closing trades 2 min before to 2 min after selected high-impact news on affected instruments","weekend":"Close positions before the weekend"}],"notes":["The trailing limit updates once a day at midnight CE(S)T."],"sources":["https://ftmo.com/en/1-step-challenge/","https://ftmo.com/en/blog/introducing-the-1-step-ftmo-challenge/","https://ftmo.com/en/comparison-table/"]},{"id":"ftmo-instant","name":"Instant Account","sizes":"$5K–$100K","split":"90%","phases":[{"name":"FTMO Account","target":null,"other":["Limits couldn't be confirmed: enter them under Adjust for my account"],"unverified":["daily loss limit","maximum loss"]}],"notes":["No evaluation. Scaling plan isn't available."],"sources":["https://ftmo.com/en/how-it-works/"]}]},{"id":"fundingpips","name":"Funding Pips","match":["fundingpips"],"reset":"00:00 platform time (UTC+3)","programs":[{"id":"fp-1step","name":"1-Step Flex","sizes":"$5K–$100K","split":"80% bi-weekly or 100% monthly","phases":[{"name":"Phase 1","target":12,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":12,"type":"static","note":"static, of initial balance"},"minDays":0,"weekend":"Allowed","unverified":["daily loss % (pages say 2–4% depending on options)"]},{"name":"Master","target":null,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":12,"type":"static","note":"static, of initial balance"},"newsMins":5,"news":"Master only: no trades 5 min before to 5 min after high-impact news (positions opened 5h+ before are fine)","weekend":"Master: positions are closed before the weekend unless you bought the Swing add-on","other":["One trade idea over 60% of the target needs 4 profitable days per payout","30 days with no trades counts as a breach"],"unverified":["daily loss %"]}],"notes":["Targets must be reached with all trades closed."],"sources":["https://help.fundingpips.com/hc/en-us/articles/34501697434385-1-Step-Flex","https://help.fundingpips.com/hc/en-us/articles/34504137479441-News-Trading-Weekend-Holding"]},{"id":"fp-2step","name":"2-Step Standard","sizes":"$5K–$100K","split":"60% weekly up to 100% monthly","phases":[{"name":"Phase 1","target":8,"daily":{"pct":5,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Phase 2","target":5,"daily":{"pct":5,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"weekend":"Allowed","unverified":["minimum trading days"]},{"name":"Master","target":null,"daily":{"pct":5,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"newsMins":5,"news":"Master only: no trades 5 min before to 5 min after high-impact news (positions opened 5h+ before are fine)","weekend":"Master: positions are closed before the weekend unless you bought the Swing add-on","unverified":["max loss (one page says 12%)"]}],"notes":["A 3% daily loss add-on exists; if you bought it, set 3% under Adjust for my account.","Targets must be reached with all trades closed."],"sources":["https://help.fundingpips.com/hc/en-us/articles/34501809112081-2-Step-Standard","https://fundingpips.com/trading-objectives"]},{"id":"fp-2step-pro","name":"2-Step Pro","sizes":"$5K–$200K","split":"80% weekly or 100% monthly","phases":[{"name":"Phase 1","target":6,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"minDays":0,"weekend":"Allowed"},{"name":"Phase 2","target":6,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"minDays":0,"weekend":"Allowed"},{"name":"Master","target":null,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"newsMins":5,"news":"Master only: no trades 5 min before to 5 min after high-impact news (positions opened 5h+ before are fine)","weekend":"Master: positions are closed before the weekend unless you bought the Swing add-on"}],"notes":["Accounts bought before 26 Aug 2026 need 1 trading day per phase."],"sources":["https://help.fundingpips.com/hc/en-us/articles/34502027344017-2-Step-Pro-Model"]},{"id":"fp-2step-flex","name":"2-Step Flex","sizes":"$5K–$100K","split":"80% or 95% (chosen at purchase)","phases":[{"name":"Phase 1","target":10,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":12,"type":"static","note":"static, of initial balance"},"minDays":1,"weekend":"Allowed"},{"name":"Phase 2","target":8,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":12,"type":"static","note":"static, of initial balance"},"minDays":1,"weekend":"Allowed"},{"name":"Master","target":null,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":12,"type":"static","note":"static, of initial balance"},"newsMins":10,"news":"Master only: no trades 10 min before to 10 min after high-impact news","weekend":"Master: positions are closed before the weekend unless you bought the Swing add-on","other":["Max risk per trade idea: 3% at $25K, 2% above $25K"]}],"notes":["The 95% split needs 3 profitable days instead of 1 trading day."],"sources":["https://help.fundingpips.com/hc/en-us/articles/47835196271249-2-Step-Flex","https://help.fundingpips.com/hc/en-us/articles/48174287980177-Risk-Per-Trade-Idea"]},{"id":"fp-zero","name":"Zero (instant funding)","sizes":"$5K–$200K","split":"95% bi-weekly","phases":[{"name":"Master","target":null,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 platform time (open trades count)"},"max":{"pct":5,"type":"trailing","note":"trails the highest equity by 5%; locks at the initial balance","lockAt":"initial"},"consistency":{"pct":15,"note":"Best day at most 15% of total profit"},"newsMins":10,"news":"No opening, closing or holding trades 10 min around high-impact news","weekend":"Close all positions before Friday's close","other":["Max open risk 1% of starting size","Max risk per trade 3% below $50K, 2% from $50K","7 profitable days (0.25%+) per 30 days","First 3% of profit can't be withdrawn"]}],"notes":["The trailing drawdown uses equity, so open trades move it."],"sources":["https://help.fundingpips.com/hc/en-us/articles/34502157694865-FundingPips-Zero"]},{"id":"fp-prime","name":"Prime (invite only)","sizes":"Up to $2M with scaling","split":"80%","phases":[{"name":"Prime","target":null,"daily":{"pct":3,"of":"startOfDay","note":"soft limit: pauses trading for the day"},"max":{"pct":8,"type":"static","note":"static; recalculated on scale-up"},"other":["Scale-up of +10% at 5% profit"]}],"notes":[],"sources":["https://help.fundingpips.com/hc/en-us/articles/34447308895889-Prime-Account"]}]},{"id":"alpha","name":"Alpha Capital","match":["alphacapital"],"reset":"00:00 GMT+3","programs":[{"id":"ac-one-6","name":"Alpha One 6%","sizes":"$5K–$200K","split":"80% (90% with add-on)","phases":[{"name":"Phase 1","target":6,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":4,"type":"trailing","note":"trails the highest balance; locks at the initial balance","lockAt":"initial"},"minDays":1,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":4,"type":"trailing","note":"trails the highest balance; locks at the initial balance","lockAt":"initial"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Allowed"}],"notes":["No time limit; 30 days of inactivity ends the account."],"sources":["https://help.alphacapitalgroup.uk/en/articles/10097421-alpha-one","https://help.alphacapitalgroup.uk/en/articles/6934210-what-are-the-daily-risk-limits-and-how-do-they-work"]},{"id":"ac-one-10","name":"Alpha One 10%","sizes":"$5K–$200K","split":"80% (90% with add-on)","phases":[{"name":"Phase 1","target":10,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"trailing","note":"trails the highest balance; locks at the initial balance","lockAt":"initial"},"minDays":1,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"trailing","note":"trails the highest balance; locks at the initial balance","lockAt":"initial"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Allowed","unverified":["Qualified daily loss"]}],"notes":["No time limit; 30 days of inactivity ends the account."],"sources":["https://help.alphacapitalgroup.uk/en/articles/10097421-alpha-one","https://help.alphacapitalgroup.uk/en/articles/6934210-what-are-the-daily-risk-limits-and-how-do-they-work"]},{"id":"ac-one-12","name":"Alpha One 12%","sizes":"$5K–$200K","split":"80% (90% with add-on)","phases":[{"name":"Phase 1","target":12,"daily":{"pct":5,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":8,"type":"trailing","note":"trails the highest balance; locks at the initial balance","lockAt":"initial"},"minDays":1,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":5,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":8,"type":"trailing","note":"trails the highest balance; locks at the initial balance","lockAt":"initial"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Allowed","unverified":["Qualified daily loss"]}],"notes":["No time limit; 30 days of inactivity ends the account."],"sources":["https://help.alphacapitalgroup.uk/en/articles/10097421-alpha-one","https://help.alphacapitalgroup.uk/en/articles/6934210-what-are-the-daily-risk-limits-and-how-do-they-work"]},{"id":"ac-pro-6","name":"Alpha Pro 6%","sizes":"$5K–$200K","split":"80% (90% with add-on)","phases":[{"name":"Phase 1","target":6,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Phase 2","target":6,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Not allowed (profit from those trades is removed)","unverified":["Qualified daily/max (assumed same as evaluation)"]}],"notes":["No time limit; 30 days of inactivity ends the account.","Qualified accounts: max open loss per asset 3% ($5K–25K) or 2% ($50K+)."],"sources":["https://help.alphacapitalgroup.uk/en/articles/11378706-alpha-pro-6","https://help.alphacapitalgroup.uk/en/articles/6934247-can-i-hold-trades-over-the-weekend","https://help.alphacapitalgroup.uk/en/articles/9293522-can-i-trade-news"]},{"id":"ac-pro-8","name":"Alpha Pro 8%","sizes":"$5K–$200K","split":"80% (90% with add-on)","phases":[{"name":"Phase 1","target":8,"daily":{"pct":4,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3 (open trades count)"},"max":{"pct":8,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Phase 2","target":5,"daily":{"pct":4,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3 (open trades count)"},"max":{"pct":8,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":4,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3 (open trades count)"},"max":{"pct":8,"type":"static","note":"static, of initial balance"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Not allowed (profit from those trades is removed)","unverified":["Qualified daily/max (assumed same as evaluation)"]}],"notes":["No time limit; 30 days of inactivity ends the account.","Qualified accounts: max open loss per asset 3% ($5K–25K) or 2% ($50K+)."],"sources":["https://help.alphacapitalgroup.uk/en/articles/8420429-alpha-pro-8-10","https://help.alphacapitalgroup.uk/en/articles/6934247-can-i-hold-trades-over-the-weekend","https://help.alphacapitalgroup.uk/en/articles/9293522-can-i-trade-news"]},{"id":"ac-pro-10","name":"Alpha Pro 10%","sizes":"$5K–$200K","split":"80% (90% with add-on)","phases":[{"name":"Phase 1","target":10,"daily":{"pct":5,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3 (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Phase 2","target":5,"daily":{"pct":5,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3 (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":5,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3 (open trades count)"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Not allowed (profit from those trades is removed)","unverified":["Qualified daily/max (assumed same as evaluation)"]}],"notes":["No time limit; 30 days of inactivity ends the account.","Qualified accounts: max open loss per asset 3% ($5K–25K) or 2% ($50K+)."],"sources":["https://help.alphacapitalgroup.uk/en/articles/8420429-alpha-pro-8-10","https://help.alphacapitalgroup.uk/en/articles/6934247-can-i-hold-trades-over-the-weekend","https://help.alphacapitalgroup.uk/en/articles/9293522-can-i-trade-news"]},{"id":"ac-swing","name":"Alpha Swing","sizes":"$5K–$200K","split":"80%","phases":[{"name":"Phase 1","target":10,"daily":{"pct":5,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Phase 2","target":5,"daily":{"pct":5,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":5,"of":"startOfDay","note":"of start-of-day balance at 00:00 GMT+3"},"max":{"pct":10,"type":"static","note":"static, of initial balance"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":2,"news":"About 2 min either side of high-impact news; trades must last over 2 min","weekend":"Allowed","unverified":["Qualified daily/max","news window"]}],"notes":["Lot size is capped by account size (e.g. 5 lots on $25K)."],"sources":["https://help.alphacapitalgroup.uk/en/articles/9789907-alpha-swing"]},{"id":"ac-three","name":"Alpha Three","sizes":"$5K–$200K","split":"80%","phases":[{"name":"Phase 1","target":8,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Phase 2","target":4,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Phase 3","target":4,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"minDays":3,"weekend":"Allowed"},{"name":"Qualified","target":null,"daily":{"pct":4,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":6,"type":"static","note":"static, of initial balance"},"consistency":{"pct":40,"note":"For payouts, no single day over 40% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Allowed"}],"notes":["May no longer be on sale; existing accounts keep these rules."],"sources":["https://help.alphacapitalgroup.uk/en/articles/10192958-alpha-three"]},{"id":"ac-direct","name":"Alpha Direct (instant)","sizes":"$2.5K–$200K","split":"90%","phases":[{"name":"Qualified","target":null,"daily":{"pct":3,"of":"startOfDay","note":"of the higher of balance or equity at 00:00 GMT+3 (open trades count)"},"max":{"pct":5,"type":"trailing","note":"trails the highest balance; locks at the initial balance","lockAt":"initial"},"consistency":{"pct":15,"note":"No single day over 15% of total profit"},"newsMins":5,"news":"Qualified only: no opening or closing 5 min before to 5 min after high-impact news on affected instruments","weekend":"Not allowed","other":["Max open loss per asset 1%","3% profit buffer before the first payout","EAs disabled"]}],"notes":[],"sources":["https://help.alphacapitalgroup.uk/en/articles/16003693-alpha-direct"]}]}]}
+</script>
 
 <script id="app">
 (() => {
@@ -2426,6 +2485,7 @@ function renderDashboard() {
   const startBal = balanceBefore(list);
 
   renderKpis(st, startBal);
+  renderProp();
   renderEquity(list, startBal, st);
   renderWinLoss(st);
   renderPairs(list);
@@ -3846,6 +3906,7 @@ F("tradeForm").addEventListener("submit", e => {
   const editing = trades.some(x => x.id === t.id);
   if (!commitTrade(t)) return;
   toast(editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
+  propWarn(t);
   resetForm(true);
   if (editing) showTab("journal");
   else F("tPair").focus();
@@ -3903,6 +3964,7 @@ F("quickForm").addEventListener("submit", e => {
   if (bad.length) { F("qMsg").textContent = "Add the " + bad.map(m => m[2]).join(", ") + "."; F(bad[0][0]).focus(); return; }
   if (!commitTrade(t)) return;
   toast(`Trade saved: ${t.pair} ${money(t.pnl)}`);
+  propWarn(t);
   resetQuick();
   renderDashboard();
   F("qPair").focus();
@@ -3972,7 +4034,7 @@ function renderAccounts() {
     return `<li class="acct-item">
       <span class="acct-badge ${cls}">${esc(a.type)}</span>
       <div class="acct-main"><b>${esc(acctLabel(a))}</b><span>${esc(meta)}</span><span>${plural(n, "trade")}</span></div>
-      <div class="acct-btns"><button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
+      <div class="acct-btns">${programOf(a) ? `<button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button>` : ""}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>
     </li>`;
   }).join("") : `<li class="acct-empty">No trading accounts yet. Add the live, demo or prop firm account you trade.</li>`;
   const loose = list.length ? unassignedTrades() : [];
@@ -3995,6 +4057,23 @@ function linkTrades(list, accountId) {
 }
 
 let acctFirst = false;
+// Known firms: choose the programme, and the stage list follows that programme's phases.
+function syncProgramFields(program, phase) {
+  const firm = findFirm(F("aFirm").value);
+  F("aProgramWrap").hidden = !firm;
+  let phases = ["Challenge", "Verification", "Funded"];
+  if (firm) {
+    const cur = program || F("aProgram").value;
+    F("aProgram").innerHTML = firm.programs.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+    F("aProgram").value = firm.programs.some(p => p.id === cur) ? cur : firm.programs[0].id;
+    phases = firm.programs.find(p => p.id === F("aProgram").value).phases.map(ph => ph.name);
+  }
+  const keep = phase || F("aPhase").value;
+  F("aPhase").innerHTML = phases.map(n => `<option>${esc(n)}</option>`).join("");
+  F("aPhase").value = phases.includes(keep) ? keep : phases[0];
+}
+F("aFirm").addEventListener("input", () => syncProgramFields());
+F("aProgram").addEventListener("change", () => syncProgramFields(F("aProgram").value));
 function setAcctType(type) {
   $$("input[name=aType]").forEach(r => r.checked = r.value === type);
   F("acctDlg").classList.toggle("is-prop", type === "Prop firm");
@@ -4006,10 +4085,12 @@ function openAccountDlg(a, first) {
   F("acctDlgForm").reset();
   F("aId").value = a ? a.id : "";
   setAcctType(a ? a.type : "Live");
+  if (!a) F("aStart").value = isoDate(new Date());
   if (a) {
     F("aSize").value = a.size ?? ""; F("aBroker").value = a.broker || ""; F("aFirm").value = a.firm || "";
-    F("aPhase").value = a.phase || "Challenge"; F("aPlatform").value = a.platform || ""; F("aName").value = a.name || "";
+    F("aPlatform").value = a.platform || ""; F("aName").value = a.name || ""; F("aStart").value = a.startDate || "";
   }
+  syncProgramFields(a ? a.program : "", a ? a.phase : "");
   F("acctDlgTitle").textContent = first ? "Register your trading account" : a ? "Edit account" : "Add a trading account";
   F("acctDlgIntro").textContent = first
     ? "Tell us which account you trade so your balance and stats match it. You can add more accounts later in Settings."
@@ -4043,7 +4124,8 @@ F("acctDlgForm").addEventListener("submit", e => {
   const bad = checks.filter(c => c[1]);
   if (bad.length) { F("aMsg").textContent = "Add the " + bad.map(c => c[2]).join(", ") + "."; F(bad[0][0]).focus(); return; }
   const id = F("aId").value || uid();
-  const acct = { id, type, size, broker, firm: prop ? firm : "", phase: prop ? F("aPhase").value : "", platform: F("aPlatform").value, name: F("aName").value.trim() };
+  const acct = { id, type, size, broker, firm: prop ? firm : "", phase: prop ? F("aPhase").value : "", platform: F("aPlatform").value, name: F("aName").value.trim(),
+    program: prop && !F("aProgramWrap").hidden ? F("aProgram").value : "", startDate: prop ? F("aStart").value : "" };
   const list = accounts().slice(), i = list.findIndex(a => a.id === id);
   if (i >= 0) list[i] = acct; else list.push(acct);
   const loose = !F("aAssignWrap").hidden && F("aAssign").checked ? unassignedTrades() : [];
@@ -4093,6 +4175,183 @@ function maybeAskAccount() {
   if (SB && !inViewer() && !(sb.session && sb.synced)) return;
   if (persist.mode === "cloud" && !persist.settingsSeen) return;
   openAccountDlg(null, true);
+}
+
+/* ======================================================================
+   Prop firm rules: match an account to its firm and programme, then track
+   the rules against its closed trades.
+   ====================================================================== */
+const PROP = (() => { try { return JSON.parse(document.getElementById("propRules").textContent); } catch (e) { return { checked: "", firms: [] }; } })();
+function findFirm(name) {
+  const n = String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  return n ? PROP.firms.find(f => f.match.some(m => n.includes(m))) || null : null;
+}
+const programOf = a => { const f = a && a.type === "Prop firm" && findFirm(a.firm); return f ? f.programs.find(p => p.id === a.program) || null : null; };
+const phaseOf = a => { const p = programOf(a); return p ? p.phases.find(ph => ph.name === a.phase) || p.phases[0] : null; };
+// The account's own adjustments (from its firm dashboard) win over the published numbers.
+function rulesFor(a) {
+  const ph = phaseOf(a);
+  if (!ph) return null;
+  const o = a.rules || {};
+  const pick = (k, v) => o[k] != null && o[k] !== "" ? Number(o[k]) : v;
+  return {
+    target: pick("target", ph.target), minDays: pick("minDays", ph.minDays), days: ph.days ?? null,
+    daily: ph.daily ? Object.assign({}, ph.daily, { pct: pick("daily", ph.daily.pct) }) : (o.daily ? { pct: Number(o.daily), of: "initial" } : null),
+    max: ph.max ? Object.assign({}, ph.max, { pct: pick("max", ph.max.pct) }) : (o.max ? { pct: Number(o.max), type: "static" } : null),
+    consistency: ph.consistency || null, adjusted: Object.keys(o).some(k => o[k] != null && o[k] !== "")
+  };
+}
+
+function propStatus(a) {
+  const r = rulesFor(a), size = Number(a.size);
+  if (!r || !(size > 0)) return null;
+  const list = sortChrono(realTrades.filter(t => t.account === a.id && (!a.startDate || t.date >= a.startDate)));
+  const byDay = new Map();
+  list.forEach(t => byDay.set(t.date, (byDay.get(t.date) || 0) + (Number(t.pnl) || 0)));
+  const days = Array.from(byDay.keys()).sort();
+  let bal = size, peak = size, breach = null, worstDaily = 0;
+  const maxAllow = r.max ? r.max.pct / 100 * size : null;
+  const floorAt = pk => {
+    if (!r.max) return -Infinity;
+    if (r.max.type !== "trailing") return size - maxAllow;
+    const f = pk - maxAllow;
+    return r.max.lockAt === "initial" ? Math.min(f, size) : f;
+  };
+  for (const d of days) {
+    const start = bal, pnl = byDay.get(d);
+    bal += pnl;
+    if (r.daily) {
+      const lim = r.daily.pct / 100 * (r.daily.of === "startOfDay" ? start : size);
+      worstDaily = Math.max(worstDaily, -pnl / lim);
+      if (-pnl >= lim - 1e-9 && !breach) breach = { rule: "Daily loss limit", date: d };
+    }
+    if (bal <= floorAt(peak) + 1e-9 && !breach) breach = { rule: "Maximum loss", date: d };
+    peak = Math.max(peak, bal);
+  }
+  const today = isoDate(new Date()), todayPnl = byDay.get(today) || 0, sod = bal - todayPnl;
+  const dailyLimit = r.daily ? r.daily.pct / 100 * (r.daily.of === "startOfDay" ? sod : size) : null;
+  const floor = floorAt(peak);
+  const profit = bal - size, targetAmt = r.target ? r.target / 100 * size : null;
+  const positiveDays = days.map(d => byDay.get(d)).filter(v => v > 0);
+  const bestDay = positiveDays.length ? Math.max(...positiveDays) : 0;
+  const started = a.startDate || days[0] || today;
+  const elapsed = Math.floor((parseIso(today) - parseIso(started)) / 864e5) + 1;
+  const daysOk = !r.minDays || days.length >= r.minDays;
+  const hit = targetAmt != null && profit >= targetAmt;
+  return {
+    r, size, bal, profit, targetAmt, hit, breach, daysOk, tradingDays: days.length, elapsed,
+    todayPnl, dailyLimit, dailyUsed: Math.max(0, -todayPnl), floor, maxRoom: bal - floor, maxAllow,
+    bestDay, bestShare: r.consistency && profit > 0 ? bestDay / sum(positiveDays) : null
+  };
+}
+
+const pctOf = (a, b) => b ? Math.max(0, Math.min(1, a / b)) : 0;
+function meter(label, value, frac, cls, note) {
+  return `<div class="meter ${cls}"><div class="m-top"><span>${label}</span><b>${value}</b></div><div class="m-bar"><i style="width:${(frac * 100).toFixed(1)}%"></i></div>${note ? `<small>${note}</small>` : ""}</div>`;
+}
+const level = f => f >= .9 ? "bad" : f >= .6 ? "warn" : "";
+function propCard(a) {
+  const st = propStatus(a), prog = programOf(a), ph = phaseOf(a), firm = findFirm(a.firm);
+  const m = v => money(v, { signed: false, decimals: 0 });
+  let status = ["In progress", ""];
+  if (st.breach) status = ["Limit hit", "bad"];
+  else if (st.hit && st.daysOk) status = ["Target reached", "ok"];
+  else if (st.dailyLimit && st.dailyUsed / st.dailyLimit >= .6) status = ["Near daily limit", "warn"];
+  else if (!st.targetAmt) status = ["Funded", "ok"];
+  const parts = [];
+  if (st.targetAmt) parts.push(meter("Profit target", `${money(st.profit)} / ${m(st.targetAmt)}`, pctOf(st.profit, st.targetAmt), st.hit ? "good" : "",
+    st.hit ? (st.daysOk ? "Target reached" : `Target reached · ${plural(st.r.minDays - st.tradingDays, "more trading day")} needed`) : `${m(st.targetAmt - st.profit)} to go`));
+  if (st.dailyLimit) { const f = pctOf(st.dailyUsed, st.dailyLimit); parts.push(meter("Daily loss today", `${m(st.dailyUsed)} / ${m(st.dailyLimit)}`, f, level(f), `${m(Math.max(0, st.dailyLimit - st.dailyUsed))} left today · resets ${esc(firm.reset)}`)); }
+  if (st.maxAllow) { const f = pctOf(st.maxAllow - st.maxRoom, st.maxAllow); parts.push(meter(st.r.max.type === "trailing" ? "Max loss (trailing)" : "Max loss", `${m(Math.max(0, st.maxRoom))} left`, f, level(f), `Balance must stay above ${m(st.floor)}`)); }
+  const facts = [];
+  if (st.r.minDays) facts.push(`${Math.min(st.tradingDays, st.r.minDays)}/${st.r.minDays} trading days`);
+  if (st.r.days) facts.push(`Day ${st.elapsed} of ${st.r.days}`);
+  if (st.bestShare != null) facts.push(`Best day ${pct(st.bestShare, 0)} of profit (max ${st.r.consistency.pct}%)`);
+  if (ph.newsMins) facts.push(`No trades ±${ph.newsMins} min around red news`);
+  if (ph.weekend) facts.push(esc(ph.weekend));
+  return `<article class="card prop-card">
+    <div class="pc-head"><div><b>${esc(acctLabel(a))}</b><small>${esc(firm.name)} · ${esc(prog.name)} · ${esc(ph.name)}</small></div><span class="pc-status ${status[1]}">${status[0]}</span></div>
+    ${st.breach ? `<p class="td-news" style="margin:0"><span class="imp High" aria-hidden="true"></span>${esc(st.breach.rule)} reached on ${esc(fmtDate(st.breach.date))} (closed trades). Check your firm dashboard.</p>` : ""}
+    ${parts.join("")}
+    ${facts.length ? `<div class="pc-facts">${facts.map(f => `<span>${f}</span>`).join("")}</div>` : ""}
+    <div class="pc-foot"><span>${st.r.adjusted ? "Using your adjusted limits" : "Closed trades only; floating losses count too at most firms"}</span><button class="btn sm ghost" type="button" data-rules="${esc(a.id)}">Rules</button></div>
+  </article>`;
+}
+function renderProp() {
+  const list = accounts().filter(a => propStatus(a));
+  F("propPanel").hidden = !list.length;
+  if (list.length) F("propCards").innerHTML = list.map(propCard).join("");
+}
+
+function openRules(a) {
+  const prog = programOf(a), firm = findFirm(a.firm), cur = phaseOf(a);
+  if (!prog) return;
+  const pc = v => v == null ? "—" : v + "%";
+  const row = (k, v) => v == null || v === "" ? "" : `<div class="rule-row"><span>${k}</span><span>${v}</span></div>`;
+  const uv = ph => (ph.unverified || []).length ? ` <span class="pc-status warn" title="Couldn't confirm on the firm's own page">Unverified: ${esc(ph.unverified.join(", "))}</span>` : "";
+  F("rulesTitle").textContent = `${firm.name} · ${prog.name}`;
+  F("rulesSub").textContent = [prog.sizes, prog.split ? "Profit split " + prog.split : ""].filter(Boolean).join(" · ");
+  const o = a.rules || {}, r = rulesFor(a);
+  F("rulesBody").innerHTML = prog.phases.map(ph => `
+    <div class="rule-phase${ph === cur ? " current" : ""}">
+      <h4>${esc(ph.name)}${ph === cur ? " · your stage" : ""}${uv(ph)}</h4>
+      ${row("Profit target", ph.target ? pc(ph.target) : "None")}
+      ${row("Daily loss limit", ph.daily ? `${pc(ph.daily.pct)} ${esc(ph.daily.note || "")}` : null)}
+      ${row("Maximum loss", ph.max ? `${pc(ph.max.pct)} ${esc(ph.max.note || ph.max.type)}` : null)}
+      ${row("Minimum trading days", ph.minDays != null ? String(ph.minDays) : null)}
+      ${row("Time limit", ph.days ? ph.days + " days" : "None")}
+      ${row("Consistency", ph.consistency ? esc(ph.consistency.note) : null)}
+      ${row("News", ph.news ? esc(ph.news) : null)}
+      ${row("Weekend / overnight", ph.weekend ? esc(ph.weekend) : null)}
+      ${(ph.other || []).map(x => row("Also", esc(x))).join("")}
+    </div>`).join("")
+    + (prog.notes && prog.notes.length ? `<ul class="rule-notes">${prog.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : "")
+    + `<form class="rule-phase" id="rulesAdjust" data-id="${esc(a.id)}">
+        <h4>Adjust for my account</h4>
+        <p class="muted" style="margin:0 0 10px;font-size:12.5px">If your firm dashboard shows different numbers, enter them here. They're used for this account only.</p>
+        <div class="fields fields-pair" style="margin:0">
+          <div class="field"><label for="rjTarget">Profit target %</label><input type="number" step="any" id="rjTarget" inputmode="decimal" placeholder="${r.target ?? ""}" value="${esc(o.target ?? "")}"></div>
+          <div class="field"><label for="rjDaily">Daily loss %</label><input type="number" step="any" id="rjDaily" inputmode="decimal" placeholder="${r.daily ? r.daily.pct : ""}" value="${esc(o.daily ?? "")}"></div>
+          <div class="field"><label for="rjMax">Max loss %</label><input type="number" step="any" id="rjMax" inputmode="decimal" placeholder="${r.max ? r.max.pct : ""}" value="${esc(o.max ?? "")}"></div>
+          <div class="field"><label for="rjDays">Min trading days</label><input type="number" step="1" id="rjDays" inputmode="numeric" placeholder="${r.minDays ?? ""}" value="${esc(o.minDays ?? "")}"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm primary" type="submit">Save</button><button class="btn sm ghost" type="button" id="rjReset">Use published rules</button></div>
+      </form>`
+    + `<p class="rule-src">Checked ${esc(fmtDate(PROP.checked))} against the firm's pages. Firms change rules; your dashboard is the final word.<br>${(prog.sources || []).map(u => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u.replace(/^https?:\/\//, "").replace(/\/$/, ""))}</a>`).join("<br>")}</p>`;
+  const dlg = F("rulesDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+}
+function saveAdjust(id, values) {
+  const list = accounts().slice(), i = list.findIndex(x => x.id === id);
+  if (i < 0) return;
+  list[i] = Object.assign({}, list[i], { rules: values });
+  settings.accounts = list;
+  saveSettings();
+  F("rulesDlg").close();
+  toast(Object.keys(values).length ? "Limits adjusted for this account" : "Using the published rules");
+  refreshAll(); renderProp();
+}
+F("rulesBody").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = {};
+  [["target", "rjTarget"], ["daily", "rjDaily"], ["max", "rjMax"], ["minDays", "rjDays"]].forEach(([k, id]) => { const n = num(F(id).value); if (n != null) v[k] = n; });
+  saveAdjust(e.target.dataset.id, v);
+});
+F("rulesBody").addEventListener("click", e => { if (e.target.id === "rjReset") saveAdjust(F("rulesAdjust").dataset.id, {}); });
+F("rulesClose").addEventListener("click", () => F("rulesDlg").close());
+document.addEventListener("click", e => { const b = e.target.closest("[data-rules]"); if (b) openRules(acctById(b.dataset.rules)); });
+
+// After a trade is saved: warn when a prop account gets close to, or past, a limit.
+function propWarn(t) {
+  const a = acctById(t.account), st = a && propStatus(a);
+  if (!st) return;
+  const firm = findFirm(a.firm).name;
+  let msg = "";
+  if (st.breach) msg = `⚠ ${firm}: ${st.breach.rule.toLowerCase()} reached on closed trades. Check your dashboard.`;
+  else if (st.dailyLimit && st.dailyUsed / st.dailyLimit >= .6) msg = `⚠ ${firm}: ${money(st.dailyUsed, { signed: false, decimals: 0 })} of ${money(st.dailyLimit, { signed: false, decimals: 0 })} daily loss used.`;
+  else if (st.maxAllow && st.maxRoom / st.maxAllow <= .4) msg = `⚠ ${firm}: ${money(st.maxRoom, { signed: false, decimals: 0 })} left before the max loss limit.`;
+  else if (st.hit && t.pnl > 0) msg = st.daysOk ? `🎯 ${firm} profit target reached!` : `🎯 ${firm} target reached. ${plural(st.r.minDays - st.tradingDays, "more trading day")} needed.`;
+  if (msg) setTimeout(() => toast(msg), 2200);
 }
 
 /* ======================================================================
