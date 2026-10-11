@@ -226,7 +226,7 @@ main { padding: 28px 0 80px; overflow: clip; position: relative; } /* the backgr
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  /* No backdrop blur: the background is already soft, and blurring it again made animations and scrolling stutter. */
   box-shadow: var(--shadow);
   padding: 20px;
   min-width: 0;
@@ -807,16 +807,18 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .nav-label { display: block; }
   main, footer { margin-left: 244px; }
   /* Collapsible sidebar: a slim icon rail; the round button on its edge toggles it. */
-  header.top, main, footer, #exportJournalTop { transition: width .25s ease, margin-left .25s ease, padding .25s ease; }
-  .side-toggle { display: flex; position: fixed; top: 30px; left: 231px; z-index: 45; width: 26px; height: 26px; padding: 0; border-radius: 50%;
-    border: 1px solid var(--border-strong); background: var(--popup-bg); color: var(--text-2); align-items: center; justify-content: center; cursor: pointer;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .25); transition: left .25s ease, color .2s, border-color .2s; }
-  .side-toggle:hover { color: var(--text); border-color: var(--accent); }
+  /* The sidebar is opaque on desktop, so it needs no blur (blur makes the collapse animation stutter). */
+  header.top { backdrop-filter: none; -webkit-backdrop-filter: none; transition: width .24s cubic-bezier(.2, .8, .2, 1); will-change: width; }
+  #exportJournalTop { width: 176px; transition: width .24s cubic-bezier(.2, .8, .2, 1); }
+  /* Small arrow beside Export journal; flips to point right when collapsed. */
+  .side-toggle { display: flex; position: fixed; left: 196px; bottom: 20px; z-index: 45; width: 34px; height: 32px; padding: 0; border: 0; border-radius: 8px;
+    background: transparent; color: var(--muted); align-items: center; justify-content: center; cursor: pointer; transition: left .24s cubic-bezier(.2, .8, .2, 1), bottom .24s cubic-bezier(.2, .8, .2, 1), color .15s, background .15s; }
+  .side-toggle:hover { color: var(--text); background: var(--surface-hover); }
   .side-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  .side-toggle svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s ease; }
+  .side-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .24s cubic-bezier(.2, .8, .2, 1); }
   .side-collapsed header.top { width: 72px; overflow-x: hidden; }
   .side-collapsed main, .side-collapsed footer { margin-left: 72px; }
-  .side-collapsed .side-toggle { left: 59px; }
+  .side-collapsed .side-toggle { left: 19px; bottom: 60px; }
   .side-collapsed .side-toggle svg { transform: rotate(180deg); }
   .side-collapsed header.top .container { padding: 0 10px; }
   .side-collapsed .top-inner { padding: 0 0 14px; align-items: center; }
@@ -833,10 +835,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .side-collapsed .tabs .tab > span, .side-collapsed .side-link > span { display: none; }
   .side-collapsed .side-actions { margin-top: 12px; }
   .side-collapsed #exportJournalTop { width: 48px; left: 12px; padding: 8px 0; font-size: 0; gap: 0; }
+  .side-collapsed header.top { padding-bottom: 110px; }
   .side-collapsed #exportJournalTop .ni { width: 17px; height: 17px; }
 }
 @media (max-width: 1040px) { .side-toggle { display: none; } }
-@media (min-width: 1041px) and (prefers-reduced-motion: reduce) { header.top, main, footer, #exportJournalTop, .side-toggle, .side-toggle svg { transition: none; } }
+@media (min-width: 1041px) and (prefers-reduced-motion: reduce) { header.top, #exportJournalTop, .side-toggle, .side-toggle svg { transition: none; } }
 @media (max-width: 1040px) {
   .menu-btn { display: inline-flex; margin-left: auto; font-size: 20px; padding: 6px 12px; }
   #exportJournalTop { display: none; }
@@ -3420,7 +3423,15 @@ function applyTheme(mode, save) {
 }
 /* Desktop sidebar: collapse to an icon rail and back. The <head> applies the saved state before drawing. */
 function setSideCollapsed(on, save) {
+  const moving = save && window.innerWidth > 1040 && !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)
+    ? [document.querySelector("main"), document.querySelector("footer")].filter(Boolean) : [];
+  const before = moving.map(el => el.getBoundingClientRect().left);
   document.documentElement.classList.toggle("side-collapsed", on);
+  // The page lays out once at its new width, then slides from where it was (transform only, so it stays smooth).
+  moving.forEach((el, i) => {
+    const dx = before[i] - el.getBoundingClientRect().left;
+    if (dx && el.animate) el.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2, .8, .2, 1)" });
+  });
   const b = F("sideToggle");
   b.setAttribute("aria-expanded", String(!on));
   b.setAttribute("aria-label", on ? "Expand sidebar" : "Collapse sidebar");
