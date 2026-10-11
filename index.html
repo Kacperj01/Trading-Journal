@@ -759,6 +759,23 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .pay-preview iframe { width: 100%; height: 280px; border: 0; background: #fff; }
 .rw-empty { display: grid; gap: 8px; max-width: 560px; }
 .rw-empty h3, .rw-empty p { margin: 0; }
+#panel-rewards > .toolbar { margin-bottom: 20px; }
+#rwMain .rw-layout.section { margin-top: 0; }
+.rw-head { margin-bottom: 16px; }
+.rw-form .stack { gap: 16px; }
+@media (min-width: 1041px) {
+  #panel-rewards > .toolbar { margin-bottom: 30px; }
+  #panel-rewards > .toolbar .lead { margin-top: 6px; }
+  .rw-stats { gap: 18px; margin-bottom: 34px; }
+  .card.rw-stat { padding: 18px 20px; gap: 6px; }
+  .rw-layout { grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 36px; }
+  .card.rw-form { padding: 26px 28px; }
+  .rw-form .card-head { margin-bottom: 22px; }
+  .rw-form .stack { gap: 20px; }
+  .rw-head { margin-bottom: 22px; padding-top: 4px; }
+  .rw-grid { gap: 24px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .rw-body { padding: 18px 20px 20px; gap: 16px; }
+}
 .fact-link { all: unset; cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
 .fact-link:hover { color: var(--accent); }
 .fact-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
