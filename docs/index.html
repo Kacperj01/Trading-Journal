@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "85c185be4a";</script>
+<script>window.ELEV8_BUILD = "37491279f1";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -2433,7 +2433,7 @@ let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 let trades = [];
 
-const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "week", from: "", to: "", session: "", setup: "", account: "", setPane: "", newsImpact: "medium", newsCurs: null, sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ quickOpen: false, tab: "overview", scrollY: 0, opened: false, range: "week", from: "", to: "", session: "", setup: "", account: "", setPane: "", newsImpact: "medium", newsCurs: null, sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
@@ -2723,6 +2723,7 @@ function hideHome() {
   if (F("home").hidden) return;
   F("home").hidden = true;
   document.documentElement.classList.remove("gated");
+  ui.quickOpen = false; saveUi(); setQuickOpen(false); // signed in: quick log starts folded
   showTab("overview");
 }
 
@@ -6939,7 +6940,8 @@ enhanceSelects();
 
 resetForm(false, true);
 F("qDate").value = isoDate(new Date());
-setQuickOpen(ui.quickOpen !== false);
+// The quick log always starts folded; tap Show to open it.
+ui.quickOpen = false; saveUi(); setQuickOpen(false);
 renderListEditors();
 renderAccount();
 // Every launch starts on Overview at the top (an unsaved trade form is still kept).
