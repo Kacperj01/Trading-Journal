@@ -994,6 +994,22 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 /* Trade detail window */
 .trade-dlg { width: min(880px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
 .trade-dlg .dlg-body { gap: 16px; }
+.td-nochart { margin: 0; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--border-strong); color: var(--muted); font-size: 13px; }
+/* Phones: the trade opens as a sheet from the bottom; details are tighter and the buttons stay in reach. */
+@media (max-width: 760px) {
+  dialog.trade-dlg { width: 100vw; max-width: 100vw; max-height: 88dvh; margin: auto 0 0; border-radius: 20px 20px 0 0; border-width: 1px 0 0; animation: sheetUp .26s cubic-bezier(.2, .7, .2, 1); }
+  .trade-dlg .dlg-body { padding: 18px 16px 0; gap: 12px; }
+  .trade-dlg .td-head h3 { font-size: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .trade-dlg .td-head .sub { font-size: 12.5px; }
+  .trade-dlg .td-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .trade-dlg .td-item { padding: 8px 10px; }
+  .trade-dlg .td-item > span { font-size: 10px; }
+  .trade-dlg .td-item b { font-size: 13.5px; }
+  .trade-dlg .chart-pair { gap: 10px; }
+  .trade-dlg .chart-frame { aspect-ratio: 16 / 9; }
+  .trade-dlg .dlg-actions { position: sticky; bottom: 0; z-index: 2; margin: 4px -16px 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--popup-bg); border-top: 1px solid var(--border); }
+  .trade-dlg .dlg-actions .btn { flex: 1; justify-content: center; }
+}
 .td-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .td-head h3 { font-size: 19px; }
 .td-head .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
@@ -5023,12 +5039,14 @@ function openTrade(t) {
   const item = (label, value, cls = "") => value === "" || value == null ? "" : `<div class="td-item"><span>${label}</span><b class="${cls}">${value}</b></div>`;
   const price = v => v == null ? "" : `<span class="mono">${esc(v)}</span>`;
   F("tdBody").innerHTML = `
-    <div class="chart-pair">${chartFigure("Before", beforeChart(t))}${chartFigure("After", afterChart(t))}</div>
-    <div class="td-grid" style="margin-top:16px">
+    ${beforeChart(t) || afterChart(t)
+      ? `<div class="chart-pair">${beforeChart(t) ? chartFigure("Before", beforeChart(t)) : ""}${afterChart(t) ? chartFigure("After", afterChart(t)) : ""}</div>`
+      : `<p class="td-nochart">No charts yet. Add TradingView links with Edit trade.</p>`}
+    <div class="td-grid">
       ${item("Account", esc(acctLabel(acctById(t.account))))}
-      ${item("Result", `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : "be"}">${res === "BE" ? "Breakeven" : res}</span>`)}
-      ${item("P&amp;L", `<span class="mono">${money(t.pnl)}</span>`, tone(t.pnl))}
-      ${item("R multiple", `<span class="mono">${fmtR(r)}</span>`, tone(r))}
+      ${item("Result", `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : res === "Open" ? "open" : "be"}">${res === "BE" ? "Breakeven" : res}</span>`)}
+      ${isOpen(t) ? "" : item("P&amp;L", `<span class="mono">${money(t.pnl)}</span>`, tone(t.pnl))}
+      ${isOpen(t) ? "" : item("R multiple", `<span class="mono">${fmtR(r)}</span>`, tone(r))}
       ${item("Entry", price(t.entry))}${item("Stop loss", price(t.stop))}${item("Take profit", price(t.target))}${item("Exit", price(t.exit))}
       ${item("Size", price(t.size))}${t.risk ? item("Risk", `<span class="mono">${money(t.risk, { signed: false })}</span>`) : ""}
       ${item("Emotion before", esc(t.emotionBefore || ""))}${item("Emotion after", esc(t.emotionAfter || ""))}
@@ -5042,7 +5060,8 @@ function openTrade(t) {
     ${t.sourceUrl ? `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open in Notion ↗</a></p>` : ""}`;
   const dlg = F("tradeDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
-  F("tdDone").focus();
+  (isOpen(t) ? F("tdCloseTrade") : F("tdDone")).focus({ preventScroll: true });
+  dlg.scrollTop = 0;
 }
 F("tdClose").addEventListener("click", () => F("tradeDlg").close());
 
