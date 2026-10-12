@@ -243,7 +243,10 @@ def main():
     settings = {r["user_id"]: r.get("data") or {} for r in all_rows("journal_settings")}
     trades = {}
     for r in all_rows("trades"):
-        trades.setdefault(r["user_id"], []).append(r.get("data") or {})
+        t = r.get("data") or {}
+        if t.get("status") == "open":
+            continue  # still open: no result yet, so it isn't part of the week's review
+        trades.setdefault(r["user_id"], []).append(t)
     sent = skipped = 0
     for u in all_users():
         email = (u.get("email") or "").lower()

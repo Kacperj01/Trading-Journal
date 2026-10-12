@@ -851,6 +851,23 @@ html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.si
 .cert-dlg .dlg-actions { justify-content: space-between; }
 #certDownload .ni { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
 .btn.danger-text { color: var(--red); }
+/* Open trades */
+.open-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; color: var(--text-2); cursor: pointer; }
+.open-toggle input { width: auto; margin: 0; }
+.open-row { margin: 0 0 14px; align-items: flex-start; }
+.open-row > span { display: grid; gap: 2px; font-size: 13.5px; }
+.open-row .muted { font-size: 12.5px; }
+fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
+.badge.open { background: var(--blue-soft); color: var(--accent); }
+.open-list { display: grid; gap: 0; padding: 6px 18px; }
+.open-row-item { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; }
+.open-row-item + .open-row-item { border-top: 1px solid var(--border); }
+.oi-main { flex: 1 1 260px; min-width: 0; display: grid; gap: 3px; }
+.oi-main b { font-size: 15px; font-weight: 600; }
+.oi-main span { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.oi-main .dir { font-size: 12px; margin-left: 6px; }
+.oi-bits { color: var(--text-2) !important; }
+.oi-btns { display: flex; gap: 6px; margin-left: auto; }
 .rw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px; margin-bottom: 18px; }
 .card.rw-stat { padding: 14px 16px; display: grid; gap: 4px; }
 .rw-stat span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
@@ -1387,7 +1404,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               </div>
             </div>
             <div class="field"><label for="qSetup">Setup</label><input type="text" id="qSetup" list="setupList" autocomplete="off" placeholder="e.g. Asia Sweep" required></div>
-            <div class="field"><label for="qPnl">P&amp;L</label><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150 or -100" required></div>
+            <div class="field"><label for="qPnl">P&amp;L</label><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150 or -100" required>
+              <label class="open-toggle"><input type="checkbox" id="qOpen"> Still open</label></div>
             <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
             <div class="field" id="qAccountWrap" hidden><label for="qAccount">Account</label><select id="qAccount"></select></div>
             <div class="field q-wide"><label for="qNotes">Notes</label><input type="text" id="qNotes" placeholder="Why did you take it?"></div>
@@ -1404,6 +1422,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <section class="section reveal" style="--d:3" aria-labelledby="propTitle" id="propPanel" hidden>
         <div class="section-head"><h3 id="propTitle">Prop firm account</h3><button class="btn sm ghost" type="button" data-goto="accounts" id="propAll" hidden>All accounts →</button></div>
         <div class="prop-grid" id="propCards"></div>
+      </section>
+
+      <section class="section reveal" style="--d:3" aria-labelledby="openTitle" id="openPanel" hidden>
+        <div class="section-head"><h3 id="openTitle">Open trades</h3><span class="muted" style="font-size:13px">Not in your stats until you close them</span></div>
+        <div class="card open-list" id="openList"></div>
       </section>
 
       <div class="needs-data">
@@ -1678,6 +1701,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
           <fieldset>
             <legend>Outcome</legend>
+            <label class="toggle open-row"><input type="checkbox" id="tOpen"> <span><b>Trade still open</b> <span class="muted">Save it now and add the result when it closes. Open trades aren't counted in your stats.</span></span></label>
             <div class="fields">
               <div class="field">
                 <label for="tPnl">Net P&amp;L <span class="req" aria-hidden="true">*</span></label>
@@ -2942,7 +2966,9 @@ function chartFigure(label, url) {
   return `<figure class="chart-fig"><figcaption>${esc(label)}</figcaption><div class="chart-frame">${frame}</div>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open ${esc(label.toLowerCase())} chart ↗</a>` : ""}</figure>`;
 }
 
-function resultOf(t) { return t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "BE"; }
+function resultOf(t) { return isOpen(t) ? "Open" : t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "BE"; }
+// Trades logged before they close: saved with status "open" and no P&L, and left out of every stat until closed.
+function isOpen(t) { return !!t && t.status === "open"; }
 function rOf(t) {
   if (t.r != null && Number.isFinite(t.r)) return t.r;
   if (t.risk) return t.pnl / t.risk;
@@ -2997,7 +3023,7 @@ function rangeBounds() {
 
 function filtered() {
   const [from, to] = rangeBounds();
-  return sortChrono(trades).filter(t => t.date >= from && t.date <= to
+  return sortChrono(trades).filter(t => !isOpen(t) && t.date >= from && t.date <= to
     && (!ui.session || t.session === ui.session)
     && (!ui.setup || t.setup === ui.setup)
     && inAccount(t));
@@ -3127,7 +3153,10 @@ function renderDashboard() {
   $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : hasAny ? "No trades in this view" : "Your journal is empty";
   $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
-  renderTable(list);
+  const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
+  renderOpen(open);
+  renderTable(open.concat(list));
+  if (empty && open.length) $$("#panel-journal .needs-data").forEach(el => el.hidden = false);
   renderProp();
   if (empty) return;
 
@@ -3486,7 +3515,7 @@ function latestWeek() {
   const all = sortChrono(trades);
   return all.length ? weekStartOf(all[all.length - 1].date) : weekStartOf(isoDate(new Date()));
 }
-function tradesInWeek(start) { const end = addDays(start, 6); return sortChrono(trades).filter(t => t.date >= start && t.date <= end); }
+function tradesInWeek(start) { const end = addDays(start, 6); return sortChrono(trades).filter(t => !isOpen(t) && t.date >= start && t.date <= end); }
 
 function buildWeek(start) {
   const list = tradesInWeek(start), prevList = tradesInWeek(addDays(start, -7));
@@ -3755,7 +3784,7 @@ function renderTable(list) {
   const indexed = list.map((t, i) => ({ t, idx: i + 1 }));
   const q = $("#tSearch").value.trim().toLowerCase();
   const res = resultFilter;
-  const counts = { "": list.length, Win: 0, Loss: 0, BE: 0 };
+  const counts = { "": list.length, Win: 0, Loss: 0, BE: 0, Open: 0 };
   list.forEach(t => counts[resultOf(t)]++);
   $$("[data-cnt]", F("tResultTabs")).forEach(el => el.textContent = counts[el.dataset.cnt]);
   let rows = indexed.filter(({ t }) => (!res || resultOf(t) === res)
@@ -3785,13 +3814,13 @@ function renderTable(list) {
       <td data-label="Direction"><span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></td>
       <td class="nowrap" data-label="Setup">${esc(t.setup)}</td>
       <td class="num ${tone(r)}" data-label="R multiple">${fmtR(r)}</td>
-      <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${money(t.pnl)}</strong></td>
-      <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
+      <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${isOpen(t) ? "Open" : money(t.pnl)}</strong></td>
+      <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : result === "Open" ? "open" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
       <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span class="plan-flag" title="${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}" role="img" aria-label="Plan broken">${ico("warn")}</span>` : ""}</td>
       <td class="notes${t.notes || t.mistakes || beforeChart(t) || afterChart(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
         <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">View</button>
-        <button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
+        ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}" aria-label="Close trade ${idx}, ${esc(t.pair)}">Close</button>` : ""}<button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
         <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" style="color:var(--red)">Delete</button>
       </div></td>
     </tr>`;
@@ -3880,6 +3909,7 @@ function resetForm(keepDate, keepDraft) {
   F("tAccount").value = defaultAccount();
   F("tConfOut").textContent = "3/5";
   syncPlanForm(null);
+  syncOpenFields();
   F("formTitle").textContent = "Log a trade";
   F("formSubmit").textContent = "Save trade";
   F("formCancel").hidden = true;
@@ -3941,7 +3971,8 @@ function readForm() {
     setup: F("tSetup").value.trim(),
     entry: num(F("tEntry").value), stop: num(F("tStop").value), target: num(F("tTarget").value), exit: num(F("tExit").value),
     size: num(F("tSize").value), risk: num(F("tRisk").value),
-    pnl: num(F("tPnl").value), r: num(F("tR").value), fees: num(F("tFees").value),
+    status: F("tOpen").checked ? "open" : "",
+    pnl: F("tOpen").checked ? null : num(F("tPnl").value), r: F("tOpen").checked ? null : num(F("tR").value), fees: num(F("tFees").value),
     emotionBefore: F("tEmoBefore").value, emotionAfter: F("tEmoAfter").value,
     confidence: Number(F("tConf").value),
     planChecks: readPlanChecks("tPlanChecks"),
@@ -3970,6 +4001,7 @@ function loadIntoForm(t) {
   const setNum = (id, v) => F(id).value = v == null ? "" : v;
   setNum("tEntry", t.entry); setNum("tStop", t.stop); setNum("tTarget", t.target); setNum("tExit", t.exit);
   setNum("tSize", t.size); setNum("tRisk", t.risk); setNum("tPnl", t.pnl); setNum("tR", t.r); setNum("tFees", t.fees);
+  F("tOpen").checked = isOpen(t); syncOpenFields();
   fillSelect(F("tEmoBefore"), settings.emotions, { placeholder: "—", value: t.emotionBefore || "" });
   fillSelect(F("tEmoAfter"), settings.emotionsAfter, { placeholder: "—", value: t.emotionAfter || "" });
   F("tConf").value = t.confidence || 3; F("tConfOut").textContent = (t.confidence || 3) + "/5";
@@ -3984,6 +4016,22 @@ function loadIntoForm(t) {
   updatePreview();
 }
 
+// "Still open" switches off the result fields until the trade is closed.
+function syncOpenFields() {
+  const open = F("tOpen").checked;
+  ["tPnl", "tR"].forEach(id => { F(id).disabled = open; if (open) { F(id).value = ""; F(id).removeAttribute("aria-invalid"); } });
+  F("tPnl").placeholder = open ? "When it closes" : "e.g. 250 or -100";
+  F("tPnl").closest("fieldset").classList.toggle("is-open", open);
+  F("formSubmit").textContent = trades.some(x => x.id === F("tId").value) ? (open ? "Update open trade" : "Update trade") : open ? "Save open trade" : "Save trade";
+}
+function syncQuickOpen() {
+  const open = F("qOpen").checked;
+  F("qPnl").disabled = open;
+  if (open) { F("qPnl").value = ""; F("qPnl").removeAttribute("aria-invalid"); }
+  F("qPnl").placeholder = open ? "When it closes" : "e.g. 150 or -100";
+}
+F("tOpen").addEventListener("change", syncOpenFields);
+F("qOpen").addEventListener("change", syncQuickOpen);
 function validate(t) {
   const errs = [];
   const mark = (id, bad, msg) => { F(id).toggleAttribute("aria-invalid", false); if (bad) { F(id).setAttribute("aria-invalid", "true"); errs.push({ id, msg }); } };
@@ -3991,7 +4039,7 @@ function validate(t) {
   mark("tPair", !t.pair, "Pair / instrument is required");
   mark("tSessionSel", !t.session, "Session is required");
   mark("tSetup", !t.setup, "Setup is required");
-  mark("tPnl", t.pnl == null, "Net P&L is required (use 0 for breakeven)");
+  mark("tPnl", t.pnl == null && !isOpen(t), "Net P&L is required (use 0 for breakeven), or tick Trade still open");
   mark("tRisk", t.risk != null && t.risk < 0, "Risk can't be negative");
   return errs;
 }
@@ -4025,7 +4073,7 @@ function updatePreview() {
 
 function renderRecent() {
   const recent = sortChrono(trades).slice(-6).reverse();
-  F("recentList").innerHTML = recent.length ? recent.map(t => `<li><span><span class="mono">${fmtDate(t.date, { day: "2-digit", month: "short" })}</span> · <strong class="mono">${esc(t.pair)}</strong> <span class="muted">${esc(t.setup)}</span></span><span class="mono ${tone(t.pnl)}">${money(t.pnl, { decimals: 0 })}</span></li>`).join("")
+  F("recentList").innerHTML = recent.length ? recent.map(t => `<li><span><span class="mono">${fmtDate(t.date, { day: "2-digit", month: "short" })}</span> · <strong class="mono">${esc(t.pair)}</strong> <span class="muted">${esc(t.setup)}</span></span><span class="mono ${tone(t.pnl)}">${isOpen(t) ? `<span class="badge open">Open</span>` : money(t.pnl, { decimals: 0 })}</span></li>`).join("")
     : `<li class="muted">No trades yet.</li>`;
 }
 
@@ -4180,7 +4228,7 @@ const SHEET_COLS = [
   ["P&L", t => t.pnl], ["R", t => { const r = rOf(t); return r == null ? "" : Math.round(r * 100) / 100; }], ["Risk", t => t.risk],
   ["Entry", t => t.entry], ["Stop", t => t.stop], ["Target", t => t.target], ["Exit", t => t.exit], ["Size", t => t.size], ["Fees", t => t.fees],
   ["Emotion before", t => t.emotionBefore || ""], ["Emotion after", t => t.emotionAfter || ""], ["Confidence", t => t.confidence],
-  ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Rules broken", t => brokenRules(t).join(", ")], ["Mistakes", t => t.mistakes || ""], ["Notes", t => t.notes || ""],
+  ["Status", t => isOpen(t) ? "Open" : "Closed"], ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Rules broken", t => brokenRules(t).join(", ")], ["Mistakes", t => t.mistakes || ""], ["Notes", t => t.notes || ""],
   ["Before chart", t => beforeChart(t)], ["After chart", t => afterChart(t)], ["Source", t => t.sourceUrl || ""]
 ];
 function sheetRows(list) {
@@ -4801,7 +4849,7 @@ F("tableBody").addEventListener("click", e => {
   if ((ed || del) && persist.loading && trades === cachedTrades) return toast("Still syncing your journal. Try again in a moment.");
   if (ed) {
     const t = trades.find(x => x.id === ed.dataset.edit);
-    if (t) { showTab("log"); loadIntoForm(t); F("tDate").focus(); }
+    if (t) { showTab("log"); loadIntoForm(t); }
   }
   if (del) {
     const t = trades.find(x => x.id === del.dataset.del);
@@ -4841,18 +4889,46 @@ F("tradeForm").addEventListener("submit", e => {
     return;
   }
   box.classList.remove("show");
-  const editing = trades.some(x => x.id === t.id);
+  const editing = trades.some(x => x.id === t.id), wasOpen = editing && isOpen(trades.find(x => x.id === t.id));
   if (!commitTrade(t)) return;
-  toast(editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
+  toast(wasOpen && !isOpen(t) ? `Trade closed: ${t.pair} ${money(t.pnl)}` : isOpen(t) ? (editing ? `Open trade updated: ${t.pair}` : `Open trade saved: ${t.pair}. Close it from Open trades when it's done.`) : editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
   propWarn(t);
   resetForm(true);
   if (editing) showTab("journal");
   else window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
 });
+// Closing an open trade: the form opens with "still open" off, scrolled to the result fields.
+function closeTrade(id) {
+  const t = trades.find(x => x.id === id);
+  if (!t) return;
+  if (persist.loading && trades === cachedTrades) return toast("Still syncing your journal. Try again in a moment.");
+  showTab("log");
+  loadIntoForm(t);
+  F("tOpen").checked = false;
+  syncOpenFields();
+  F("formSubmit").textContent = "Close trade";
+  setTimeout(() => F("tOpen").closest("fieldset").scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }), 80);
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-close]"); if (b) closeTrade(b.dataset.close); });
+function renderOpen(list) {
+  F("openPanel").hidden = !list.length;
+  if (!list.length) return;
+  F("openList").innerHTML = list.map(t => {
+    const a = acctById(t.account);
+    const bits = [t.entry != null ? "Entry " + t.entry : "", t.stop != null ? "SL " + t.stop : "", t.target != null ? "TP " + t.target : "", t.size != null ? t.size + " lots" : "", t.risk ? "Risk " + money(t.risk, { signed: false, decimals: 0 }) : ""].filter(Boolean);
+    return `<div class="open-row-item">
+      <div class="oi-main"><b>${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></b>
+        <span>${esc([fmtDate(t.date) + (t.time ? " " + t.time : ""), t.setup, t.session, a ? acctLabel(a) : ""].filter(Boolean).join(" · "))}</span>
+        ${bits.length ? `<span class="mono oi-bits">${esc(bits.join(" · "))}</span>` : ""}</div>
+      <div class="oi-btns"><button class="btn sm ghost" type="button" data-view="${esc(t.id)}">View</button><button class="btn sm primary" type="button" data-close="${esc(t.id)}">Close trade</button></div>
+    </div>`;
+  }).join("");
+}
+
 // Save a trade from either form. Returns false if this journal is read-only.
 function commitTrade(t) {
   if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return false; }
-  if (t.r == null && t.risk) t.r = Math.round((t.pnl / t.risk) * 100) / 100;
+  if (t.r == null && t.risk && t.pnl != null) t.r = Math.round((t.pnl / t.risk) * 100) / 100;
   putTrade(t);
   syncView();
   // Remember new pairs/setups so they show up as suggestions next time.
@@ -4871,7 +4947,7 @@ function quickTrade() {
   return {
     id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value, account: F("qAccount").value,
     direction: ($("input[name=qDir]:checked") || {}).value || "Long", setup: F("qSetup").value.trim(),
-    entry: null, stop: null, target: null, exit: null, size: null, risk, pnl, r: null, fees: null,
+    entry: null, stop: null, target: null, exit: null, size: null, risk, pnl: F("qOpen").checked ? null : pnl, r: null, fees: null, status: F("qOpen").checked ? "open" : "",
     emotionBefore: F("qEmo").value, emotionAfter: "", confidence: null, planChecks: readPlanChecks("qPlanChecks"),
     followedPlan: (c => c ? Object.values(c).every(Boolean) : true)(readPlanChecks("qPlanChecks")), mistakes: "",
     notes: F("qNotes").value.trim(), chartBefore: "", chartAfter: "", screenshot: ""
@@ -4886,6 +4962,7 @@ function resetQuick() {
   refreshLists();
   syncPlanQuick();
   F("qAccount").value = defaultAccount();
+  syncQuickOpen();
 }
 function setQuickOpen(open) {
   F("quickLog").classList.toggle("collapsed", !open);
@@ -4895,16 +4972,15 @@ function setQuickOpen(open) {
 F("quickForm").addEventListener("submit", e => {
   e.preventDefault();
   const t = quickTrade();
-  const missing = [["qDate", !t.date, "date"], ["qPair", !t.pair, "pair"], ["qSession", !t.session, "session"], ["qSetup", !t.setup, "setup"], ["qPnl", t.pnl == null, "P&L"]];
+  const missing = [["qDate", !t.date, "date"], ["qPair", !t.pair, "pair"], ["qSession", !t.session, "session"], ["qSetup", !t.setup, "setup"], ["qPnl", t.pnl == null && !isOpen(t), "P&L (or tick Still open)"]];
   missing.forEach(([id, bad]) => bad ? F(id).setAttribute("aria-invalid", "true") : F(id).removeAttribute("aria-invalid"));
   const bad = missing.filter(m => m[1]);
   if (bad.length) { F("qMsg").textContent = "Add the " + bad.map(m => m[2]).join(", ") + "."; F(bad[0][0]).focus(); return; }
   if (!commitTrade(t)) return;
-  toast(`Trade saved: ${t.pair} ${money(t.pnl)}`);
+  toast(isOpen(t) ? `Open trade saved: ${t.pair}. Close it from Open trades when it's done.` : `Trade saved: ${t.pair} ${money(t.pnl)}`);
   propWarn(t);
   resetQuick();
   renderDashboard();
-  F("qPair").focus();
 });
 F("qMore").addEventListener("click", () => {
   // Carry what's typed into the full form.
@@ -4931,7 +5007,7 @@ let viewing = null;
 function openTrade(t) {
   viewing = t;
   const r = rOf(t), res = resultOf(t);
-  F("tdTitle").innerHTML = `${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span>`;
+  F("tdTitle").innerHTML = `${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span>${isOpen(t) ? ` <span class="badge open">Open</span>` : ""}`;
   F("tdSub").textContent = [fmtDate(t.date) + (t.time ? " " + t.time : ""), t.session, t.setup].filter(Boolean).join(" · ");
   const item = (label, value, cls = "") => value === "" || value == null ? "" : `<div class="td-item"><span>${label}</span><b class="${cls}">${value}</b></div>`;
   const price = v => v == null ? "" : `<span class="mono">${esc(v)}</span>`;
@@ -4969,7 +5045,7 @@ function manageRow(a) {
 }
 // Live, demo, and prop accounts without known firm rules: balance, P&L, trades, win rate.
 function plainCard(a) {
-  const n = realTrades.filter(t => t.account === a.id), p = sum(n.map(t => Number(t.pnl) || 0)), w = n.filter(t => t.pnl > 0).length;
+  const n = realTrades.filter(t => t.account === a.id && !isOpen(t)), p = sum(n.map(t => Number(t.pnl) || 0)), w = n.filter(t => t.pnl > 0).length;
   const meta = [a.type === "Prop firm" ? [a.firm, a.phase].filter(Boolean).join(" · ") : a.broker, a.platform, Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
   return `<article class="card acct-card">
     <div class="pc-head">${badgeFor(a)}<div class="pc-name"><b>${esc(acctLabel(a))}${a.id === defaultAccount() ? `<span class="active-tag">Active</span>` : ""}</b><small>${esc(meta)}</small></div></div>
@@ -5254,7 +5330,7 @@ function rulesFor(a) {
 function propStatus(a) {
   const r = rulesFor(a), size = Number(a.size);
   if (!r || !(size > 0)) return null;
-  const list = sortChrono(realTrades.filter(t => t.account === a.id && (!a.startDate || t.date >= a.startDate)));
+  const list = sortChrono(realTrades.filter(t => t.account === a.id && !isOpen(t) && (!a.startDate || t.date >= a.startDate)));
   const byDay = new Map();
   list.forEach(t => byDay.set(t.date, (byDay.get(t.date) || 0) + (Number(t.pnl) || 0)));
   const allDays = Array.from(byDay.keys()).sort();
@@ -5988,6 +6064,7 @@ F("rwList").addEventListener("click", async e => {
 
 // After a trade is saved: warn when a prop account gets close to, or past, a limit.
 function propWarn(t) {
+  if (isOpen(t)) return;
   const a = acctById(t.account), st = a && propStatus(a);
   if (!st) return;
   const firm = findFirm(a.firm).name;
