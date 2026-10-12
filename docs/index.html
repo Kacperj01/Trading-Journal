@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "ed22eddc53";</script>
+<script>window.ELEV8_BUILD = "d91ed66e4f";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -3008,7 +3008,32 @@ function chartFigure(label, url) {
   return `<figure class="chart-fig"><figcaption>${esc(label)}</figcaption><div class="chart-frame">${frame}</div>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open ${esc(label.toLowerCase())} chart ↗</a>` : ""}</figure>`;
 }
 
-function resultOf(t) { return isOpen(t) ? "Open" : t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "BE"; }
+function resultOf(t) { return isOpen(t) ? "Open" : isScratch(t) ? "BE" : t.pnl > 0 ? "Win" : "Loss"; }
+// A "scratch": a result too small to call a win or a loss (under a tenth of the trade's risk, or of the
+// default risk; with neither, under 0.02% of the account). +$1.12 on a $100-risk trade is breakeven.
+function scratchSize(t) {
+  const risk = Number(t.risk) > 0 ? Number(t.risk) : Number(settings.defaultRisk) > 0 ? Number(settings.defaultRisk) : 0;
+  return risk ? risk * 0.1 : startingBalance(t.account) * 0.0002;
+}
+function isScratch(t) { const v = Number(t.pnl) || 0; return !isOpen(t) && Math.abs(v) < scratchSize(t); }
+// What a trade's notes (and mistakes) say, in a few plain categories.
+const NOTE_TAGS = {
+  invalid: /\b(invalid(ated)?|no longer valid|setup (was )?(broke|broken|failed)|thesis (was )?wrong|structure (broke|shifted)|didn'?t (play|work) out)\b/i,
+  early: /\b(clos(ed|ing)|cut|exit(ed)?|took (it )?off|got out)\b[^.]{0,20}\b(early|before (tp|target))\b|\bmanual(ly)? clos|\bscratch(ed)?\b/i,
+  breakeven: /\b(moved|move|put)\b[^.]{0,12}\b(sl|stop|stop loss)\b[^.]{0,8}\b(to )?(be|break ?even)\b|\bstopped (out )?at (be|break ?even)\b/i,
+  news: /\b(news|nfp|cpi|fomc|rate decision|powell)\b/i,
+  emotional: /\b(revenge|fomo|tilt(ed)?|greed(y)?|scared|fear(ful)?|impatien(t|ce)|bored|overtrad(e|ed|ing)|chas(e|ed|ing))\b/i
+};
+function noteTags(t) {
+  const text = `${t.notes || ""} ${t.mistakes || ""}`;
+  return Object.keys(NOTE_TAGS).filter(k => NOTE_TAGS[k].test(text));
+}
+// Closed early because the idea broke: notes say invalid (or a scratched early exit), and it was closed
+// well before a full loss and without a real win. A stopped-out loss or a big winner taken early isn't this.
+function cutForInvalid(t) {
+  const tags = noteTags(t), risk = Number(t.risk) > 0 ? Number(t.risk) : scratchSize(t) * 10, v = Number(t.pnl) || 0;
+  return (tags.includes("invalid") || (tags.includes("early") && isScratch(t))) && v > -0.6 * risk && v < 0.5 * risk;
+}
 // Trades logged before they close: saved with status "open" and no P&L, and left out of every stat until closed.
 function isOpen(t) { return !!t && t.status === "open"; }
 function rOf(t) {
@@ -3118,8 +3143,8 @@ function group(list, key) {
     map.get(k).push(t);
   }
   return Array.from(map, ([name, items]) => {
-    const wins = items.filter(t => t.pnl > 0).length;
-    const losses = items.filter(t => t.pnl < 0).length;
+    const wins = items.filter(t => resultOf(t) === "Win").length;
+    const losses = items.filter(t => resultOf(t) === "Loss").length;
     const rs = items.map(rOf).filter(r => r != null);
     return {
       name, items, n: items.length, wins, losses, be: items.length - wins - losses,
@@ -3132,11 +3157,11 @@ function group(list, key) {
 
 function stats(list) {
   const n = list.length;
-  const winsL = list.filter(t => t.pnl > 0);
-  const lossL = list.filter(t => t.pnl < 0);
+  const winsL = list.filter(t => resultOf(t) === "Win");
+  const lossL = list.filter(t => resultOf(t) === "Loss");
   const grossWin = sum(winsL.map(t => t.pnl));
   const grossLoss = sum(lossL.map(t => t.pnl));
-  const total = grossWin + grossLoss;
+  const total = sum(list.map(t => Number(t.pnl) || 0)); // scratches still count towards the total
   const rs = list.map(rOf).filter(r => r != null);
   const avgWin = winsL.length ? grossWin / winsL.length : 0;
   const avgLoss = lossL.length ? grossLoss / lossL.length : 0;
@@ -3151,7 +3176,8 @@ function stats(list) {
   // Current & longest streaks.
   let streak = 0, bestW = 0, bestL = 0, cur = 0;
   for (const t of list) {
-    if (t.pnl > 0) { cur = cur > 0 ? cur + 1 : 1; } else if (t.pnl < 0) { cur = cur < 0 ? cur - 1 : -1; } else { continue; }
+    const res = resultOf(t);
+    if (res === "Win") { cur = cur > 0 ? cur + 1 : 1; } else if (res === "Loss") { cur = cur < 0 ? cur - 1 : -1; } else { continue; }
     bestW = Math.max(bestW, cur); bestL = Math.min(bestL, cur);
   }
   streak = cur;
@@ -3576,22 +3602,37 @@ function buildWeek(start) {
   const clusters = Object.values(list.reduce((acc, t) => {
     const k = t.date + "|" + t.setup + "|" + t.direction; (acc[k] = acc[k] || []).push(t); return acc;
   }, {})).filter(c => c.length >= 2 && sum(c.map(t => t.pnl)) < 0);
-  const rec = g => `${g.wins}W–${g.losses}L`;
+  const rec = g => `${g.wins}W–${g.losses}L${g.be ? `–${g.be}BE` : ""}`;
   const N = x => `<b>${x}</b>`;
+  // Size results against risk and the account, so a few dollars isn't called a good or bad week.
+  const risks = list.map(t => Number(t.risk)).filter(x => x > 0);
+  const unit = risks.length ? sum(risks) / risks.length : Number(settings.defaultRisk) || 0;
+  const bal = list.length ? balanceBefore(list) : startingBalance(ui.account);
+  const minMove = Math.max(unit * 0.25, bal * 0.0005, 0.01); // smallest amount worth calling out
+  const big = v => Math.abs(v) >= minMove;
+  const sizeTxt = v => unit ? `${v >= 0 ? "+" : "−"}${Math.abs(v / unit).toFixed(1)}R` : bal ? `${v >= 0 ? "+" : "−"}${Math.abs(v / bal * 100).toFixed(2)}%` : "";
+  const tagged = k => list.filter(t => noteTags(t).includes(k));
 
   const worked = [], cost = [], focus = [];
   // Losing setups: ones traded repeatedly come first (a pattern), then the biggest single losses.
   const losingSetups = setups.filter(g => g.pnl < 0).sort((a, b) => (b.n >= 2) - (a.n >= 2) || a.pnl - b.pnl).slice(0, 2);
-  const bestSetup = setups.find(g => g.pnl > 0), worstSetup = losingSetups[0];
+  const bestSetup = setups.find(g => g.pnl > 0 && big(g.pnl)), worstSetup = losingSetups.find(g => big(g.pnl));
   if (bestSetup) worked.push(`${N(esc(bestSetup.name))} went ${rec(bestSetup)} for ${N(money(bestSetup.pnl))}.`);
-  const bestSess = sessions.find(g => g.pnl > 0); if (bestSess) worked.push(`${N(esc(bestSess.name))} was your best session: ${N(money(bestSess.pnl))} (${rec(bestSess)}).`);
-  const bestPair = pairs.find(g => g.pnl > 0); if (bestPair) worked.push(`${N(esc(bestPair.name))} made ${N(money(bestPair.pnl))} from ${plural(bestPair.n, "trade")}.`);
-  const bestEmo = emos.find(g => g.pnl > 0 && g.n >= 2); if (bestEmo) worked.push(`Trades taken feeling ${N(esc(bestEmo.name.toLowerCase()))} returned ${N(money(bestEmo.pnl))} (${rec(bestEmo)}).`);
-  if (followed.length && sum(followed.map(t => t.pnl)) > 0) worked.push(`Following your plan made ${N(money(sum(followed.map(t => t.pnl))))} over ${plural(followed.length, "trade")}.`);
+  const bestSess = sessions.find(g => g.pnl > 0 && big(g.pnl)); if (bestSess) worked.push(`${N(esc(bestSess.name))} was your best session: ${N(money(bestSess.pnl))} (${rec(bestSess)}).`);
+  const bestPair = pairs.find(g => g.pnl > 0 && big(g.pnl)); if (bestPair) worked.push(`${N(esc(bestPair.name))} made ${N(money(bestPair.pnl))} from ${plural(bestPair.n, "trade")}.`);
+  const bestEmo = emos.find(g => g.pnl > 0 && g.n >= 2 && big(g.pnl)); if (bestEmo) worked.push(`Trades taken feeling ${N(esc(bestEmo.name.toLowerCase()))} returned ${N(money(bestEmo.pnl))} (${rec(bestEmo)}).`);
+  // From the notes: trades cut because the idea was invalid, or managed to breakeven, are good discipline.
+  // (Only ones closed for well under a full loss: a stopped-out loss isn't "cut early".)
+  const cut = list.filter(cutForInvalid);
+  if (cut.length) worked.push(`You closed ${plural(cut.length, "trade")} early because ${cut.length === 1 ? "it" : "they"} no longer looked valid (${cut.map(t => `${esc(t.pair)} ${money(t.pnl)}`).join(", ")}). Cutting a broken idea small is good discipline.`);
+  const toBe = tagged("breakeven"); if (toBe.length) worked.push(`You protected ${plural(toBe.length, "trade")} by moving the stop to breakeven.`);
+  if (followed.length && big(sum(followed.map(t => t.pnl))) && sum(followed.map(t => t.pnl)) > 0) worked.push(`Following your plan made ${N(money(sum(followed.map(t => t.pnl))))} over ${plural(followed.length, "trade")}.`);
 
-  losingSetups.forEach(g => cost.push(`${N(esc(g.name))} went ${rec(g)} for ${N(money(g.pnl))}.`));
-  const worstSess = sessions.filter(g => g.pnl < 0).pop(); if (worstSess) cost.push(`${N(esc(worstSess.name))} lost ${N(money(worstSess.pnl))} (${rec(worstSess)}).`);
-  const worstEmo = emos.filter(g => g.pnl < 0 && g.n >= 2).pop(); if (worstEmo) cost.push(`Trades taken feeling ${N(esc(worstEmo.name.toLowerCase()))}: ${rec(worstEmo)}, ${N(money(worstEmo.pnl))}.`);
+  losingSetups.filter(g => big(g.pnl)).forEach(g => cost.push(`${N(esc(g.name))} went ${rec(g)} for ${N(money(g.pnl))}.`));
+  const worstSess = sessions.filter(g => g.pnl < 0 && big(g.pnl)).pop(); if (worstSess) cost.push(`${N(esc(worstSess.name))} lost ${N(money(worstSess.pnl))} (${rec(worstSess)}).`);
+  const emoNotes = tagged("emotional"); if (emoNotes.length) cost.push(`Your notes mention revenge, FOMO, fear or impatience on ${plural(emoNotes.length, "trade")} (${N(money(sum(emoNotes.map(t => t.pnl))))}).`);
+  const newsNotes = tagged("news").filter(t => t.pnl < 0); if (newsNotes.length) cost.push(`News hit ${plural(newsNotes.length, "trade")} according to your notes (${N(money(sum(newsNotes.map(t => t.pnl))))}).`);
+  const worstEmo = emos.filter(g => g.pnl < 0 && g.n >= 2 && big(g.pnl)).pop(); if (worstEmo) cost.push(`Trades taken feeling ${N(esc(worstEmo.name.toLowerCase()))}: ${rec(worstEmo)}, ${N(money(worstEmo.pnl))}.`);
   if (broke.length) cost.push(`${plural(broke.length, "trade")} broke your plan, for ${N(money(sum(broke.map(t => t.pnl))))}.`);
   clusters.forEach(c => cost.push(`On ${fmtDate(c[0].date, { weekday: "short", day: "numeric", month: "short" })} you took ${N(esc(c[0].setup))} ${esc(c[0].direction.toLowerCase())} on ${c.length} pairs (${c.map(t => esc(t.pair)).join(", ")}) for ${N(money(sum(c.map(t => t.pnl))))}.`));
   if (topMistakes.length) cost.push(`Mistakes logged: ${topMistakes.slice(0, 3).map(([m, v]) => `${esc(m)} ×${v.n}`).join(", ")}.`);
@@ -3606,12 +3647,17 @@ function buildWeek(start) {
   if (worstSetup && focus.length < 3) focus.push(`Tighten ${esc(worstSetup.name)} entries: wait for confirmation before committing.`);
 
   const delta = st.total - prev.total;
+  const live = start === weekStartOf(isoDate(new Date())), so = live ? " so far" : "";
+  const size = sizeTxt(st.total), sized = size ? ` (${size})` : "";
+  const strong = unit ? st.total >= unit * 2 : st.total >= bal * 0.01;
+  const rough = unit ? st.total <= -unit * 2 : st.total <= -bal * 0.01;
   let verdict;
-  if (!list.length) verdict = { emoji: ico("calendar"), text: "No trades this week." };
-  else if (st.total > 0 && st.pf >= 1.5) verdict = { emoji: ico("up"), text: `Strong week. You finished ${N(money(st.total))} across ${plural(st.n, "trade")}${prevList.length ? `, ${delta >= 0 ? "up" : "down"} ${N(money(Math.abs(delta), { signed: false }))} on last week` : ""}.` };
-  else if (st.total > 0) verdict = { emoji: ico("up"), text: `Positive week: ${N(money(st.total))} from ${plural(st.n, "trade")}. Solid, with room to tighten up.` };
-  else if (st.total === 0) verdict = { emoji: ico("flat"), text: `Flat week across ${plural(st.n, "trade")}.` };
-  else verdict = { emoji: ico("down"), text: `Tough week: ${N(money(st.total))} across ${plural(st.n, "trade")}. The notes below show where it went.` };
+  if (!list.length) verdict = { emoji: ico("calendar"), text: live ? "No trades yet this week." : "No trades this week." };
+  else if (!big(st.total)) verdict = { emoji: ico("flat"), text: `Breakeven week${so}: ${N(money(st.total))} from ${plural(st.n, "trade")}${sized}.${cut.length ? ` ${cut.length === 1 ? "One trade was" : `${cut.length} trades were`} closed early as invalid, which kept it that way.` : " Nothing won or lost to speak of yet."}` };
+  else if (st.total > 0 && strong && st.pf >= 1.5 && st.n >= 2) verdict = { emoji: ico("up"), text: `Strong week${so}: ${N(money(st.total))}${sized} across ${plural(st.n, "trade")}${prevList.length ? `, ${delta >= 0 ? "up" : "down"} ${N(money(Math.abs(delta), { signed: false }))} on last week` : ""}.` };
+  else if (st.total > 0) verdict = { emoji: ico("up"), text: `Small green week${so}: ${N(money(st.total))}${sized} from ${plural(st.n, "trade")}. Positive, but not much in it yet.` };
+  else if (rough) verdict = { emoji: ico("down"), text: `Tough week${so}: ${N(money(st.total))}${sized} across ${plural(st.n, "trade")}. The notes below show where it went.` };
+  else verdict = { emoji: ico("down"), text: `Small red week${so}: ${N(money(st.total))}${sized} from ${plural(st.n, "trade")}. A normal dip, well within one good trade.` };
 
   const days = Array.from({ length: 7 }, (_, i) => { const d = addDays(start, i); const ts = list.filter(t => t.date === d); return { d, n: ts.length, pnl: sum(ts.map(t => t.pnl)) }; });
   return { start, end: addDays(start, 6), list, prevList, st, prev, followed, verdict, worked, cost, focus: focus.slice(0, 3), days };
@@ -3633,9 +3679,9 @@ function renderWeekly() {
   const tiles = [
     ["P&L", `<span class="${tone(st.total)}">${money(st.total)}</span>`, deltaTxt(st.total, prev.total, v => money(v, { signed: false }))],
     ["Trades", st.n, `${st.wins}W · ${st.losses}L${st.be ? " · " + st.be + "BE" : ""}`],
-    ["Win rate", `<span class="${st.winRate >= 0.5 ? "pos" : "neg"}">${pct(st.winRate, 0)}</span>`, deltaTxt(st.winRate * 100, prev.winRate * 100, v => v.toFixed(0) + " pts")],
+    ["Win rate", st.wins + st.losses ? `<span class="${st.winRate >= 0.5 ? "pos" : "neg"}">${pct(st.winRate, 0)}</span>` : `<span class="hl">—</span>`, deltaTxt(st.winRate * 100, prev.winRate * 100, v => v.toFixed(0) + " pts")],
     ["Avg R", `<span class="${tone(st.avgR)}">${fmtR(st.avgR)}</span>`, `Expectancy ${money(st.expectancy, { decimals: 0 })}`],
-    ["Profit factor", `<span class="hl">${st.pf === Infinity ? "∞" : st.pf.toFixed(2)}</span>`, `Payoff ${st.payoff == null ? "—" : st.payoff.toFixed(2)} : 1`],
+    ["Profit factor", `<span class="hl">${!(st.wins + st.losses) ? "—" : st.pf === Infinity ? "∞" : st.pf.toFixed(2)}</span>`, `Payoff ${st.payoff == null ? "—" : st.payoff.toFixed(2)} : 1`],
     ["Plan followed", `<span class="hl">${pct(adherence, 0)}</span>`, `${w.followed.length} of ${st.n} trades`]
   ];
   const maxAbs = Math.max(1, ...w.days.map(d => Math.abs(d.pnl)));
@@ -3674,9 +3720,13 @@ function renderInsights(list, st) {
   const sessions = group(list, "session");
   const pairs = group(list, "pair");
   const minN = list.length >= 20 ? 3 : 2;
+  // Results are judged against risk, so a few dollars doesn't make a setup "A+" or a session a "leak".
+  const risks = list.map(t => Number(t.risk)).filter(x => x > 0);
+  const unit = risks.length ? sum(risks) / risks.length : Number(settings.defaultRisk) || 0;
+  const minMove = Math.max(unit * 0.5, startingBalance(ui.account) * 0.001, 0.01);
 
-  // Setups with 0% win rate → cut.
-  setups.filter(s => s.n >= minN && s.wins === 0).sort((a, b) => a.pnl - b.pnl).forEach(s => out.push({
+  // Setups with 0% win rate → cut (actual losses, not just scratches).
+  setups.filter(s => s.n >= minN && s.wins === 0 && s.losses >= minN && s.pnl <= -minMove).sort((a, b) => a.pnl - b.pnl).forEach(s => out.push({
     icon: ico("ban"), tone: "bad", tag: "Cut",
     title: `Stop trading “${s.name}”`,
     text: `${N(s.n)} trades, ${N("0")} wins. This setup has cost ${N(money(s.pnl))} (${N(fmtR(s.avgR))} average).`,
@@ -3692,7 +3742,7 @@ function renderInsights(list, st) {
   }));
 
   // Best setup → double down.
-  const bestSetup = setups.filter(s => s.n >= minN && s.pnl > 0).sort((a, b) => b.pnl - a.pnl)[0];
+  const bestSetup = setups.filter(s => s.n >= minN && s.pnl >= Math.max(minMove, unit)).sort((a, b) => b.pnl - a.pnl)[0];
   if (bestSetup) {
     const share = st.total > 0 ? bestSetup.pnl / st.total : null;
     out.push({
@@ -3706,7 +3756,7 @@ function renderInsights(list, st) {
   // Sessions.
   const sortedSess = sessions.slice().sort((a, b) => b.pnl - a.pnl);
   const worstSess = sortedSess.filter(s => s.pnl < 0 && s.n >= minN).pop();
-  const bestSess = sortedSess.find(s => s.pnl > 0 && s.n >= minN);
+  const bestSess = sortedSess.find(s => s.pnl >= minMove && s.n >= minN);
   if (worstSess) out.push({
     icon: ico("moon"), tone: "bad", tag: "Session leak",
     title: `You're losing money in ${worstSess.name}`,
@@ -3795,6 +3845,33 @@ function renderInsights(list, st) {
     title: `Losing streaks of up to ${st.longestLoss} trades`,
     text: `Your longest losing streak is ${N(st.longestLoss)} trades, against a longest winning streak of ${N(st.longestWin)}.`,
     action: `Set a daily stop: after 2 consecutive losses, stop trading for the day.`
+  });
+
+  // What the notes say.
+  const tagged = k => list.filter(t => noteTags(t).includes(k));
+  const emo = tagged("emotional");
+  if (emo.length >= 2) out.push({
+    icon: ico("pulse"), tone: sum(emo.map(t => t.pnl)) < 0 ? "bad" : "warn", tag: "From your notes",
+    title: "Emotion shows up in your notes",
+    text: `${N(emo.length)} trades mention revenge, FOMO, fear, impatience or overtrading. Together they returned ${N(money(sum(emo.map(t => t.pnl))))}.`,
+    action: "When you catch yourself writing one of those words, that's the day to stop after the current trade."
+  });
+  const cutEarly = list.filter(cutForInvalid);
+  if (cutEarly.length >= 2) {
+    const c = sum(cutEarly.map(t => t.pnl));
+    out.push({
+      icon: ico("shield"), tone: "good", tag: "From your notes",
+      title: "You cut invalid trades early",
+      text: `${N(cutEarly.length)} trades were closed early because the idea stopped being valid, for ${N(money(c))} in total${unit ? ` (${N(fmtR(c / unit))})` : ""}. That's losses you didn't take.`,
+      action: "Keep doing it. Write down what made each one invalid; those are your filters for next time."
+    });
+  }
+  const newsHit = tagged("news").filter(t => resultOf(t) === "Loss");
+  if (newsHit.length >= 2) out.push({
+    icon: ico("warn"), tone: "warn", tag: "From your notes",
+    title: "News keeps catching you",
+    text: `${N(newsHit.length)} losing trades mention news in the notes, for ${N(money(sum(newsHit.map(t => t.pnl))))}.`,
+    action: "Check the News tab before entering and stay flat 15–30 minutes either side of red-folder events."
   });
 
   if (!out.length) out.push({ icon: ico("pen"), tone: "info", tag: "Keep logging", title: "Not enough data yet", text: `Insights appear once you have at least ${N(minN)} trades per setup, session or pair.`, action: "Keep journaling every trade, including the boring ones." });
@@ -5098,7 +5175,7 @@ function manageRow(a) {
 }
 // Live, demo, and prop accounts without known firm rules: balance, P&L, trades, win rate.
 function plainCard(a) {
-  const n = realTrades.filter(t => t.account === a.id && !isOpen(t)), p = sum(n.map(t => Number(t.pnl) || 0)), w = n.filter(t => t.pnl > 0).length;
+  const n = realTrades.filter(t => t.account === a.id && !isOpen(t)), p = sum(n.map(t => Number(t.pnl) || 0)), w = n.filter(t => resultOf(t) === "Win").length;
   const meta = [a.type === "Prop firm" ? [a.firm, a.phase].filter(Boolean).join(" · ") : a.broker, a.platform, Number(a.size) > 0 ? money(Number(a.size), { signed: false, decimals: 0 }) : ""].filter(Boolean).join(" · ");
   return `<article class="card acct-card">
     <div class="pc-head">${badgeFor(a)}<div class="pc-name"><b>${esc(acctLabel(a))}${a.id === defaultAccount() ? `<span class="active-tag">Active</span>` : ""}</b><small>${esc(meta)}</small></div></div>

@@ -15,6 +15,7 @@ import datetime as dt
 import html
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -83,12 +84,50 @@ def num(v):
         return 0.0
 
 
+# Same rules as the app: a result under a tenth of the trade's risk (or the default risk; with neither,
+# under 0.02% of the account) is a scratch, counted as breakeven rather than a win or a loss.
+CTX = {"risk": 0.0, "sizes": {}}
+
+
+def scratch_size(t):
+    risk = num(t.get("risk")) if num(t.get("risk")) > 0 else CTX["risk"]
+    return risk * 0.1 if risk > 0 else CTX["sizes"].get(t.get("account"), 0.0) * 0.0002
+
+
+def result(t):
+    p = num(t.get("pnl"))
+    return "BE" if abs(p) < scratch_size(t) else "Win" if p > 0 else "Loss"
+
+
+NOTE_TAGS = {
+    "invalid": re.compile(r"\b(invalid(ated)?|no longer valid|setup (was )?(broke|broken|failed)|thesis (was )?wrong|structure (broke|shifted)|didn'?t (play|work) out)\b", re.I),
+    "early": re.compile(r"\b(clos(ed|ing)|cut|exit(ed)?|took (it )?off|got out)\b[^.]{0,20}\b(early|before (tp|target))\b|\bmanual(ly)? clos|\bscratch(ed)?\b", re.I),
+    "breakeven": re.compile(r"\b(moved|move|put)\b[^.]{0,12}\b(sl|stop|stop loss)\b[^.]{0,8}\b(to )?(be|break ?even)\b|\bstopped (out )?at (be|break ?even)\b", re.I),
+    "news": re.compile(r"\b(news|nfp|cpi|fomc|rate decision|powell)\b", re.I),
+    "emotional": re.compile(r"\b(revenge|fomo|tilt(ed)?|greed(y)?|scared|fear(ful)?|impatien(t|ce)|bored|overtrad(e|ed|ing)|chas(e|ed|ing))\b", re.I),
+}
+
+
+def note_tags(t):
+    text = f"{t.get('notes') or ''} {t.get('mistakes') or ''}"
+    return [k for k, rx in NOTE_TAGS.items() if rx.search(text)]
+
+
+def cut_for_invalid(t):
+    tags, v = note_tags(t), num(t.get("pnl"))
+    risk = num(t.get("risk")) if num(t.get("risk")) > 0 else scratch_size(t) * 10
+    return ("invalid" in tags or ("early" in tags and result(t) == "BE")) and -0.6 * risk < v < 0.5 * risk
+
+
 def stats(ts):
     pn = [num(t.get("pnl")) for t in ts]
-    wins, losses = [p for p in pn if p > 0], [p for p in pn if p < 0]
+    res = [result(t) for t in ts]
+    wins = [p for p, r in zip(pn, res) if r == "Win"]
+    losses = [p for p, r in zip(pn, res) if r == "Loss"]
     run = longest = 0
-    for p in pn:
-        run = run + 1 if p < 0 else 0
+    for r in res:
+        if r == "BE": continue
+        run = run + 1 if r == "Loss" else 0
         longest = max(longest, run)
     gross_loss = -sum(losses)
     return {"n": len(ts), "wins": len(wins), "losses": len(losses), "total": sum(pn),
@@ -103,11 +142,14 @@ def group(ts, key):
     out = []
     for name, items in g.items():
         s = stats(items)
-        out.append({"name": name, "n": s["n"], "wins": s["wins"], "losses": s["losses"], "pnl": s["total"]})
+        out.append({"name": name, "n": s["n"], "wins": s["wins"], "losses": s["losses"], "be": s["n"] - s["wins"] - s["losses"], "pnl": s["total"]})
     return sorted(out, key=lambda x: -x["pnl"])
 
 
-def build_week(trades, start, cur):
+def build_week(trades, start, cur, settings=None):
+    settings = settings or {}
+    CTX["risk"] = num(settings.get("defaultRisk"))
+    CTX["sizes"] = {a.get("id"): num(a.get("size")) for a in settings.get("accounts") or []}
     end = start + dt.timedelta(days=6)
     iso = lambda d: d.isoformat()
     in_week = lambda s, e: sorted([t for t in trades if iso(s) <= str(t.get("date", "")) <= iso(e)], key=lambda t: (t.get("date", ""), t.get("time") or ""))
@@ -117,7 +159,17 @@ def build_week(trades, start, cur):
     def money(v, signed=True):
         s = f"{cur}{abs(v):,.2f}"
         return (("+" if v > 0 else "−" if v < 0 else "") + s) if signed else s
-    rec = lambda g: f"{g['wins']}W–{g['losses']}L"
+    rec = lambda g: f"{g['wins']}W–{g['losses']}L" + (f"–{g['be']}BE" if g.get("be") else "")
+    # Size results against risk and the account, so a few dollars isn't called a good or bad week.
+    risks = [num(t.get("risk")) for t in week if num(t.get("risk")) > 0]
+    unit = sum(risks) / len(risks) if risks else CTX["risk"]
+    bal = max([CTX["sizes"].get(t.get("account"), 0.0) for t in week] + [0.0])
+    min_move = max(unit * 0.25, bal * 0.0005, 0.01)
+    big = lambda v: abs(v) >= min_move
+    def size_txt(v):
+        sign = "+" if v >= 0 else "−"
+        return f"{sign}{abs(v / unit):.1f}R" if unit else f"{sign}{abs(v / bal * 100):.2f}%" if bal else ""
+    tagged = lambda k: [t for t in week if k in note_tags(t)]
     b = lambda x: f"<b>{html.escape(str(x))}</b>"
     plural = lambda n, w: f"{n} {w}{'' if n == 1 else 's'}"
 
@@ -134,22 +186,30 @@ def build_week(trades, start, cur):
     top_mistakes = sorted(mistakes.items(), key=lambda kv: (-kv[1][0], kv[1][1]))
 
     worked, cost, focus = [], [], []
-    losing = sorted([g for g in setups if g["pnl"] < 0], key=lambda g: (-(g["n"] >= 2), g["pnl"]))[:2]
-    best_setup = next((g for g in setups if g["pnl"] > 0), None)
+    losing = [g for g in sorted([g for g in setups if g["pnl"] < 0], key=lambda g: (-(g["n"] >= 2), g["pnl"]))[:2] if big(g["pnl"])]
+    best_setup = next((g for g in setups if g["pnl"] > 0 and big(g["pnl"])), None)
     if best_setup: worked.append(f"{b(best_setup['name'])} went {rec(best_setup)} for {b(money(best_setup['pnl']))}.")
-    bs = next((g for g in sessions if g["pnl"] > 0), None)
+    bs = next((g for g in sessions if g["pnl"] > 0 and big(g["pnl"])), None)
     if bs: worked.append(f"{b(bs['name'])} was your best session: {b(money(bs['pnl']))} ({rec(bs)}).")
-    bp = next((g for g in pairs if g["pnl"] > 0), None)
+    bp = next((g for g in pairs if g["pnl"] > 0 and big(g["pnl"])), None)
     if bp: worked.append(f"{b(bp['name'])} made {b(money(bp['pnl']))} from {plural(bp['n'], 'trade')}.")
-    be = next((g for g in emos if g["pnl"] > 0 and g["n"] >= 2), None)
+    be = next((g for g in emos if g["pnl"] > 0 and g["n"] >= 2 and big(g["pnl"])), None)
     if be: worked.append(f"Trades taken feeling {b(be['name'].lower())} returned {b(money(be['pnl']))} ({rec(be)}).")
     fp = sum(num(t.get("pnl")) for t in followed)
-    if followed and fp > 0: worked.append(f"Following your plan made {b(money(fp))} over {plural(len(followed), 'trade')}.")
+    cut = [t for t in week if cut_for_invalid(t)]
+    if cut: worked.append(f"You closed {plural(len(cut), 'trade')} early because {'it' if len(cut) == 1 else 'they'} no longer looked valid ({', '.join(html.escape(str(t.get('pair') or '')) + ' ' + money(num(t.get('pnl'))) for t in cut)}). Cutting a broken idea small is good discipline.")
+    to_be = tagged("breakeven")
+    if to_be: worked.append(f"You protected {plural(len(to_be), 'trade')} by moving the stop to breakeven.")
+    if followed and fp > 0 and big(fp): worked.append(f"Following your plan made {b(money(fp))} over {plural(len(followed), 'trade')}.")
 
     for g in losing: cost.append(f"{b(g['name'])} went {rec(g)} for {b(money(g['pnl']))}.")
-    ws = ([g for g in sessions if g["pnl"] < 0] or [None])[-1]
+    ws = ([g for g in sessions if g["pnl"] < 0 and big(g["pnl"])] or [None])[-1]
     if ws: cost.append(f"{b(ws['name'])} lost {b(money(ws['pnl']))} ({rec(ws)}).")
-    we = ([g for g in emos if g["pnl"] < 0 and g["n"] >= 2] or [None])[-1]
+    emo_notes = tagged("emotional")
+    if emo_notes: cost.append(f"Your notes mention revenge, FOMO, fear or impatience on {plural(len(emo_notes), 'trade')} ({b(money(sum(num(t.get('pnl')) for t in emo_notes)))}).")
+    news_notes = [t for t in tagged("news") if num(t.get("pnl")) < 0]
+    if news_notes: cost.append(f"News hit {plural(len(news_notes), 'trade')} according to your notes ({b(money(sum(num(t.get('pnl')) for t in news_notes)))}).")
+    we = ([g for g in emos if g["pnl"] < 0 and g["n"] >= 2 and big(g["pnl"])] or [None])[-1]
     if we: cost.append(f"Trades taken feeling {b(we['name'].lower())}: {rec(we)}, {b(money(we['pnl']))}.")
     if broke: cost.append(f"{plural(len(broke), 'trade')} broke your plan, for {b(money(sum(num(t.get('pnl')) for t in broke)))}.")
     if top_mistakes: cost.append("Mistakes logged: " + ", ".join(f"{html.escape(m)} ×{v[0]}" for m, v in top_mistakes[:3]) + ".")
@@ -163,19 +223,26 @@ def build_week(trades, start, cur):
     if losing and len(focus) < 3: focus.append(f"Tighten {html.escape(losing[0]['name'])} entries: wait for confirmation before committing.")
 
     delta = st["total"] - pv["total"]
+    size = size_txt(st["total"]) if week else ""
+    sized = f" ({size})" if size else ""
+    strong = st["total"] >= unit * 2 if unit else st["total"] >= bal * 0.01
+    rough = st["total"] <= -unit * 2 if unit else st["total"] <= -bal * 0.01
     if not week: verdict = "No trades logged this week."
-    elif st["total"] > 0 and st["pf"] >= 1.5:
-        verdict = f"Strong week. You finished {b(money(st['total']))} across {plural(st['n'], 'trade')}" + (f", {'up' if delta >= 0 else 'down'} {b(money(abs(delta), False))} on last week." if prev else ".")
-    elif st["total"] > 0: verdict = f"Positive week: {b(money(st['total']))} from {plural(st['n'], 'trade')}. Solid, with room to tighten up."
-    elif st["total"] == 0: verdict = f"Flat week across {plural(st['n'], 'trade')}."
-    else: verdict = f"Tough week: {b(money(st['total']))} across {plural(st['n'], 'trade')}. The notes below show where it went."
+    elif not big(st["total"]):
+        verdict = f"Breakeven week: {b(money(st['total']))} from {plural(st['n'], 'trade')}{sized}." + (
+            f" {'One trade was' if len(cut) == 1 else f'{len(cut)} trades were'} closed early as invalid, which kept it that way." if cut else " Nothing won or lost to speak of.")
+    elif st["total"] > 0 and strong and st["pf"] >= 1.5 and st["n"] >= 2:
+        verdict = f"Strong week: {b(money(st['total']))}{sized} across {plural(st['n'], 'trade')}" + (f", {'up' if delta >= 0 else 'down'} {b(money(abs(delta), False))} on last week." if prev else ".")
+    elif st["total"] > 0: verdict = f"Small green week: {b(money(st['total']))}{sized} from {plural(st['n'], 'trade')}. Positive, but not much in it."
+    elif rough: verdict = f"Tough week: {b(money(st['total']))}{sized} across {plural(st['n'], 'trade')}. The notes below show where it went."
+    else: verdict = f"Small red week: {b(money(st['total']))}{sized} from {plural(st['n'], 'trade')}. A normal dip, well within one good trade."
 
     days = []
     for i in range(7):
         d = start + dt.timedelta(days=i)
         ts = [t for t in week if t.get("date") == d.isoformat()]
         days.append((d, len(ts), sum(num(t.get("pnl")) for t in ts)))
-    pf = "∞" if st["pf"] == float("inf") else f"{st['pf']:.2f}"
+    pf = "—" if not (st["wins"] or st["losses"]) else "∞" if st["pf"] == float("inf") else f"{st['pf']:.2f}"
     return {"start": start, "end": end, "st": st, "prev": pv, "verdict": verdict, "worked": worked, "cost": cost,
             "focus": focus[:3], "days": days, "money": money, "pf": pf, "plan_rate": (len(followed) / len(week)) if week else 0}
 
@@ -208,7 +275,7 @@ def render(w, name, preview=False):
 <tr><td style="padding:22px 24px 4px"><div style="font-size:13px;color:#5d6d84">{rng}</div><div style="font-size:20px;font-weight:700;color:#0d1b2e;margin-top:4px">Hi {hello}, here's your week</div>
 <p style="font-size:15px;color:#33445c;line-height:1.5;margin:10px 0 0">{w['verdict']}</p></td></tr>
 <tr><td style="padding:16px 18px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="6"><tr>
-{kpi("P&amp;L", money(st['total']), col(st['total']))}{kpi("Trades", st['n'])}{kpi("Win rate", f"{st['win_rate']:.0%}")}{kpi("Profit factor", w['pf'])}
+{kpi("P&amp;L", money(st['total']), col(st['total']))}{kpi("Trades", st['n'])}{kpi("Win rate", f"{st['win_rate']:.0%}" if st['wins'] or st['losses'] else "—")}{kpi("Profit factor", w['pf'])}
 </tr></table></td></tr>
 <tr><td style="padding:16px 24px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="height:100px"><tr>{bars}</tr></table></td></tr>
 {section("What worked", "#13955a", lst(w['worked'], "Nothing stood out this week."))}
@@ -257,7 +324,7 @@ def main():
             if not u.get("email_confirmed_at"): continue
         elif not s.get("weeklyEmail") or not u.get("email_confirmed_at"):
             continue
-        w = build_week(trades.get(u["id"], []), start, s.get("currency") or "$")
+        w = build_week(trades.get(u["id"], []), start, s.get("currency") or "$", s)
         if not w["st"]["n"] and not ONLY and not PREVIEW_ALL:
             skipped += 1  # nothing logged this week: no email
             continue
