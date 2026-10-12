@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "d9ee9f80a5";</script>
+<script>window.ELEV8_BUILD = "e75199e676";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -5061,8 +5061,9 @@ F("tradeForm").addEventListener("submit", e => {
   toast(wasOpen && !isOpen(t) ? `Trade closed: ${t.pair} ${money(t.pnl)}` : isOpen(t) ? (editing ? `Open trade updated: ${t.pair}` : `Open trade saved: ${t.pair}. Close it from Open trades when it's done.`) : editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
   propWarn(t);
   resetForm(true);
-  if (editing) showTab("journal");
-  else window.scrollTo({ top: 0, behavior: calm() ? "auto" : "smooth" });
+  // Back to Overview after saving, editing or closing a trade.
+  showTab("overview");
+  window.scrollTo({ top: 0, behavior: "auto" });
 });
 // Closing an open trade: the form opens with "still open" off, scrolled to the result fields.
 function closeTrade(id) {
@@ -5153,6 +5154,8 @@ F("quickForm").addEventListener("submit", e => {
   toast(isOpen(t) ? `Open trade saved: ${t.pair}. Close it from Open trades when it's done.` : `Trade saved: ${t.pair} ${money(t.pnl)}`);
   propWarn(t);
   resetQuick();
+  // Fold the quick log away once the trade is in; "Show" opens it again.
+  ui.quickOpen = false; saveUi(); setQuickOpen(false);
   renderDashboard();
 });
 F("qMore").addEventListener("click", () => {
