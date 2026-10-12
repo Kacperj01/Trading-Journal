@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "77d5b16266";</script>
+<script>window.ELEV8_BUILD = "9d84321362";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -883,6 +883,8 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .open-list { display: grid; gap: 0; padding: 6px 18px; }
 .open-row-item { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; }
 .open-row-item + .open-row-item { border-top: 1px solid var(--border); }
+.open-row-item { cursor: pointer; }
+.open-row-item:hover .oi-main b { color: var(--accent); }
 .oi-main { flex: 1 1 260px; min-width: 0; display: grid; gap: 3px; }
 .oi-main b { font-size: 15px; font-weight: 600; }
 .oi-main span { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
@@ -2279,6 +2281,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <div id="tdBody"></div>
     <div class="dlg-actions">
       <button class="btn" type="button" id="tdEdit">Edit trade</button>
+      <button class="btn primary" type="button" id="tdCloseTrade" hidden>Close trade</button>
       <button class="btn primary" type="button" id="tdDone">Done</button>
     </div>
   </div>
@@ -2994,7 +2997,7 @@ function resultOf(t) { return isOpen(t) ? "Open" : t.pnl > 0 ? "Win" : t.pnl < 0
 function isOpen(t) { return !!t && t.status === "open"; }
 function rOf(t) {
   if (t.r != null && Number.isFinite(t.r)) return t.r;
-  if (t.risk) return t.pnl / t.risk;
+  if (t.risk && t.pnl != null && !isOpen(t)) return t.pnl / t.risk;
   return null;
 }
 
@@ -4933,13 +4936,19 @@ function closeTrade(id) {
   setTimeout(() => F("tOpen").closest("fieldset").scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }), 80);
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-close]"); if (b) closeTrade(b.dataset.close); });
+F("openList").addEventListener("click", e => {
+  if (e.target.closest("[data-close]")) return;
+  const row = e.target.closest("[data-open-id]");
+  const t = row && trades.find(x => x.id === row.dataset.openId);
+  if (t) openTrade(t);
+});
 function renderOpen(list) {
   F("openPanel").hidden = !list.length;
   if (!list.length) return;
   F("openList").innerHTML = list.map(t => {
     const a = acctById(t.account);
     const bits = [t.entry != null ? "Entry " + t.entry : "", t.stop != null ? "SL " + t.stop : "", t.target != null ? "TP " + t.target : "", t.size != null ? t.size + " lots" : "", t.risk ? "Risk " + money(t.risk, { signed: false, decimals: 0 }) : ""].filter(Boolean);
-    return `<div class="open-row-item">
+    return `<div class="open-row-item" data-open-id="${esc(t.id)}">
       <div class="oi-main"><b>${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></b>
         <span>${esc([fmtDate(t.date) + (t.time ? " " + t.time : ""), t.setup, t.session, a ? acctLabel(a) : ""].filter(Boolean).join(" · "))}</span>
         ${bits.length ? `<span class="mono oi-bits">${esc(bits.join(" · "))}</span>` : ""}</div>
@@ -5030,6 +5039,8 @@ let viewing = null;
 function openTrade(t) {
   viewing = t;
   const r = rOf(t), res = resultOf(t);
+  F("tdCloseTrade").hidden = !isOpen(t);
+  F("tdDone").hidden = isOpen(t);
   F("tdTitle").innerHTML = `${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span>${isOpen(t) ? ` <span class="badge open">Open</span>` : ""}`;
   F("tdSub").textContent = [fmtDate(t.date) + (t.time ? " " + t.time : ""), t.session, t.setup].filter(Boolean).join(" · ");
   const item = (label, value, cls = "") => value === "" || value == null ? "" : `<div class="td-item"><span>${label}</span><b class="${cls}">${value}</b></div>`;
@@ -6326,8 +6337,9 @@ F("weekStrip").addEventListener("click", () => { wkStart = latestWeek(); showTab
 F("tdDone").addEventListener("click", () => F("tradeDlg").close());
 F("tdEdit").addEventListener("click", () => {
   F("tradeDlg").close();
-  if (viewing) { showTab("log"); loadIntoForm(viewing); F("tDate").focus(); }
+  if (viewing) { showTab("log"); loadIntoForm(viewing); }
 });
+F("tdCloseTrade").addEventListener("click", () => { F("tradeDlg").close(); if (viewing) closeTrade(viewing.id); });
 
 F("formErrors").addEventListener("click", e => {
   const a = e.target.closest("a[href^='#']");
