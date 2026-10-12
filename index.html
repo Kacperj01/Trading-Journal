@@ -980,6 +980,38 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .week-strip .ws-r { color: var(--accent); font-size: 13.5px; font-weight: 500; }
 
 /* Before / after charts */
+.td-head-btns { display: flex; gap: 6px; align-items: center; }
+.td-head-btns .btn .ni, #wkShare .ni, #shareGo .ni, #shareDownload .ni { width: 16px; height: 16px; }
+#wkShare, #tdShare { display: inline-flex; gap: 6px; align-items: center; }
+.share-dlg { width: min(560px, calc(100vw - 24px)); }
+.share-preview { display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); padding: 12px; min-height: 200px; }
+.share-preview img { display: block; width: 100%; max-width: 380px; height: auto; border-radius: 10px; box-shadow: var(--shadow); }
+.share-preview img:not([src]) { display: none; }
+.share-opts { display: grid; gap: 8px; margin: 14px 0 4px; font-size: 14px; color: var(--text-2); }
+.share-opts .check-row { display: flex; gap: 10px; align-items: center; cursor: pointer; }
+.share-opts input { width: 18px; height: 18px; accent-color: var(--accent); }
+@media (max-width: 560px) { #wkShare span, #tdShare span { display: none; } }
+.tour { position: fixed; inset: 0; z-index: 2000; }
+.tour-hole { position: fixed; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(2, 8, 16, .72), 0 0 0 2px var(--accent), 0 0 30px 4px rgba(47,208,200,.35); transition: all .25s ease; pointer-events: none; }
+.tour-hole.none { width: 0 !important; height: 0 !important; left: 50% !important; top: 40% !important; box-shadow: 0 0 0 9999px rgba(2, 8, 16, .72); }
+.tour-tip { position: fixed; width: min(360px, calc(100vw - 32px)); padding: 20px 20px 16px; border-radius: var(--radius); background: var(--bg-2); border: 1px solid var(--border-strong); box-shadow: var(--shadow); transition: top .25s ease, left .25s ease; }
+.tour-tip h3 { margin: 4px 0 6px; font-size: 19px; }
+.tour-tip p { margin: 0 0 16px; color: var(--text-2); font-size: 14.5px; line-height: 1.5; }
+.tour-step { font-size: 11.5px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent); }
+.tour-btns { display: flex; gap: 8px; align-items: center; }
+.tour-btns span { flex: 1; }
+:root.light-mode .tour-tip { background: #fff; }
+.demo-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin: 0 0 18px; padding: 14px 18px; border-radius: var(--radius-sm);
+  background: linear-gradient(120deg, rgba(42,127,217,.16), rgba(47,208,200,.12)); border: 1px solid rgba(47,208,200,.32); position: relative; z-index: 2; }
+.demo-bar .demo-txt { display: grid; gap: 2px; }
+.demo-bar .demo-txt b { color: var(--accent); font-size: 14px; letter-spacing: .5px; text-transform: uppercase; }
+.demo-bar .demo-txt span { color: var(--text-2); font-size: 14px; }
+.demo-bar .demo-btns, .welcome-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.welcome-card { position: relative; margin-top: 22px; }
+.welcome-card h3 { margin: 0 0 6px; }
+.welcome-card p { margin: 0 0 16px; color: var(--text-2); max-width: 620px; }
+.welcome-x { position: absolute; top: 12px; right: 12px; }
+.home-demo { display: block; margin: 14px auto 0; text-align: center; }
 .chart-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .chart-pair:empty { display: none; }
 #chartPreview { margin: -8px 0 22px; }
@@ -1387,6 +1419,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <div class="glow blue" style="top:1500px;right:10%" aria-hidden="true"></div>
     <div class="glow green" style="top:2300px;left:-120px" aria-hidden="true"></div>
 
+    <div id="demoBar" class="demo-bar" hidden>
+      <div class="demo-txt"><b>Demo journal</b><span>Sample trades to explore. Nothing here is saved.</span></div>
+      <div class="demo-btns"><button class="btn sm ghost" type="button" data-tour-start>Take the tour</button><a class="btn sm primary" id="demoExit" href="./">Start your own journal</a></div>
+    </div>
+
     <!-- =================== SHARED ANALYTICS HEADER =================== -->
     <div id="analyticsHeader">
       <div class="toolbar reveal" style="--d:0">
@@ -1397,6 +1434,12 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <button class="filter-btn" type="button" id="filterBtn" aria-expanded="false" aria-controls="filterPanel" aria-haspopup="dialog"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M7 12h10M10 17.5h4"/></svg><span>Filters</span><span class="filter-badge" id="filterBadge" hidden></span></button>
       </div>
 
+      <div id="welcomeCard" class="card welcome-card reveal" style="--d:1" hidden>
+        <button class="btn sm ghost welcome-x" type="button" id="welcomeX" aria-label="Dismiss">✕</button>
+        <h3>Welcome to ELEV8</h3>
+        <p>New here? Take the one-minute tour, or open a demo journal full of sample trades to see what ELEV8 shows you.</p>
+        <div class="welcome-btns"><button class="btn primary" type="button" data-tour-start>Take the tour</button><a class="btn" href="./?demo">Explore a demo journal</a></div>
+      </div>
       <div id="dashEmpty" class="card empty reveal" style="--d:1; margin-top:22px" hidden>
         <h3>No trades in this view</h3>
         <p id="dashEmptyText">Log your first trade to start seeing analytics.</p>
@@ -1577,6 +1620,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="sub" id="wkRange" aria-live="polite"></div>
           </div>
           <div class="cal-nav">
+            <button class="btn sm ghost" type="button" id="wkShare" aria-label="Share this week"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 11.5v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span>Share</span></button>
             <button class="btn sm ghost" type="button" id="wkPrev" aria-label="Previous week">‹</button>
             <button class="btn sm ghost" type="button" id="wkNext" aria-label="Next week">›</button>
           </div>
@@ -1979,6 +2023,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <label><input type="radio" name="themeMode" value="light"> <svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>Light</label>
           </div>
         </section>
+        <section class="card accent-blue set-narrow" aria-labelledby="helpTitle" style="margin-bottom:14px">
+          <div class="card-head"><div><h3 id="helpTitle">Getting started</h3><div class="sub">A quick walk through the app, or a journal full of sample trades</div></div></div>
+          <div class="welcome-btns"><button class="btn" type="button" data-tour-start>Take the tour</button><a class="btn ghost" href="./?demo" target="_blank" rel="noopener">Open the demo journal</a></div>
+        </section>
         <form id="acctForm" class="set-narrow stack">
           <section class="card accent-blue" aria-labelledby="acctTitle">
             <div class="card-head"><div><h3 id="acctTitle">Balance &amp; risk</h3><div class="sub">Pick the account you're trading from the sidebar or the Accounts page</div></div></div>
@@ -2076,6 +2124,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <p id="dlgMsg" role="status" aria-live="polite"></p>
       <button class="btn primary" type="submit" id="dlgSubmit">Sign in</button>
       <button class="btn" type="button" id="dlgSignUp">Create account</button>
+      <a class="link-btn home-demo" href="./?demo">Not ready yet? Explore a demo journal →</a>
     </form>
     <ul class="home-points">
       <li><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Log every trade with session, setup and emotions</li>
@@ -2289,11 +2338,39 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </form>
 </dialog>
 
+<div id="tour" class="tour" hidden>
+  <div class="tour-hole" id="tourHole"></div>
+  <div class="tour-tip" id="tourTip" role="dialog" aria-modal="false" aria-labelledby="tourTitle">
+    <div class="tour-step" id="tourStep"></div>
+    <h3 id="tourTitle"></h3>
+    <p id="tourText"></p>
+    <div class="tour-btns"><button class="btn sm ghost" type="button" id="tourSkip">Skip</button><span></span><button class="btn sm" type="button" id="tourBack">Back</button><button class="btn sm primary" type="button" id="tourNext">Next</button></div>
+  </div>
+</div>
+
+<dialog id="shareDlg" class="rules-dlg share-dlg" aria-labelledby="shareTitle">
+  <div class="dlg-body">
+    <div class="td-head">
+      <div><h3 id="shareTitle">Share</h3><div class="sub">A branded card for Instagram, Discord or anywhere else</div></div>
+      <button class="btn sm ghost" type="button" id="shareClose" aria-label="Close">✕</button>
+    </div>
+    <div class="share-preview"><img id="shareImg" alt="Share card preview"><p class="muted" id="shareWait">Drawing your card…</p></div>
+    <div class="share-opts">
+      <label class="check-row"><input type="checkbox" id="shareMoney"> Show amounts in money (otherwise R and % only)</label>
+      <label class="check-row" id="shareChartWrap"><input type="checkbox" id="shareChart" checked> Include the chart screenshot</label>
+    </div>
+    <div class="dlg-actions">
+      <a class="btn" id="shareDownload" download="elev8-share.png"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11.5M7 10l5 5 5-5M4.5 20.5h15"/></svg>Download</a>
+      <button class="btn primary" type="button" id="shareGo"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 11.5v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="tradeDlg" class="trade-dlg" aria-labelledby="tdTitle">
   <div class="dlg-body">
     <div class="td-head">
       <div><h3 id="tdTitle"></h3><div class="sub" id="tdSub"></div></div>
-      <button class="btn sm ghost" type="button" id="tdClose" aria-label="Close">✕</button>
+      <div class="td-head-btns"><button class="btn sm ghost" type="button" id="tdShare" aria-label="Share this trade"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3.5M7.5 8L12 3.5 16.5 8"/><path d="M5 11.5v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span>Share</span></button><button class="btn sm ghost" type="button" id="tdClose" aria-label="Close">✕</button></div>
     </div>
     <div id="tdBody"></div>
     <div class="dlg-actions">
@@ -2353,9 +2430,17 @@ const KEY_UI = "tj.ui.v1";
 const KEY_CACHE = "tj.cloudcache.v1"; // last synced trades, shown instantly on open (this device only)
 const KEY_DRAFT = "tj.draft.v1";      // an unsaved trade form
 
-const store = {
+// Demo journal (?demo): sample data held in memory only. No sign-in, no sync, nothing saved on the device.
+const DEMO = (() => { try { return new URLSearchParams(location.search).has("demo"); } catch (e) { return false; } })();
+const memStore = new Map();
+const store = DEMO ? {
+  get(k, d) { return memStore.has(k) ? JSON.parse(memStore.get(k)) : d; },
+  set(k, v) { memStore.set(k, JSON.stringify(v)); return true; },
+  del(k) { memStore.delete(k); }
+} : {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* storage unavailable */ } }
 };
 
 // Line icons (same style as the sidebar), drawn inline: ico("warn").
@@ -2407,8 +2492,47 @@ const DEFAULT_SETTINGS = {
   weeklyEmail: false // email me my weekly review (sent Sundays by the weekly-review GitHub Action)
 };
 
+// A believable journal for the demo: five weeks of trades on a $100K challenge, dated up to today.
+function demoJournal() {
+  let seed = 8; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
+  const z = n => String(n).padStart(2, "0"), iso = d => d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
+  const challenge = { id: "demo-challenge", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "Challenge", size: 100000, broker: "", platform: "MetaTrader 5", name: "100K Challenge" };
+  const funded = { id: "demo-funded", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "Funded", size: 50000, broker: "", platform: "MetaTrader 5", name: "Funded 50K", startDate: "",
+    payouts: [] };
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const start = new Date(today); start.setDate(start.getDate() - 34);
+  challenge.startDate = iso(start);
+  [[-120, 1840], [-85, 2615], [-50, 3120]].forEach(([d, amt], i) => { const x = new Date(today); x.setDate(x.getDate() + d); funded.payouts.push({ id: "demo-pay" + i, date: iso(x), amount: amt, note: i ? "" : "First payout" }); });
+  const setups = { "Asia Sweep": [0.62, "London"], "PDH/PDL Sweep": [0.58, "London"], "Break & Retest": [0.52, "New York"], "Breakout": [0.36, "New York"] };
+  const pairs = ["GBPUSD", "EURUSD", "XAUUSD", "NAS100", "GBPJPY"];
+  const winNotes = ["Swept the Asia high, waited for the 15m close back inside and entered on the retest.", "Clean retest of the level, held to target.", "Took partials at 1R, runner hit TP.", "Patient entry after the sweep. Textbook."];
+  const lossNotes = ["Entered before the candle closed and got stopped.", "Setup was valid, just didn't work out.", "Chased it after missing the first entry. Revenge trade.", "Got caught by the CPI spike."];
+  const out = []; let n = 0;
+  for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+    if (d.getDay() === 0 || d.getDay() === 6) continue;
+    const count = rnd() < 0.25 ? 0 : rnd() < 0.7 ? 1 : 2;
+    for (let k = 0; k < count; k++) {
+      const setup = pick(Object.keys(setups)), [p, session] = setups[setup], win = rnd() < p;
+      const R = win ? Math.round((1.6 + rnd() * 1.3) * 100) / 100 : -1;
+      const mistake = win ? "" : pick(["", "Entered early", "No confirmation", "", "Moved stop loss"]);
+      out.push({ id: "demo" + (++n), date: iso(d), time: session === "London" ? pick(["08:05", "08:40", "09:15"]) : pick(["14:35", "15:10", "15:45"]),
+        pair: pick(pairs), session, direction: rnd() < 0.5 ? "Long" : "Short", setup, risk: 200, pnl: Math.round(R * 200 * 100) / 100,
+        emotionBefore: win ? pick(["Confident", "Confident", "Neutral"]) : pick(["FOMO", "Neutral", "Unsure", "Impatient"]),
+        emotionAfter: win ? pick(["Proud", "Satisfied"]) : pick(["Lesson learned", "Disappointed"]), confidence: win ? pick([3, 4, 5]) : pick([2, 3]),
+        notes: win ? pick(winNotes) : pick(lossNotes), mistakes: mistake, followedPlan: win || !mistake, account: challenge.id, chartBefore: "", chartAfter: "", screenshot: "" });
+    }
+  }
+  // One scratch closed early as invalid, and one trade still open today.
+  out.push({ id: "demo-scratch", date: iso(today), time: "08:20", pair: "EURUSD", session: "London", direction: "Short", setup: "Break & Retest", risk: 200, pnl: 4.6,
+    emotionBefore: "Neutral", emotionAfter: "Satisfied", confidence: 3, notes: "Closed early, the setup was invalidated when price reclaimed the level.", mistakes: "", followedPlan: true, account: challenge.id, chartBefore: "", chartAfter: "", screenshot: "" });
+  out.push({ id: "demo-open", date: iso(today), time: "14:40", pair: "XAUUSD", session: "New York", direction: "Long", setup: "PDH/PDL Sweep", risk: 200, pnl: null, status: "open",
+    emotionBefore: "Confident", emotionAfter: "", confidence: 4, notes: "Previous day low swept, long on the reclaim.", mistakes: "", followedPlan: true, account: challenge.id, chartBefore: "", chartAfter: "", screenshot: "" });
+  const s = Object.assign({}, DEFAULT_SETTINGS, { balance: 100000, defaultRisk: 200, accounts: [challenge, funded], lastAccount: challenge.id, emotionsSplit: true });
+  return { settings: s, trades: out };
+}
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
+if (DEMO) { const d = demoJournal(); settings = d.settings; realTrades = d.trades; store.set(KEY_SETTINGS, settings); store.set(KEY_TRADES, realTrades); }
 let trades = [];
 
 const ui = Object.assign({ quickOpen: false, tab: "overview", scrollY: 0, opened: false, range: "week", from: "", to: "", session: "", setup: "", account: "", setPane: "", newsImpact: "medium", newsCurs: null, sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
@@ -2495,7 +2619,7 @@ function saveSettings() {
    queued; the queue is sent in order, then the account's copy is fetched and merged,
    keeping any changes still waiting to be sent.
    ====================================================================== */
-const SB = (window.ELEV8_SUPABASE && window.ELEV8_SUPABASE.url && window.ELEV8_SUPABASE.key) ? window.ELEV8_SUPABASE : null;
+const SB = !DEMO && (window.ELEV8_SUPABASE && window.ELEV8_SUPABASE.url && window.ELEV8_SUPABASE.key) ? window.ELEV8_SUPABASE : null;
 const KEY_SB_SESSION = "tj.sb.session.v1";
 const KEY_SB_OUTBOX = "tj.sb.outbox.v1";
 const KEY_SB_USER = "tj.sb.user.v1"; // which account this device's trades were last merged with
@@ -2856,7 +2980,7 @@ document.getElementById("pwForm").addEventListener("submit", async e => {
 });
 
 async function connectCloud() {
-  if (!window.claude || typeof window.claude.use !== "function") { finishLoading("local"); return; }
+  if (DEMO || !window.claude || typeof window.claude.use !== "function") { finishLoading("local"); if (DEMO) setSync("local", "Demo journal · nothing is saved"); return; }
   try {
     const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
     const id = user ? await user.id() : null;
@@ -3262,6 +3386,7 @@ function renderDashboard() {
   $("#dashEmpty").hidden = !empty || (!hasAny && !persist.loading && currentTab() === "overview");
   $$(".needs-data").forEach(el => el.hidden = empty);
   const freshWeek = hasAny && ui.range === "week" && filterCount() === 0;
+  F("welcomeCard").hidden = DEMO || hasAny || persist.loading || !!ui.welcomeDone || currentTab() !== "overview";
   $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
   $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
@@ -4068,7 +4193,7 @@ function restoreDraft() {
   }
 }
 function resetForm(keepDate, keepDraft) {
-  if (!keepDraft) { try { localStorage.removeItem(KEY_DRAFT); } catch (e) { /* storage unavailable */ } }
+  if (!keepDraft) store.del(KEY_DRAFT);
   const d = F("tDate").value;
   $("#tradeForm").reset();
   F("tId").value = "";
@@ -4298,7 +4423,7 @@ const KEY_THEME = "tj.theme.v1";
 function applyTheme(mode, save) {
   const light = mode === "light";
   document.documentElement.classList.toggle("light-mode", light);
-  if (save) { try { localStorage.setItem(KEY_THEME, light ? "light" : "dark"); } catch (e) { /* storage unavailable */ } }
+  if (save && !DEMO) { try { localStorage.setItem(KEY_THEME, light ? "light" : "dark"); } catch (e) { /* storage unavailable */ } }
   $$("input[name=themeMode]").forEach(r => r.checked = r.value === (light ? "light" : "dark"));
   F("sideTheme").innerHTML = light ? `<svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span>Dark mode</span>` : `<svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg><span>Light mode</span>`;
   const meta = document.querySelector('meta[name="theme-color"]');
@@ -5197,6 +5322,7 @@ function openTrade(t) {
   viewing = t;
   const r = rOf(t), res = resultOf(t);
   F("tdCloseTrade").hidden = !isOpen(t);
+  F("tdShare").hidden = isOpen(t);
   F("tdDone").hidden = isOpen(t);
   F("tdTitle").innerHTML = `${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span>${isOpen(t) ? ` <span class="badge open">Open</span>` : ""}`;
   F("tdSub").textContent = [fmtDate(t.date) + (t.time ? " " + t.time : ""), t.session, t.setup].filter(Boolean).join(" · ");
@@ -5227,6 +5353,184 @@ function openTrade(t) {
   dlg.scrollTop = 0;
 }
 F("tdClose").addEventListener("click", () => F("tradeDlg").close());
+
+/* ---------- Share cards: a branded 1080×1350 image of a trade or a week ---------- */
+// Money is hidden unless switched on: R and % say how it went without showing account size.
+let shareJob = null, shareBlob = null;
+const CARD = { w: 1080, h: 1350, pad: 76, bg: "#06111f", text: "#e6eef8", text2: "#b0bfd3", muted: "#8394ad", green: "#34d27b", red: "#ff5c7a", teal: "#2fd0c8", line: "rgba(150,195,245,.16)" };
+function cardBase(ctx) {
+  const { w, h } = CARD;
+  ctx.fillStyle = CARD.bg; ctx.fillRect(0, 0, w, h);
+  const glow = (x, y, r, c) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, c); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); };
+  glow(120, 80, 620, "rgba(42,127,217,.40)"); glow(w - 80, h - 60, 600, "rgba(47,208,200,.26)");
+  ctx.strokeStyle = "rgba(150,195,245,.045)"; ctx.lineWidth = 1;
+  for (let x = 0; x <= w; x += 60) { ctx.beginPath(); ctx.moveTo(x + .5, 0); ctx.lineTo(x + .5, h); ctx.stroke(); }
+  for (let y = 0; y <= h; y += 60) { ctx.beginPath(); ctx.moveTo(0, y + .5); ctx.lineTo(w, y + .5); ctx.stroke(); }
+}
+const gradText = (ctx, x0, x1) => { const g = ctx.createLinearGradient(x0, 0, x1, 0); g.addColorStop(0, "#2a7fd9"); g.addColorStop(.55, "#1f9fcf"); g.addColorStop(1, "#2fd0c8"); return g; };
+function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); } }
+function panel(ctx, x, y, w, h, r = 26) {
+  rrect(ctx, x, y, w, h, r);
+  const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, "rgba(150,195,245,.085)"); g.addColorStop(1, "rgba(150,195,245,.03)");
+  ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = CARD.line; ctx.lineWidth = 1.5; ctx.stroke();
+}
+function spaced(ctx, text, x, y, spacing, align = "left") {
+  if ("letterSpacing" in ctx) { ctx.letterSpacing = spacing + "px"; ctx.textAlign = align; ctx.fillText(text, x, y); ctx.letterSpacing = "0px"; return; }
+  ctx.textAlign = "left"; const w = [...text].reduce((a, c) => a + ctx.measureText(c).width + spacing, -spacing);
+  let cx = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
+  for (const c of text) { ctx.fillText(c, cx, y); cx += ctx.measureText(c).width + spacing; }
+}
+function fitFont(ctx, text, weight, size, family, maxW) { let s = size; do { ctx.font = `${weight} ${s}px ${family}`; s -= 2; } while (ctx.measureText(text).width > maxW && s > 20); return s + 2; }
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+async function cardHeader(ctx, pill) {
+  const { pad, w } = CARD, logo = document.querySelector(".brand-logo");
+  try { if (logo) { const im = await loadImg(logo.src), lh = 74; ctx.drawImage(im, pad, 66, im.width * lh / im.height, lh); } } catch (e) { /* draw without the mark */ }
+  ctx.font = "800 42px Outfit, sans-serif"; ctx.fillStyle = gradText(ctx, pad + 120, pad + 300); ctx.textBaseline = "middle"; spaced(ctx, "ELEV8", pad + 128, 104, 3);
+  ctx.font = "600 21px Outfit, sans-serif"; const pw = ctx.measureText(pill).width + 52;
+  rrect(ctx, w - pad - pw, 80, pw, 50, 25); ctx.fillStyle = "rgba(47,208,200,.10)"; ctx.fill(); ctx.strokeStyle = "rgba(47,208,200,.38)"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = CARD.teal; ctx.textAlign = "center"; ctx.fillText(pill, w - pad - pw / 2, 106); ctx.textAlign = "left";
+}
+function cardFooter(ctx, left) {
+  const { pad, w, h } = CARD;
+  ctx.textBaseline = "alphabetic"; ctx.font = "500 23px Outfit, sans-serif"; ctx.fillStyle = CARD.muted; ctx.textAlign = "left"; ctx.fillText(left, pad, h - 66);
+  ctx.font = "600 23px Outfit, sans-serif"; ctx.fillStyle = CARD.text; ctx.textAlign = "right"; ctx.fillText("elev8tradingjournal.com", w - pad, h - 66); ctx.textAlign = "left";
+}
+function statBoxes(ctx, y, items) {
+  const { pad, w } = CARD, gap = 16, bw = (w - pad * 2 - gap * (items.length - 1)) / items.length;
+  items.forEach(([label, value, color], i) => {
+    const x = pad + i * (bw + gap); panel(ctx, x, y, bw, 128, 22);
+    ctx.textBaseline = "alphabetic"; ctx.fillStyle = CARD.muted; ctx.font = "600 19px Outfit, sans-serif"; spaced(ctx, label.toUpperCase(), x + 26, y + 46, 2.5);
+    ctx.fillStyle = color || CARD.text; fitFont(ctx, value, 700, 33, "Outfit, sans-serif", bw - 52); ctx.fillText(value, x + 26, y + 96);
+  });
+}
+const fmtSignedR = r => (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r).toFixed(1) + "R";
+const fmtSignedPct = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "%";
+async function drawTradeCard(t, opts) {
+  const c = document.createElement("canvas"); c.width = CARD.w; c.height = CARD.h;
+  const ctx = c.getContext("2d"), { pad, w } = CARD; cardBase(ctx);
+  await cardHeader(ctx, "Trade recap");
+  const r = rOf(t), res = resultOf(t), tone = res === "Win" ? CARD.green : res === "Loss" ? CARD.red : CARD.text2;
+  const bal = startingBalance(t.account), pct = bal ? (Number(t.pnl) || 0) / bal * 100 : null;
+  ctx.textBaseline = "alphabetic"; ctx.fillStyle = CARD.teal; ctx.font = "700 23px Outfit, sans-serif";
+  spaced(ctx, [fmtDate(t.date, { day: "numeric", month: "short", year: "numeric" }), t.session, t.setup].filter(Boolean).join("  ·  ").toUpperCase(), pad, 236, 3.5);
+  const big = r != null ? fmtSignedR(r) : pct != null ? fmtSignedPct(pct) : res;
+  ctx.font = "700 76px 'JetBrains Mono', monospace"; const bigW = ctx.measureText(big).width;
+  ctx.fillStyle = CARD.text; const pairSize = fitFont(ctx, t.pair, 800, 96, "Outfit, sans-serif", w - pad * 2 - bigW - 60);
+  ctx.fillText(t.pair, pad, 340); const pairW = ctx.measureText(t.pair).width;
+  ctx.font = `800 ${Math.round(pairSize * .62)}px Outfit, sans-serif`; ctx.fillStyle = t.direction === "Long" ? CARD.green : CARD.red;
+  ctx.fillText((t.direction === "Long" ? "▲ " : "▼ ") + t.direction, pad + pairW + 22, 340);
+  ctx.font = "700 76px 'JetBrains Mono', monospace"; ctx.fillStyle = tone; ctx.textAlign = "right"; ctx.fillText(big, w - pad, 340);
+  ctx.font = "600 26px 'JetBrains Mono', monospace"; ctx.fillStyle = CARD.muted;
+  const sub = [opts.money ? money(Number(t.pnl) || 0) : "", r != null && pct != null ? fmtSignedPct(pct) : ""].filter(Boolean).join("  ·  ");
+  if (sub) ctx.fillText(sub, w - pad, 384);
+  ctx.textAlign = "left";
+  let y = 420;
+  const shot = opts.chart && (t.shotAfter && t.shotAfter.path ? t.shotAfter : t.shotBefore && t.shotBefore.path ? t.shotBefore : null);
+  if (shot) {
+    try {
+      const im = await loadImg(await certUrl(shot)), bw = w - pad * 2, bh = 560;
+      ctx.save(); rrect(ctx, pad, y, bw, bh, 24); ctx.clip(); ctx.fillStyle = "#0b1422"; ctx.fillRect(pad, y, bw, bh);
+      const k = Math.min(bw / im.width, bh / im.height), dw = im.width * k, dh = im.height * k; ctx.drawImage(im, pad + (bw - dw) / 2, y + (bh - dh) / 2, dw, dh); ctx.restore();
+      rrect(ctx, pad, y, bw, bh, 24); ctx.strokeStyle = "rgba(150,195,245,.22)"; ctx.lineWidth = 1.5; ctx.stroke();
+      y += bh + 26;
+    } catch (e) { /* no chart */ }
+  }
+  if (!shot) {
+    // No chart: a large result panel instead.
+    const ph = 560; panel(ctx, pad, y, w - pad * 2, ph, 28);
+    ctx.fillStyle = CARD.muted; ctx.font = "600 21px Outfit, sans-serif"; spaced(ctx, "RESULT", pad + 40, y + 70, 3);
+    ctx.fillStyle = tone; ctx.font = "800 120px Outfit, sans-serif"; ctx.fillText(res === "BE" ? "Breakeven" : res, pad + 36, y + 200);
+    let ty = y + 280;
+    const feel = [t.emotionBefore && "Felt " + t.emotionBefore.toLowerCase() + " going in", t.emotionAfter && t.emotionAfter.toLowerCase() + " after"].filter(Boolean).join(", ");
+    if (feel) { ctx.fillStyle = CARD.text2; ctx.font = "500 28px Outfit, sans-serif"; ctx.fillText(feel + ".", pad + 40, ty); ty += 60; }
+    if (t.notes) {
+      // The trader's own notes, wrapped to at most four lines.
+      ctx.fillStyle = CARD.text; ctx.font = "500 30px Outfit, sans-serif";
+      const words = String(t.notes).replace(/\s+/g, " ").trim().split(" "), maxW = w - pad * 2 - 80, lines = [];
+      let line = "";
+      for (const wd of words) { const tryL = line ? line + " " + wd : wd; if (ctx.measureText(tryL).width > maxW && line) { lines.push(line); line = wd; } else line = tryL; }
+      if (line) lines.push(line);
+      const shown = lines.slice(0, 4); if (lines.length > 4) shown[3] = shown[3].replace(/\s*\S*$/, "") + "…";
+      ctx.fillStyle = CARD.teal; ctx.fillRect(pad + 40, ty - 26, 4, shown.length * 44 - 8);
+      ctx.fillStyle = CARD.text; shown.forEach((l, i) => ctx.fillText(l, pad + 62, ty + i * 44));
+    }
+    y += ph + 26;
+  }
+  const planned = t.entry != null && t.stop != null && t.target != null && t.entry !== t.stop ? Math.abs(t.target - t.entry) / Math.abs(t.entry - t.stop) : null;
+  statBoxes(ctx, y, [["Setup", t.setup || "—"], ["Session", t.session || "—"], planned ? ["Planned R:R", "1 : " + planned.toFixed(1)] : ["Plan", t.followedPlan === false ? "Broken" : "Followed", t.followedPlan === false ? CARD.red : CARD.green]]);
+  cardFooter(ctx, "Journaled with ELEV8");
+  return c;
+}
+async function drawWeekCard(w, opts) {
+  const c = document.createElement("canvas"); c.width = CARD.w; c.height = CARD.h;
+  const ctx = c.getContext("2d"), { pad } = CARD, W = CARD.w; cardBase(ctx);
+  await cardHeader(ctx, "Weekly review");
+  const st = w.st, totalR = sum(w.list.map(rOf).filter(r => r != null)), bal = startingBalance(ui.account), pct = bal ? st.total / bal * 100 : null;
+  const tone = st.total > 0 ? CARD.green : st.total < 0 ? CARD.red : CARD.text2;
+  ctx.textBaseline = "alphabetic"; ctx.fillStyle = CARD.teal; ctx.font = "700 23px Outfit, sans-serif";
+  spaced(ctx, ("Week of " + fmtDate(w.start, { day: "numeric", month: "short" }) + " – " + fmtDate(w.end, { day: "numeric", month: "short", year: "numeric" })).toUpperCase(), pad, 236, 3.5);
+  const headline = (w.verdict.text.replace(/<[^>]+>/g, "").split(":")[0] || "").trim();
+  ctx.fillStyle = CARD.text; fitFont(ctx, headline, 800, 84, "Outfit, sans-serif", W - pad * 2); ctx.fillText(headline, pad, 336);
+  // Big result
+  panel(ctx, pad, 384, W - pad * 2, 250, 28);
+  ctx.fillStyle = CARD.muted; ctx.font = "600 21px Outfit, sans-serif"; spaced(ctx, "RESULT", pad + 40, 444, 3);
+  ctx.fillStyle = tone; ctx.font = "700 104px 'JetBrains Mono', monospace";
+  const main = totalR ? fmtSignedR(totalR) : pct != null ? fmtSignedPct(pct) : money(st.total);
+  ctx.fillText(main, pad + 36, 560);
+  ctx.textAlign = "right"; ctx.font = "600 30px 'JetBrains Mono', monospace"; ctx.fillStyle = CARD.text2;
+  const side = [pct != null && totalR ? fmtSignedPct(pct) : "", opts.money ? money(st.total) : ""].filter(Boolean);
+  side.forEach((v, i) => ctx.fillText(v, W - pad - 40, 520 + i * 44 - (side.length - 1) * 22));
+  ctx.textAlign = "left";
+  // Day bars
+  const by = 664, bh = 260, n = w.days.length, gap = 14, bw = (W - pad * 2 - gap * (n - 1)) / n, max = Math.max(1, ...w.days.map(d => Math.abs(d.pnl)));
+  panel(ctx, pad - 0, by, W - pad * 2, bh + 70, 28);
+  const base = by + 30 + bh / 2;
+  ctx.strokeStyle = "rgba(150,195,245,.18)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(pad + 24, base); ctx.lineTo(W - pad - 24, base); ctx.stroke();
+  const inner = (W - pad * 2 - 48 - gap * (n - 1)) / n;
+  w.days.forEach((d, i) => {
+    const x = pad + 24 + i * (inner + gap), hgt = d.n ? Math.max(8, Math.abs(d.pnl) / max * (bh / 2 - 16)) : 0;
+    if (hgt) { rrect(ctx, x, d.pnl >= 0 ? base - hgt : base, inner, hgt, 8); ctx.fillStyle = d.pnl >= 0 ? CARD.green : CARD.red; ctx.fill(); }
+    ctx.fillStyle = CARD.muted; ctx.font = "600 20px Outfit, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(fmtDate(d.d, { weekday: "short" }), x + inner / 2, by + bh + 52); ctx.textAlign = "left";
+  });
+  statBoxes(ctx, 1014, [["Trades", String(st.n)], ["Win rate", st.wins + st.losses ? pct0(st.winRate) : "—"], ["Profit factor", !(st.wins + st.losses) ? "—" : st.pf === Infinity ? "∞" : st.pf.toFixed(2)], ["Plan kept", w.list.length ? pct0(w.followed.length / w.list.length) : "—"]]);
+  cardFooter(ctx, "Reviewed with ELEV8");
+  return c;
+}
+const pct0 = v => Math.round(v * 100) + "%";
+async function renderShare() {
+  if (!shareJob) return;
+  F("shareWait").hidden = false; F("shareImg").removeAttribute("src");
+  try { await Promise.all([document.fonts.load("800 80px Outfit"), document.fonts.load("600 20px Outfit"), document.fonts.load("700 70px 'JetBrains Mono'")]); } catch (e) { /* system fonts */ }
+  const opts = { money: F("shareMoney").checked, chart: F("shareChart").checked };
+  const canvas = shareJob.kind === "trade" ? await drawTradeCard(shareJob.data, opts) : await drawWeekCard(shareJob.data, opts);
+  shareBlob = await new Promise(r => canvas.toBlob(r, "image/png"));
+  const url = URL.createObjectURL(shareBlob), old = F("shareImg").src;
+  F("shareImg").src = url; F("shareDownload").href = url; F("shareDownload").download = shareJob.name;
+  if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+  F("shareWait").hidden = true;
+  const file = new File([shareBlob], shareJob.name, { type: "image/png" });
+  F("shareGo").hidden = !(navigator.canShare && navigator.canShare({ files: [file] }));
+}
+function openShare(kind, data) {
+  const hasShot = kind === "trade" && ((data.shotAfter && data.shotAfter.path) || (data.shotBefore && data.shotBefore.path));
+  shareJob = { kind, data, name: kind === "trade" ? `elev8-${(data.pair || "trade").toLowerCase()}-${data.date}.png` : `elev8-week-${data.start}.png` };
+  F("shareTitle").textContent = kind === "trade" ? "Share this trade" : "Share this week";
+  F("shareChartWrap").hidden = !hasShot;
+  const dlg = F("shareDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  renderShare();
+}
+F("shareMoney").addEventListener("change", renderShare);
+F("shareChart").addEventListener("change", renderShare);
+F("shareClose").addEventListener("click", () => F("shareDlg").close());
+F("shareGo").addEventListener("click", async () => {
+  if (!shareBlob) return;
+  try { await navigator.share({ files: [new File([shareBlob], shareJob.name, { type: "image/png" })], title: "ELEV8" }); }
+  catch (e) { if (e && e.name !== "AbortError") toast("Couldn't open sharing. Use Download instead."); }
+});
+F("tdShare").addEventListener("click", () => { if (viewing && !isOpen(viewing)) openShare("trade", viewing); });
+F("wkShare").addEventListener("click", () => { const w = buildWeek(wkStart || latestWeek()); if (w.list.length) openShare("week", w); else toast("No trades in this week to share yet"); });
 
 /* ---------- Accounts page: every account, its progress, and the archive ---------- */
 const ACCT_SHOW = [["", "All"], ["standard", "Live & demo"], ["progress", "In progress"], ["funded", "Funded"], ["passed", "Passed"], ["failed", "Failed"]];
@@ -6922,6 +7226,90 @@ F("qDate").value = isoDate(new Date());
 ui.quickOpen = false; saveUi(); setQuickOpen(false);
 renderListEditors();
 renderAccount();
+/* ---------- Guided tour: a few spotlighted stops across the app ---------- */
+const TOUR = [
+  { tab: "overview", sel: "#quickLog", title: "Log a trade in seconds", text: "Tap Show to open the quick log. Tick Still open to log a trade before it closes, and close it from Open trades later." },
+  { tab: "overview", sel: "#propPanel", title: "Your prop challenge, live", text: "Profit target, daily loss, max loss and trading days are tracked as you log. You get a warning before you get close to a limit." },
+  { tab: "overview", sel: "#filterBtn", title: "This week, by default", text: "Your stats start fresh every Monday. Open Filters for last week, this month, all time, or a session, setup or account." },
+  { tab: "insights", sel: "#weeklyReview", title: "Your weekly review", text: "What worked, what cost you and what to focus on next week, read from your trades and notes. Tap Share to post your week." },
+  { tab: "journal", sel: "#tableBody tr", title: "Every trade, in one place", text: "Tap a trade to see its before and after screenshots, notes and emotions, and to share a recap card." },
+  { tab: "accounts", sel: "#acctGrid", title: "Accounts and rewards", text: "Switch between challenges, live and demo accounts. Mark a phase passed or failed, and log your payouts under Rewards." },
+  { tab: "overview", sel: null, title: "You're all set", text: "" }
+];
+let tourAt = -1;
+const tourVisible = el => el && el.offsetParent !== null && el.getBoundingClientRect().height > 0;
+function tourStop(i) {
+  const step = TOUR[i];
+  if (!step) return endTour();
+  if (currentTab() !== step.tab) showTab(step.tab);
+  const el = step.sel ? $(step.sel) : null;
+  if (step.sel && !tourVisible(el)) return tourStop(i + (i >= tourAt ? 1 : -1)); // skip stops that aren't on screen
+  tourAt = i;
+  const last = i === TOUR.length - 1, n = TOUR.length - 1;
+  F("tourStep").textContent = last ? "Tour complete" : `${i + 1} of ${n}`;
+  F("tourTitle").textContent = step.title;
+  F("tourText").textContent = last ? (DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
+  F("tourNext").textContent = last ? (DEMO ? "Start your own journal" : "Log a trade") : "Next";
+  F("tourBack").hidden = i === 0 || last;
+  F("tourSkip").hidden = last;
+  if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
+  requestAnimationFrame(tourPlace);
+}
+function tourPlace() {
+  if (tourAt < 0) return;
+  const step = TOUR[tourAt], el = step.sel ? $(step.sel) : null, hole = F("tourHole"), tip = F("tourTip"), pad = 8;
+  const vw = innerWidth, vh = innerHeight, tw = tip.offsetWidth, th = tip.offsetHeight;
+  if (!el) {
+    hole.classList.add("none");
+    tip.style.left = Math.round((vw - tw) / 2) + "px"; tip.style.top = Math.round((vh - th) / 2) + "px";
+    return;
+  }
+  hole.classList.remove("none");
+  const r = el.getBoundingClientRect(), top = Math.max(4, r.top - pad), h = Math.min(r.height + pad * 2, vh - 8 - top);
+  Object.assign(hole.style, { left: Math.max(4, r.left - pad) + "px", top: top + "px", width: Math.min(r.width + pad * 2, vw - 8) + "px", height: h + "px" });
+  const below = top + h + 12, above = top - th - 12;
+  const y = below + th <= vh - 8 ? below : above >= 8 ? above : Math.max(8, vh - th - 8);
+  const x = Math.min(Math.max(16, r.left + r.width / 2 - tw / 2), vw - tw - 16);
+  tip.style.left = Math.round(x) + "px"; tip.style.top = Math.round(y) + "px";
+}
+function startTour() {
+  setMenu(false);
+  document.querySelectorAll("dialog[open]").forEach(d => d.close());
+  ui.welcomeDone = true; saveUi();
+  F("tour").hidden = false;
+  tourAt = 0;
+  tourStop(0);
+  F("tourNext").focus({ preventScroll: true });
+}
+function endTour() {
+  tourAt = -1;
+  F("tour").hidden = true;
+  ui.tourDone = true; saveUi();
+  if (currentTab() !== "overview") showTab("overview");
+  window.scrollTo({ top: 0 });
+}
+F("tourNext").addEventListener("click", () => {
+  if (tourAt === TOUR.length - 1) {
+    endTour();
+    if (DEMO) location.href = F("demoExit").href;
+    else { setQuickOpen(true); F("qPair").focus({ preventScroll: true }); F("quickLog").scrollIntoView({ block: "center" }); }
+    return;
+  }
+  tourStop(tourAt + 1);
+});
+F("tourBack").addEventListener("click", () => tourStop(Math.max(0, tourAt - 1)));
+F("tourSkip").addEventListener("click", endTour);
+document.addEventListener("keydown", e => { if (tourAt >= 0 && e.key === "Escape") endTour(); });
+addEventListener("resize", () => requestAnimationFrame(tourPlace));
+addEventListener("scroll", () => { if (tourAt >= 0) requestAnimationFrame(tourPlace); }, { passive: true });
+document.addEventListener("click", e => { if (e.target.closest("[data-tour-start]")) startTour(); });
+F("welcomeX").addEventListener("click", () => { ui.welcomeDone = true; saveUi(); F("welcomeCard").hidden = true; });
+if (DEMO) {
+  F("demoBar").hidden = false;
+  document.title = "ELEV8 Trading Journal · Demo";
+  if (!ui.tourDone) setTimeout(() => { if (tourAt < 0 && !document.querySelector("dialog[open]")) startTour(); }, 900);
+}
+
 // Every launch starts on Overview at the top (an unsaved trade form is still kept).
 const first = !ui.opened;
 if (!first) document.documentElement.classList.add("calm");
