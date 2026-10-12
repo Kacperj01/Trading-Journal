@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "e75199e676";</script>
+<script>window.ELEV8_BUILD = "4352b811e2";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -2433,7 +2433,7 @@ let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 let trades = [];
 
-const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "all", from: "", to: "", session: "", setup: "", account: "", setPane: "", newsImpact: "medium", newsCurs: null, sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
+const ui = Object.assign({ quickOpen: true, tab: "overview", scrollY: 0, opened: false, range: "week", from: "", to: "", session: "", setup: "", account: "", setPane: "", newsImpact: "medium", newsCurs: null, sortKey: "date", sortDir: "desc", calMonth: "" }, store.get(KEY_UI, {}));
 
 /* Persistence: the viewer's private account store when available (syncs across devices),
    otherwise this browser's localStorage. */
@@ -3256,8 +3256,9 @@ function renderDashboard() {
   // On Overview the quick log already invites the first trade, so skip the empty-journal card there.
   $("#dashEmpty").hidden = !empty || (!hasAny && !persist.loading && currentTab() === "overview");
   $$(".needs-data").forEach(el => el.hidden = empty);
-  $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : hasAny ? "No trades in this view" : "Your journal is empty";
-  $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
+  const freshWeek = hasAny && ui.range === "week" && filterCount() === 0;
+  $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
+  $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
   renderOpen(open);
@@ -4883,7 +4884,9 @@ window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { pu
 
 // Filters: one button opens a panel with every option; changes apply straight away.
 // Function declarations, so the start-up renders can call them before this point runs.
-function filterCount() { return (ui.range !== "all" ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && allAccounts().length > 1 && acctById(ui.account) ? 1 : 0) + (ui.propStatus ? 1 : 0); }
+// Stats show the current week (Monday to Sunday) by default; any other period counts as a filter.
+const DEFAULT_RANGE = "week";
+function filterCount() { return (ui.range !== DEFAULT_RANGE ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && allAccounts().length > 1 && acctById(ui.account) ? 1 : 0) + (ui.propStatus ? 1 : 0); }
 function syncFilters() {
   const n = filterCount();
   F("filterBadge").hidden = !n; F("filterBadge").textContent = n;
@@ -4959,8 +4962,8 @@ F("filterPanel").addEventListener("keydown", e => {
   if (step && i >= 0) { e.preventDefault(); list[(i + step + list.length) % list.length].focus(); }
 });
 F("fClear").addEventListener("click", () => {
-  ui.range = "all"; ui.session = ""; ui.setup = ""; ui.account = ""; ui.propStatus = ""; ui.calMonth = "";
-  F("fRange").value = "all"; F("fSession").value = ""; F("fSetup").value = ""; F("fAccount").value = "";
+  ui.range = DEFAULT_RANGE; ui.session = ""; ui.setup = ""; ui.account = ""; ui.propStatus = ""; ui.calMonth = "";
+  F("fRange").value = DEFAULT_RANGE; F("fSession").value = ""; F("fSetup").value = ""; F("fAccount").value = "";
   saveUi(); renderDashboard();
 });
 F("fRange").addEventListener("change", e => {
@@ -6737,6 +6740,24 @@ if (embedded && !inViewer()) {
 }
 syncView();
 setSync("", "Connecting…");
+// Every time the app opens, the stats start on the current week; other periods are a filter away.
+ui.range = DEFAULT_RANGE; ui.from = ""; ui.to = ""; saveUi();
+// If the app stays open into a new week (Monday 00:00), roll the stats over to it.
+let shownWeek = weekStartOf(isoDate(new Date())), shownDay = isoDate(new Date());
+function checkNewWeek() {
+  const day = isoDate(new Date()), wk = weekStartOf(day);
+  if (day !== shownDay) {
+    // Past midnight: date fields still on yesterday (and untouched) move to today.
+    if (F("qDate").value === shownDay) F("qDate").value = day;
+    if (!F("tId").value && F("tDate").value === shownDay) F("tDate").value = day;
+    shownDay = day;
+  }
+  if (wk === shownWeek) return;
+  shownWeek = wk;
+  if (isAnalytics(currentTab())) renderDashboard(); else renderWeekly();
+}
+setInterval(checkNewWeek, 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkNewWeek(); });
 F("fRange").value = ui.range;
 F("fFrom").value = ui.from; F("fTo").value = ui.to;
 F("fFromWrap").hidden = F("fToWrap").hidden = ui.range !== "custom";
