@@ -113,6 +113,41 @@ def note_tags(t):
     return [k for k, rx in NOTE_TAGS.items() if rx.search(text)]
 
 
+# Mistakes are typed freely; the review names them in standard trading terms rather than quoting them.
+MISTAKE_TYPES = [
+    ("early_exit", "exit before target", r"\b(clos(e|ed|ing)|exit(ed)?|took (profit|it off)|cut)\b[^,.]{0,15}\b(too )?early\b|\bcut (the |my )?winners?\b|\bpanic(ked)? clos"),
+    ("news", "position held through high-impact news", r"\b(news|nfp|cpi|fomc|powell|rate decision)\b"),
+    ("no_stop", "no stop loss in place", r"\bno (stop|sl)\b|\bwithout (a |my )?(stop|sl)\b"),
+    ("moved_stop", "stop loss moved against the plan", r"\b(mov(e|ed|ing)|widen(ed)?)\b[^,.]{0,10}\b(stop|sl)\b"),
+    ("size", "position size above plan", r"\bover ?(si[sz]ed?|leverag\w*|risk\w*)|\btoo (big|large|much risk)|\blot size|\brisked too much"),
+    ("late", "late entry after the move", r"\b(late entry|entered late|chas(e|ed|ing) (price|the move|it))\b"),
+    ("early_entry", "entry before confirmation", r"\b(enter(ed)?|entry|jump(ed)? in)\b[^,.]{0,10}\b(early|too soon)\b|\bno confirm|\bwithout confirm|\bbefore confirm|\bdidn'?t wait"),
+    ("held_long", "held past the planned exit", r"\bheld (it )?too long|\bdidn'?t take (profit|tp)|\bgave (it )?back"),
+    ("influence", "trade influenced by outside opinion", r"\boutside influence|\b(signal|discord|telegram|twitter|someone|friend|group|copied|copy ?trad)"),
+    ("overtrading", "overtrading", r"\bover ?trad|\btoo many trades"),
+    ("emotional", "emotion-driven decision", r"\b(revenge|fomo|greed(y)?|fear(ful)?|scared|tilt(ed)?|impatien\w*|bored)\b"),
+    ("off_plan", "setup outside the trading plan", r"\b(not (my|in (my|the)) (setup|plan)|off[- ]?plan|wrong setup|no setup|random (trade|entry))\b"),
+    ("counter_trend", "trade against the higher-timeframe bias", r"\b(against (the )?(trend|htf|bias)|counter[- ]?trend)\b"),
+]
+MISTAKE_RX = [(k, label, re.compile(rx, re.I)) for k, label, rx in MISTAKE_TYPES]
+
+
+def mistake_type(m):
+    for k, label, rx in MISTAKE_RX:
+        if rx.search(m):
+            return k, label
+    tidy = re.sub(r"[.!]+$", "", re.sub(r"\s+", " ", m.strip()))
+    tidy = re.sub(r"\b(did|do|was|is|could|should|would|can)nt\b", r"\1n't", tidy, flags=re.I)
+    tidy = re.sub(r"\bcant\b", "can't", tidy, flags=re.I)
+    tidy = re.sub(r"\bwont\b", "won't", tidy, flags=re.I)
+    tidy = re.sub(r"\bi\b", "I", tidy)
+    return "x:" + tidy.lower(), tidy[:1].lower() + tidy[1:]
+
+
+def emo_word(e):
+    return e if e == e.upper() else e.lower()
+
+
 def cut_for_invalid(t):
     tags, v = note_tags(t), num(t.get("pnl"))
     risk = num(t.get("risk")) if num(t.get("risk")) > 0 else scratch_size(t) * 10
@@ -179,48 +214,53 @@ def build_week(trades, start, cur, settings=None):
     emos = group([t for t in week if t.get("emotionBefore")], "emotionBefore")
     mistakes = {}
     for t in week:
+        seen = set()
         for m in [x.strip() for x in str(t.get("mistakes") or "").split(",") if x.strip()]:
-            mistakes.setdefault(m, [0, 0.0])
-            mistakes[m][0] += 1
-            mistakes[m][1] += num(t.get("pnl"))
-    top_mistakes = sorted(mistakes.items(), key=lambda kv: (-kv[1][0], kv[1][1]))
+            key, label = mistake_type(m)
+            if key in seen: continue  # one count per trade
+            seen.add(key)
+            mistakes.setdefault(key, {"label": label, "n": 0, "pnl": 0.0})
+            mistakes[key]["n"] += 1
+            mistakes[key]["pnl"] += num(t.get("pnl"))
+    top_mistakes = sorted(mistakes.items(), key=lambda kv: (-kv[1]["n"], kv[1]["pnl"]))
 
     worked, cost, focus = [], [], []
     losing = [g for g in sorted([g for g in setups if g["pnl"] < 0], key=lambda g: (-(g["n"] >= 2), g["pnl"]))[:2] if big(g["pnl"])]
     best_setup = next((g for g in setups if g["pnl"] > 0 and big(g["pnl"])), None)
-    if best_setup: worked.append(f"{b(best_setup['name'])} went {rec(best_setup)} for {b(money(best_setup['pnl']))}.")
+    if best_setup: worked.append(f"{b(best_setup['name'])} was your strongest setup: {rec(best_setup)}, net {b(money(best_setup['pnl']))}.")
     bs = next((g for g in sessions if g["pnl"] > 0 and big(g["pnl"])), None)
-    if bs: worked.append(f"{b(bs['name'])} was your best session: {b(money(bs['pnl']))} ({rec(bs)}).")
+    if bs: worked.append(f"The {b(bs['name'])} session performed best, returning {b(money(bs['pnl']))} ({rec(bs)}).")
     bp = next((g for g in pairs if g["pnl"] > 0 and big(g["pnl"])), None)
-    if bp: worked.append(f"{b(bp['name'])} made {b(money(bp['pnl']))} from {plural(bp['n'], 'trade')}.")
+    if bp: worked.append(f"{b(bp['name'])} was your most profitable instrument: {b(money(bp['pnl']))} across {plural(bp['n'], 'trade')}.")
     be = next((g for g in emos if g["pnl"] > 0 and g["n"] >= 2 and big(g["pnl"])), None)
-    if be: worked.append(f"Trades taken feeling {b(be['name'].lower())} returned {b(money(be['pnl']))} ({rec(be)}).")
+    if be: worked.append(f"Trades entered feeling {b(emo_word(be['name']))} returned {b(money(be['pnl']))} ({rec(be)}).")
     fp = sum(num(t.get("pnl")) for t in followed)
     cut = [t for t in week if cut_for_invalid(t)]
-    if cut: worked.append(f"You closed {plural(len(cut), 'trade')} early because {'it' if len(cut) == 1 else 'they'} no longer looked valid ({', '.join(html.escape(str(t.get('pair') or '')) + ' ' + money(num(t.get('pnl'))) for t in cut)}). Cutting a broken idea small is good discipline.")
+    if cut: worked.append(f"{'One trade was' if len(cut) == 1 else f'{len(cut)} trades were'} closed early once the setup was invalidated ({', '.join(html.escape(str(t.get('pair') or '')) + ' ' + money(num(t.get('pnl'))) for t in cut)}). Exiting a broken idea at minimal cost is sound risk management.")
     to_be = tagged("breakeven")
-    if to_be: worked.append(f"You protected {plural(len(to_be), 'trade')} by moving the stop to breakeven.")
-    if followed and fp > 0 and big(fp): worked.append(f"Following your plan made {b(money(fp))} over {plural(len(followed), 'trade')}.")
+    if to_be: worked.append(f"Risk was removed from {plural(len(to_be), 'trade')} by moving the stop to breakeven.")
+    if followed and fp > 0 and big(fp): worked.append(f"Plan-compliant trades returned {b(money(fp))} across {plural(len(followed), 'trade')}.")
 
-    for g in losing: cost.append(f"{b(g['name'])} went {rec(g)} for {b(money(g['pnl']))}.")
+    for g in losing: cost.append(f"{b(g['name'])} underperformed: {rec(g)}, net {b(money(g['pnl']))}.")
     ws = ([g for g in sessions if g["pnl"] < 0 and big(g["pnl"])] or [None])[-1]
-    if ws: cost.append(f"{b(ws['name'])} lost {b(money(ws['pnl']))} ({rec(ws)}).")
+    if ws: cost.append(f"The {b(ws['name'])} session was a drag on results: {b(money(ws['pnl']))} ({rec(ws)}).")
     emo_notes = tagged("emotional")
-    if emo_notes: cost.append(f"Your notes mention revenge, FOMO, fear or impatience on {plural(len(emo_notes), 'trade')} ({b(money(sum(num(t.get('pnl')) for t in emo_notes)))}).")
+    if emo_notes: cost.append(f"Your notes point to emotional decision-making (revenge, FOMO, fear or impatience) on {plural(len(emo_notes), 'trade')}, net {b(money(sum(num(t.get('pnl')) for t in emo_notes)))}.")
     news_notes = [t for t in tagged("news") if num(t.get("pnl")) < 0]
-    if news_notes: cost.append(f"News hit {plural(len(news_notes), 'trade')} according to your notes ({b(money(sum(num(t.get('pnl')) for t in news_notes)))}).")
+    if news_notes: cost.append(f"High-impact news affected {plural(len(news_notes), 'losing trade')}, net {b(money(sum(num(t.get('pnl')) for t in news_notes)))}.")
     we = ([g for g in emos if g["pnl"] < 0 and g["n"] >= 2 and big(g["pnl"])] or [None])[-1]
-    if we: cost.append(f"Trades taken feeling {b(we['name'].lower())}: {rec(we)}, {b(money(we['pnl']))}.")
-    if broke: cost.append(f"{plural(len(broke), 'trade')} broke your plan, for {b(money(sum(num(t.get('pnl')) for t in broke)))}.")
-    if top_mistakes: cost.append("Mistakes logged: " + ", ".join(f"{html.escape(m)} ×{v[0]}" for m, v in top_mistakes[:3]) + ".")
-    if st["longest_loss"] >= 3: cost.append(f"A losing run of {b(st['longest_loss'])} trades in a row.")
+    if we: cost.append(f"Entries taken feeling {b(emo_word(we['name']))} returned {b(money(we['pnl']))} ({rec(we)}).")
+    if broke: cost.append(f"{'One trade' if len(broke) == 1 else f'{len(broke)} trades'} deviated from your trading plan, net {b(money(sum(num(t.get('pnl')) for t in broke)))}.")
+    if top_mistakes: cost.append("Execution errors logged: " + "; ".join(html.escape(v["label"]) + (f" (×{v['n']})" if v["n"] > 1 else "") for _, v in top_mistakes[:3]) + ".")
+    if st["longest_loss"] >= 3: cost.append(f"Longest losing streak: {b(st['longest_loss'])} consecutive trades.")
 
-    if we: focus.append(f"If you feel {html.escape(we['name'].lower())}, skip the trade. Those entries went {rec(we)} this week.")
-    if mistakes.get("Closed too early", [0])[0] >= 2: focus.append(f"Let winners reach take profit. You closed early {mistakes['Closed too early'][0]} times; set the TP and step away.")
-    if st["longest_loss"] >= 3 and len(focus) < 3: focus.append("Use a daily stop: after 2 losses in a row, finish for the day.")
-    if broke and len(focus) < 3: focus.append(f"Stick to the plan. Plan-breaking trades returned {money(sum(num(t.get('pnl')) for t in broke))}.")
-    if best_setup and len(focus) < 3: focus.append(f"Prioritise {html.escape(best_setup['name'])} setups. They were your edge this week ({rec(best_setup)}).")
-    if losing and len(focus) < 3: focus.append(f"Tighten {html.escape(losing[0]['name'])} entries: wait for confirmation before committing.")
+    if we: focus.append(f"Stand aside when you feel {html.escape(emo_word(we['name']))}: those entries went {rec(we)} this week.")
+    if mistakes.get("early_exit", {}).get("n", 0) >= 2: focus.append(f"Allow winners to reach target. {mistakes['early_exit']['n']} trades were exited early; set the take profit and let the trade play out.")
+    if mistakes.get("early_entry", {}).get("n", 0) >= 2 and len(focus) < 3: focus.append(f"Wait for confirmation before entering. {mistakes['early_entry']['n']} entries were taken too soon this week.")
+    if st["longest_loss"] >= 3 and len(focus) < 3: focus.append("Apply a daily stop: after two consecutive losses, end the session.")
+    if broke and len(focus) < 3: focus.append(f"Prioritise plan adherence. Off-plan trades returned {money(sum(num(t.get('pnl')) for t in broke))}" + (", and outside opinion influenced some of them." if "influence" in mistakes else "."))
+    if best_setup and len(focus) < 3: focus.append(f"Concentrate on {html.escape(best_setup['name'])}: it was your edge this week ({rec(best_setup)}).")
+    if losing and len(focus) < 3: focus.append(f"Refine {html.escape(losing[0]['name'])} entries and wait for confirmation before committing.")
 
     delta = st["total"] - pv["total"]
     size = size_txt(st["total"]) if week else ""
@@ -230,12 +270,12 @@ def build_week(trades, start, cur, settings=None):
     if not week: verdict = "No trades logged this week."
     elif not big(st["total"]):
         verdict = f"Breakeven week: {b(money(st['total']))} from {plural(st['n'], 'trade')}{sized}." + (
-            f" {'One trade was' if len(cut) == 1 else f'{len(cut)} trades were'} closed early as invalid, which kept it that way." if cut else " Nothing won or lost to speak of.")
+            f" {'One trade was' if len(cut) == 1 else f'{len(cut)} trades were'} closed early after the setup was invalidated, which limited the impact." if cut else " No meaningful gain or loss.")
     elif st["total"] > 0 and strong and st["pf"] >= 1.5 and st["n"] >= 2:
         verdict = f"Strong week: {b(money(st['total']))}{sized} across {plural(st['n'], 'trade')}" + (f", {'up' if delta >= 0 else 'down'} {b(money(abs(delta), False))} on last week." if prev else ".")
-    elif st["total"] > 0: verdict = f"Small green week: {b(money(st['total']))}{sized} from {plural(st['n'], 'trade')}. Positive, but not much in it."
-    elif rough: verdict = f"Tough week: {b(money(st['total']))}{sized} across {plural(st['n'], 'trade')}. The notes below show where it went."
-    else: verdict = f"Small red week: {b(money(st['total']))}{sized} from {plural(st['n'], 'trade')}. A normal dip, well within one good trade."
+    elif st["total"] > 0: verdict = f"Small green week: {b(money(st['total']))}{sized} from {plural(st['n'], 'trade')}. A modest gain with room to build on."
+    elif rough: verdict = f"Tough week: {b(money(st['total']))}{sized} across {plural(st['n'], 'trade')}. The breakdown below shows where the losses came from."
+    else: verdict = f"Small red week: {b(money(st['total']))}{sized} from {plural(st['n'], 'trade')}. A contained drawdown, recoverable with a single good trade."
 
     days = []
     for i in range(7):
