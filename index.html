@@ -989,6 +989,15 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .chart-frame img { width: 100%; height: 100%; object-fit: contain; display: block; background: var(--chart-bg); }
 .chart-frame .none { color: var(--muted); font-size: 13px; padding: 12px; text-align: center; }
 .chart-fig a { font-size: 12.5px; overflow-wrap: anywhere; }
+.chart-fig .shot-open { appearance: none; border: 0; padding: 0; margin: 0; width: 100%; height: 100%; background: none; cursor: zoom-in; display: block; }
+.chart-fig .fig-links { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.shot-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.shot-btn { position: relative; cursor: pointer; }
+.shot-btn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); }
+.shot-msg { font-size: 12.5px; color: var(--muted); }
+.shot-msg.err { color: var(--red); }
+.link-btn.danger-text { color: var(--red); }
 @media (max-width: 560px) { .chart-pair { grid-template-columns: minmax(0, 1fr); } }
 
 /* Trade detail window */
@@ -1788,12 +1797,14 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <div class="field">
                 <label for="tBefore">Before (entry)</label>
                 <input type="url" id="tBefore" inputmode="url" autocapitalize="off" placeholder="https://www.tradingview.com/x/…" aria-describedby="chartHint">
+                <div class="shot-row"><label class="btn sm ghost shot-btn"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5V4M7 9l5-5 5 5"/><path d="M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15"/></svg><span>Upload screenshot</span><input type="file" id="tBeforeFile" accept="image/*" data-shot-side="before" class="sr-file"></label><span class="shot-msg" id="tBeforeMsg" role="status"></span></div>
               </div>
               <div class="field">
                 <label for="tAfter">After (result)</label>
                 <input type="url" id="tAfter" inputmode="url" autocapitalize="off" placeholder="https://www.tradingview.com/x/…" aria-describedby="chartHint">
+                <div class="shot-row"><label class="btn sm ghost shot-btn"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5V4M7 9l5-5 5 5"/><path d="M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15"/></svg><span>Upload screenshot</span><input type="file" id="tAfterFile" accept="image/*" data-shot-side="after" class="sr-file"></label><span class="shot-msg" id="tAfterMsg" role="status"></span></div>
               </div>
-              <span class="hint field wide" id="chartHint">Paste a TradingView snapshot link (Share → Copy link) or any image link.</span>
+              <span class="hint field wide" id="chartHint">Upload a screenshot from your phone or computer, or paste a TradingView snapshot link (Share → Copy link). On a computer you can also paste a copied screenshot straight into the box.</span>
             </div>
             <div class="chart-pair" id="chartPreview"></div>
           </fieldset>
@@ -2232,6 +2243,19 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   </div>
 </dialog>
 
+<dialog id="shotDlg" class="rules-dlg cert-dlg shot-dlg" aria-labelledby="shotTitle">
+  <div class="dlg-body">
+    <div class="td-head">
+      <div><h3 id="shotTitle">Screenshot</h3></div>
+      <button class="btn sm ghost" type="button" id="shotClose" aria-label="Close">✕</button>
+    </div>
+    <div class="cert-view" id="shotView"></div>
+    <div class="dlg-actions" style="justify-content:flex-end">
+      <a class="btn primary" id="shotDownload" download><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11.5M7 10l5 5 5-5M4.5 20.5h15"/></svg>Download</a>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="calcDlg" class="acct-dlg calc-dlg" aria-labelledby="calcTitle">
   <form id="calcForm" class="dlg-body" novalidate>
     <div class="td-head">
@@ -2449,6 +2473,8 @@ function putTrade(t) {
   else { saveLocal(); sbQueue({ op: "put", id: t.id }); }
 }
 function removeTrade(id) {
+  const gone = realTrades.find(x => x.id === id);
+  if (gone) [gone.shotBefore, gone.shotAfter].forEach(removeCertFile);
   realTrades = realTrades.filter(x => x.id !== id);
   if (persist.mode === "cloud") enqueue(() => tradesCol().doc(id).delete());
   else { saveLocal(); sbQueue({ op: "del", id }); }
@@ -2983,6 +3009,18 @@ function chartFigure(label, url) {
     : img ? `<img src="${esc(img)}" alt="${esc(label)} chart" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'none',textContent:'Preview unavailable. Open the link below.'}))">`
     : `<div class="none">Open the link below to view this chart.</div>`;
   return `<figure class="chart-fig"><figcaption>${esc(label)}</figcaption><div class="chart-frame">${frame}</div>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open ${esc(label.toLowerCase())} chart ↗</a>` : ""}</figure>`;
+}
+
+// Uploaded screenshots live in private storage, so they're drawn as a placeholder and loaded afterwards.
+function shotFigure(label, shot, removable) {
+  return `<figure class="chart-fig"><figcaption>${esc(label)}</figcaption><div class="chart-frame" data-shot-load="${esc(shot.path)}" data-shot-label="${esc(label)}"><div class="none">Loading screenshot…</div></div>`
+    + `<div class="fig-links"><button type="button" class="link-btn" data-shot-view="${esc(shot.path)}" data-shot-label="${esc(label)}">View full size</button>${removable ? `<button type="button" class="link-btn danger-text" data-shot-remove="${removable}">Remove</button>` : ""}</div></figure>`;
+}
+const chartSide = (label, shot, link, edit) => shot && shot.path ? shotFigure(label, shot, edit) : chartFigure(label, link);
+const hasCharts = t => !!(beforeChart(t) || afterChart(t) || (t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path));
+function tradeCharts(t) {
+  const b = t.shotBefore && t.shotBefore.path ? t.shotBefore : null, a = t.shotAfter && t.shotAfter.path ? t.shotAfter : null;
+  return `<div class="chart-pair">${b || beforeChart(t) ? chartSide("Before", b, beforeChart(t)) : ""}${a || afterChart(t) ? chartSide("After", a, afterChart(t)) : ""}</div>`;
 }
 
 function resultOf(t) { return isOpen(t) ? "Open" : isScratch(t) ? "BE" : t.pnl > 0 ? "Win" : "Loss"; }
@@ -3913,7 +3951,7 @@ function renderTable(list) {
       <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${isOpen(t) ? "Open" : money(t.pnl)}</strong></td>
       <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : result === "Open" ? "open" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
       <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span class="plan-flag" title="${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}" role="img" aria-label="Plan broken">${ico("warn")}</span>` : ""}</td>
-      <td class="notes${t.notes || t.mistakes || beforeChart(t) || afterChart(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
+      <td class="notes${t.notes || t.mistakes || hasCharts(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${(t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? ` <button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
         <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">View</button>
         ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}" aria-label="Close trade ${idx}, ${esc(t.pair)}">Close</button>` : ""}<button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
@@ -4004,6 +4042,9 @@ function resetForm(keepDate, keepDraft) {
   F("tRisk").value = settings.defaultRisk || "";
   F("tAccount").value = defaultAccount();
   F("tConfOut").textContent = "3/5";
+  if (!keepDraft) discardShots();
+  formShots = { before: null, after: null }; savedShots = { before: null, after: null };
+  ["tBefore", "tAfter"].forEach(id => { F(id + "Msg").textContent = ""; F(id + "Msg").classList.remove("err"); });
   syncPlanForm(null);
   syncOpenFields();
   F("formTitle").textContent = "Log a trade";
@@ -4077,6 +4118,7 @@ function readForm() {
     notes: F("tNotes").value.trim(),
     chartBefore: safeLink(F("tBefore").value),
     chartAfter: safeLink(F("tAfter").value),
+    shotBefore: formShots.before, shotAfter: formShots.after,
     screenshot: ""
   };
 }
@@ -4106,6 +4148,9 @@ function loadIntoForm(t) {
   F("tNotes").value = t.notes || "";
   F("tBefore").value = beforeChart(t);
   F("tAfter").value = afterChart(t);
+  const saved = t.id && realTrades.find(x => x.id === t.id);
+  formShots = { before: t.shotBefore || null, after: t.shotAfter || null };
+  savedShots = { before: saved && saved.shotBefore || null, after: saved && saved.shotAfter || null };
   F("formTitle").textContent = "Edit trade";
   F("formSubmit").textContent = "Update trade";
   F("formCancel").hidden = false;
@@ -4142,11 +4187,12 @@ function validate(t) {
 
 let chartPreviewKey = "";
 function updateChartPreview() {
-  const b = safeLink(F("tBefore").value), a = safeLink(F("tAfter").value);
-  const key = b + "|" + a;
+  const b = safeLink(F("tBefore").value), a = safeLink(F("tAfter").value), sb_ = formShots.before, sa = formShots.after;
+  const key = [b, a, sb_ && sb_.path, sa && sa.path].join("|");
   if (key === chartPreviewKey) return;
   chartPreviewKey = key;
-  F("chartPreview").innerHTML = b || a ? chartFigure("Before", b) + chartFigure("After", a) : "";
+  F("chartPreview").innerHTML = b || a || sb_ || sa ? chartSide("Before", sb_, b, "before") + chartSide("After", sa, a, "after") : "";
+  loadShots(F("chartPreview"));
 }
 function updatePreview() {
   updateChartPreview();
@@ -4987,6 +5033,8 @@ F("tradeForm").addEventListener("submit", e => {
   box.classList.remove("show");
   const editing = trades.some(x => x.id === t.id), wasOpen = editing && isOpen(trades.find(x => x.id === t.id));
   if (!commitTrade(t)) return;
+  ["before", "after"].forEach(k => { const old = savedShots[k]; if (old && (!formShots[k] || formShots[k].path !== old.path)) removeCertFile(old); });
+  savedShots = { before: formShots.before, after: formShots.after };
   toast(wasOpen && !isOpen(t) ? `Trade closed: ${t.pair} ${money(t.pnl)}` : isOpen(t) ? (editing ? `Open trade updated: ${t.pair}` : `Open trade saved: ${t.pair}. Close it from Open trades when it's done.`) : editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
   propWarn(t);
   resetForm(true);
@@ -5116,9 +5164,7 @@ function openTrade(t) {
   const item = (label, value, cls = "") => value === "" || value == null ? "" : `<div class="td-item"><span>${label}</span><b class="${cls}">${value}</b></div>`;
   const price = v => v == null ? "" : `<span class="mono">${esc(v)}</span>`;
   F("tdBody").innerHTML = `
-    ${beforeChart(t) || afterChart(t)
-      ? `<div class="chart-pair">${beforeChart(t) ? chartFigure("Before", beforeChart(t)) : ""}${afterChart(t) ? chartFigure("After", afterChart(t)) : ""}</div>`
-      : `<p class="td-nochart">No charts yet. Add TradingView links with Edit trade.</p>`}
+    ${hasCharts(t) ? tradeCharts(t) : `<p class="td-nochart">No charts yet. Add screenshots or TradingView links with Edit trade.</p>`}
     <div class="td-grid">
       ${item("Account", esc(acctLabel(acctById(t.account))))}
       ${item("Result", `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : res === "Open" ? "open" : "be"}">${res === "BE" ? "Breakeven" : res}</span>`)}
@@ -5135,6 +5181,7 @@ function openTrade(t) {
     ${newsNear(t).length ? `<p class="td-news"><span class="imp High" aria-hidden="true"></span> High-impact news within an hour: ${newsNear(t).map(e => `${esc(e.cur)} ${esc(e.title)} (${fmtTime(new Date(e.t))})`).join(", ")}</p>` : ""}
     ${t.notes ? `<p class="td-notes" style="margin-top:14px">${esc(t.notes)}</p>` : ""}
     ${t.sourceUrl ? `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open in Notion ↗</a></p>` : ""}`;
+  loadShots(F("tdBody"));
   const dlg = F("tradeDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   (isOpen(t) ? F("tdCloseTrade") : F("tdDone")).focus({ preventScroll: true });
@@ -5807,7 +5854,7 @@ async function sbStorage(method, path, body, type) {
   const res = await fetch(SB.url + "/storage/v1/object/" + where, { method, headers, body });
   if (!res.ok) {
     const j = await res.json().catch(() => ({})), msg = String(j.message || j.error || "Storage error " + res.status);
-    throw new Error(/bucket not found/i.test(msg) ? "Certificate storage isn't set up yet" : /row-level security|unauthori[sz]ed/i.test(msg) ? "Certificate storage permissions aren't set up yet"
+    throw new Error(/bucket not found/i.test(msg) ? "File storage isn't set up yet" : /row-level security|unauthori[sz]ed/i.test(msg) ? "File storage permissions aren't set up yet"
       : /exceeded|too large/i.test(msg) ? "That file is over 10 MB" : /mime|content type/i.test(msg) ? "Choose an image or a PDF" : msg);
   }
   return res;
@@ -5876,6 +5923,82 @@ F("certRemove").addEventListener("click", async () => {
   F("certDlg").close();
   toast("Certificate removed");
 });
+
+/* ---------- Trade screenshots: same private bucket, under <user>/trades/ ---------- */
+let formShots = { before: null, after: null }, savedShots = { before: null, after: null };
+const SHOT_FIELD = { before: "tBefore", after: "tAfter" };
+// Uploads made in the form but never saved are deleted when the form is cleared.
+function discardShots() {
+  ["before", "after"].forEach(k => { const s = formShots[k]; if (s && (!savedShots[k] || savedShots[k].path !== s.path)) removeCertFile(s); });
+}
+function loadShots(root) {
+  $$("[data-shot-load]", root).forEach(el => {
+    const path = el.dataset.shotLoad, label = el.dataset.shotLabel || "Chart";
+    el.removeAttribute("data-shot-load");
+    certUrl({ path }).then(u => { if (el.isConnected) el.innerHTML = `<button type="button" class="shot-open" data-shot-view="${esc(path)}" data-shot-label="${esc(label)}" aria-label="View ${esc(label.toLowerCase())} screenshot full size"><img src="${u}" alt="${esc(label)} screenshot"></button>`; })
+      .catch(err => { if (el.isConnected) el.innerHTML = `<div class="none">Couldn't load the screenshot: ${esc(err.message)}</div>`; });
+  });
+}
+async function uploadShot(side, file) {
+  const msg = F(SHOT_FIELD[side] + "Msg");
+  msg.classList.remove("err"); msg.textContent = "Uploading…";
+  try {
+    if (!sbOn()) throw new Error("Sign in to your ELEV8 account to upload screenshots");
+    if (!/^image\//.test(file.type) && !/\.(png|jpe?g|webp|heic|heif|gif)$/i.test(file.name || "")) throw new Error("Choose an image");
+    const f = await shrinkImage(file);
+    if (f.size > CERT_MAX) throw new Error("That image is over 10 MB");
+    const ext = ((f.name || "").match(/\.(\w{2,5})$/) || [])[1] || (f.type.split("/")[1] || "png").replace("jpeg", "jpg");
+    const type = f.type || "image/" + (ext === "jpg" ? "jpeg" : ext.toLowerCase());
+    const path = `${sb.session.user.id}/trades/${safeId(F("tId").value || "new")}-${side}-${Date.now().toString(36)}.${ext.toLowerCase()}`;
+    await sbStorage("POST", path, f, type);
+    certUrls.set(path, URL.createObjectURL(f));
+    const old = formShots[side];
+    if (old && (!savedShots[side] || savedShots[side].path !== old.path)) removeCertFile(old);
+    formShots[side] = { path, name: String(file.name || "screenshot").slice(0, 120), type, size: f.size };
+    msg.textContent = "Screenshot added";
+    updateChartPreview();
+    store.set(KEY_DRAFT, Object.assign(readForm(), { _editing: realTrades.some(x => x.id === F("tId").value) }));
+  } catch (e) { msg.classList.add("err"); msg.textContent = e.message; }
+}
+$$("[data-shot-side]").forEach(inp => inp.addEventListener("change", e => {
+  e.stopPropagation();
+  const file = inp.files && inp.files[0];
+  inp.value = "";
+  if (file) uploadShot(inp.dataset.shotSide, file);
+}));
+// On a computer: copy a screenshot, click the Before or After box, paste.
+Object.entries(SHOT_FIELD).forEach(([side, id]) => F(id).addEventListener("paste", e => {
+  const file = Array.from((e.clipboardData && e.clipboardData.files) || []).find(f => /^image\//.test(f.type));
+  if (!file) return;
+  e.preventDefault();
+  uploadShot(side, file);
+}));
+F("chartPreview").addEventListener("click", e => {
+  const rm = e.target.closest("[data-shot-remove]");
+  if (!rm) return;
+  const side = rm.dataset.shotRemove, s = formShots[side];
+  if (s && (!savedShots[side] || savedShots[side].path !== s.path)) removeCertFile(s); // a saved one goes when the trade is saved
+  formShots[side] = null;
+  F(SHOT_FIELD[side] + "Msg").textContent = "";
+  updateChartPreview();
+  store.set(KEY_DRAFT, Object.assign(readForm(), { _editing: realTrades.some(x => x.id === F("tId").value) }));
+});
+// Full-size view, from the form preview or the trade window.
+document.addEventListener("click", async e => {
+  const v = e.target.closest("[data-shot-view]");
+  if (!v) return;
+  const label = v.dataset.shotLabel || "Chart", dlg = F("shotDlg");
+  F("shotTitle").textContent = label + " screenshot";
+  F("shotView").innerHTML = `<p class="muted" style="margin:0">Loading…</p>`;
+  F("shotDownload").removeAttribute("href");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  try {
+    const u = await certUrl({ path: v.dataset.shotView });
+    F("shotView").innerHTML = `<img src="${u}" alt="${esc(label)} screenshot">`;
+    F("shotDownload").href = u; F("shotDownload").download = label.toLowerCase() + "-screenshot";
+  } catch (err) { F("shotView").innerHTML = `<p class="q-msg" style="margin:0">Couldn't open it: ${esc(err.message)}</p>`; }
+});
+F("shotClose").addEventListener("click", () => F("shotDlg").close());
 
 /* ---------- Passing a phase: archive the account, optionally start the next phase ---------- */
 // The stage after this one in the firm's programme (or Challenge → Verification → Funded for other firms).
