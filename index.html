@@ -1511,10 +1511,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="card-head">
               <div>
                 <h3 id="eqTitle">Equity curve</h3>
-                <div class="sub">Cumulative balance after each trade · dots coloured by result</div>
+                <div class="sub" id="eqSub">Balance after each trade · dots coloured by result</div>
               </div>
               <div class="eq-stats" id="eqStats"></div>
             </div>
+            <p class="none" id="eqEmpty" hidden></p>
             <div class="chart-wrap" id="equityWrap">
               <div class="tooltip" id="eqTip" role="status" aria-live="polite"></div>
             </div>
@@ -3429,7 +3430,7 @@ function renderDashboard() {
   const startBal = balanceBefore(list);
 
   renderKpis(st, startBal);
-  renderEquity(list, startBal, st);
+  drawEquity(list);
   renderWinLoss(st);
   renderPairs(list);
   renderSetups(list);
@@ -3483,6 +3484,31 @@ function renderKpis(st, startBal) {
 }
 
 let eqState = null;
+// The equity curve always follows one account: the one picked in Filters, otherwise the active account.
+// It starts from that account's own balance, never the whole journal added together.
+function equityView(list) {
+  const id = ui.account && acctById(ui.account) ? ui.account : defaultAccount();
+  const own = id ? list.filter(t => t.account === id) : list;
+  let start = startingBalance(id);
+  if (own.length && (ui.range !== "all" || ui.session || ui.setup)) {
+    const first = own[0], at = first.date + (first.time || "");
+    start += sum(trades.filter(t => !isOpen(t) && (!id || t.account === id) && (t.date + (t.time || "")) < at).map(t => Number(t.pnl) || 0));
+  }
+  return { id, list: own, start, st: stats(own) };
+}
+function drawEquity(list) {
+  const ev = equityView(list), a = acctById(ev.id);
+  F("eqSub").textContent = (a ? acctLabel(a) + " · " : "") + "Balance after each trade · dots coloured by result";
+  if (!ev.list.length) {
+    $$("svg", F("equityWrap")).forEach(s => s.remove());
+    F("eqEmpty").hidden = false;
+    F("eqEmpty").textContent = `No closed trades on ${a ? acctLabel(a) : "this account"} in this view.`;
+    F("eqStats").innerHTML = "";
+    return;
+  }
+  F("eqEmpty").hidden = true;
+  renderEquity(ev.list, ev.start, ev.st);
+}
 function renderEquity(list, startBal, st) {
   const wrap = $("#equityWrap");
   const tip = $("#eqTip");
@@ -7068,8 +7094,7 @@ window.addEventListener("resize", () => {
     if (F("panel-overview").hidden) return;
     const list = filtered();
     if (!list.length) return;
-    const st = stats(list);
-    renderEquity(list, balanceBefore(list), st);
+    drawEquity(list);
   }, 200);
 });
 
