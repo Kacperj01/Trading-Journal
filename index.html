@@ -5199,7 +5199,8 @@ F("tradeForm").addEventListener("submit", e => {
   toast(wasOpen && !isOpen(t) ? `Trade closed: ${t.pair} ${money(t.pnl)}` : isOpen(t) ? (editing ? `Open trade updated: ${t.pair}` : `Open trade saved: ${t.pair}. Close it from Open trades when it's done.`) : editing ? "Trade updated" : `Trade saved: ${t.pair} ${money(t.pnl)}`);
   propWarn(t);
   resetForm(true);
-  // Back to Overview after saving, editing or closing a trade.
+  // Back to Overview after saving, editing or closing a trade, with the quick log folded away.
+  ui.quickOpen = false; saveUi(); setQuickOpen(false); resetQuick();
   showTab("overview");
   window.scrollTo({ top: 0, behavior: "auto" });
 });
