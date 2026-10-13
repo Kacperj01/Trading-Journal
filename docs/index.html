@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "8504635815";</script>
+<script>window.ELEV8_BUILD = "a16e09e8d6";</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -1814,6 +1814,15 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
                 <input type="number" step="any" id="tFees" inputmode="decimal" aria-describedby="tFeesHint">
                 <span class="hint" id="tFeesHint">Taken off your P&amp;L automatically</span>
               </div>
+              <div class="field">
+                <label for="tClosedDate">Closed on</label>
+                <input type="date" id="tClosedDate" aria-describedby="tClosedHint">
+              </div>
+              <div class="field">
+                <label for="tClosedTime">Close time</label>
+                <input type="time" id="tClosedTime" aria-describedby="tClosedHint">
+                <span class="hint" id="tClosedHint">Optional. Blank means it closed when it was opened. Sets its place on the equity curve.</span>
+              </div>
             </div>
           </fieldset>
 
@@ -3288,6 +3297,10 @@ const nextFrame = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
 /* ======================================================================
    Analytics
    ====================================================================== */
+// When a trade closed: its close date and time if recorded, otherwise when it was opened.
+const closeDateOf = t => t.closedDate || t.date;
+const closeKey = t => (t.closedDate || t.date || "") + " " + (t.closedDate ? (t.closedTime || "") : (t.time || ""));
+const sortByClose = list => list.slice().sort((a, b) => closeKey(a).localeCompare(closeKey(b)));
 function sortChrono(list) {
   return list.slice().sort((a, b) => (a.date + (a.time || "")).localeCompare(b.date + (b.time || "")));
 }
@@ -3511,11 +3524,12 @@ let eqState = null;
 // It starts from that account's own balance, never the whole journal added together.
 function equityView(list) {
   const id = ui.account && acctById(ui.account) ? ui.account : defaultAccount();
-  const own = id ? list.filter(t => t.account === id) : list;
+  // Plotted in the order the trades closed, so a trade held over several days lands where it was closed.
+  const own = sortByClose(id ? list.filter(t => t.account === id) : list);
   let start = startingBalance(id);
   if (own.length && (ui.range !== "all" || ui.session || ui.setup)) {
-    const first = own[0], at = first.date + (first.time || "");
-    start += sum(trades.filter(t => !isOpen(t) && (!id || t.account === id) && (t.date + (t.time || "")) < at).map(t => Number(t.pnl) || 0));
+    const at = closeKey(own[0]);
+    start += sum(trades.filter(t => !isOpen(t) && (!id || t.account === id) && !own.includes(t) && closeKey(t) < at).map(t => Number(t.pnl) || 0));
   }
   return { id, list: own, start, st: stats(own) };
 }
@@ -3563,7 +3577,7 @@ function renderEquity(list, startBal, st) {
     const idx = Math.round(1 + (i / Math.max(1, ticks - 1)) * (list.length - 1));
     const p = pts[idx];
     if (!p || !p.t) continue;
-    grid += `<text class="axis-label" x="${sx(p.x)}" y="${H - 10}" text-anchor="${i === 0 ? "start" : i === ticks - 1 ? "end" : "middle"}">${fmtDate(p.t.date, { day: "2-digit", month: "short" })}</text>`;
+    grid += `<text class="axis-label" x="${sx(p.x)}" y="${H - 10}" text-anchor="${i === 0 ? "start" : i === ticks - 1 ? "end" : "middle"}">${fmtDate(closeDateOf(p.t), { day: "2-digit", month: "short" })}</text>`;
   }
   const baseY = sy(startBal);
   grid += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${baseY}" y2="${baseY}" stroke="var(--accent)" stroke-opacity=".5" stroke-dasharray="2 4"/>`;
@@ -3622,7 +3636,7 @@ function renderEquity(list, startBal, st) {
     g.setAttribute("x1", sx(p.x)); g.setAttribute("x2", sx(p.x)); g.style.opacity = 1;
     const t = p.t;
     tip.innerHTML = `<div class="t">#${i} · ${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></div>
-      <div class="row"><span class="muted">Date</span><span class="mono">${fmtDate(t.date)}</span></div>
+      <div class="row"><span class="muted">${t.closedDate ? "Closed" : "Date"}</span><span class="mono">${fmtDate(closeDateOf(t))}${t.closedDate && t.closedTime ? " " + esc(t.closedTime) : ""}</span></div>
       <div class="row"><span class="muted">Setup</span><span>${esc(t.setup)}</span></div>
       <div class="row"><span class="muted">P&amp;L</span><span class="mono ${tone(t.pnl)}">${money(t.pnl)}</span></div>
       <div class="row"><span class="muted">R</span><span class="mono ${tone(rOf(t))}">${fmtR(rOf(t))}</span></div>
@@ -4346,6 +4360,8 @@ function readForm() {
     entry: num(F("tEntry").value), stop: num(F("tStop").value), target: num(F("tTarget").value), exit: num(F("tExit").value),
     size: num(F("tSize").value), risk: num(F("tRisk").value),
     status: F("tOpen").checked ? "open" : "",
+    closedDate: F("tOpen").checked || !F("tClosedDate").value || (F("tClosedDate").value === F("tDate").value && !F("tClosedTime").value) ? "" : F("tClosedDate").value,
+    closedTime: F("tOpen").checked || !F("tClosedDate").value ? "" : F("tClosedTime").value,
     gross: F("tOpen").checked ? null : num(F("tPnl").value), fees: num(F("tFees").value) == null ? null : Math.abs(num(F("tFees").value)),
     pnl: F("tOpen").checked || num(F("tPnl").value) == null ? null : netOf(num(F("tPnl").value), num(F("tFees").value)), r: F("tOpen").checked ? null : num(F("tR").value),
     emotionBefore: F("tEmoBefore").value, emotionAfter: F("tEmoAfter").value,
@@ -4377,6 +4393,7 @@ function loadIntoForm(t) {
   const setNum = (id, v) => F(id).value = v == null ? "" : v;
   setNum("tEntry", t.entry); setNum("tStop", t.stop); setNum("tTarget", t.target); setNum("tExit", t.exit);
   setNum("tSize", t.size); setNum("tRisk", t.risk); setNum("tPnl", t.pnl == null ? null : Math.round(grossOf(t) * 100) / 100); setNum("tR", autoR(t) ? null : t.r); setNum("tFees", t.fees == null ? null : feeOf(t));
+  F("tClosedDate").value = t.closedDate || ""; F("tClosedTime").value = t.closedDate ? t.closedTime || "" : "";
   F("tOpen").checked = isOpen(t); syncOpenFields();
   fillSelect(F("tEmoBefore"), settings.emotions, { placeholder: "—", value: t.emotionBefore || "" });
   fillSelect(F("tEmoAfter"), settings.emotionsAfter, { placeholder: "—", value: t.emotionAfter || "" });
@@ -4398,7 +4415,7 @@ function loadIntoForm(t) {
 // "Still open" switches off the result fields until the trade is closed.
 function syncOpenFields() {
   const open = F("tOpen").checked;
-  ["tPnl", "tR"].forEach(id => { F(id).disabled = open; if (open) { F(id).value = ""; F(id).removeAttribute("aria-invalid"); } });
+  ["tPnl", "tR", "tClosedDate", "tClosedTime"].forEach(id => { F(id).disabled = open; if (open) { F(id).value = ""; F(id).removeAttribute("aria-invalid"); } });
   F("tPnl").placeholder = open ? "When it closes" : "e.g. 250 or -100";
   F("tPnl").closest("fieldset").classList.toggle("is-open", open);
   F("formSubmit").textContent = trades.some(x => x.id === F("tId").value) ? (open ? "Update open trade" : "Update trade") : open ? "Save open trade" : "Save trade";
@@ -5293,6 +5310,8 @@ function closeTrade(id) {
   loadIntoForm(t);
   F("tOpen").checked = false;
   syncOpenFields();
+  const now = new Date(), z = n => String(n).padStart(2, "0");
+  F("tClosedDate").value = isoDate(now); F("tClosedTime").value = z(now.getHours()) + ":" + z(now.getMinutes());
   F("formSubmit").textContent = "Close trade";
   setTimeout(() => F("tOpen").closest("fieldset").scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }), 80);
 }
@@ -5419,6 +5438,7 @@ function openTrade(t) {
       ${isOpen(t) || !feeOf(t) ? "" : item("Fees", `<span class="mono">${money(-feeOf(t))}</span>`, "neg")}
       ${isOpen(t) || !feeOf(t) ? "" : item("Before fees", `<span class="mono">${money(grossOf(t))}</span>`)}
       ${isOpen(t) ? "" : item("R multiple", `<span class="mono">${fmtR(r)}</span>`, tone(r))}
+      ${t.closedDate && !isOpen(t) ? item("Closed", esc(fmtDate(t.closedDate) + (t.closedTime ? " " + t.closedTime : ""))) : ""}
       ${item("Entry", price(t.entry))}${item("Stop loss", price(t.stop))}${item("Take profit", price(t.target))}${item("Exit", price(t.exit))}
       ${item("Size", price(t.size))}${t.risk ? item("Risk", `<span class="mono">${money(t.risk, { signed: false })}</span>`) : ""}
       ${item("Emotion before", esc(t.emotionBefore || ""))}${item("Emotion after", esc(t.emotionAfter || ""))}
