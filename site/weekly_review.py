@@ -253,6 +253,8 @@ def build_week(trades, start, cur, settings=None):
     if broke: cost.append(f"{'One trade' if len(broke) == 1 else f'{len(broke)} trades'} deviated from your trading plan, net {b(money(sum(num(t.get('pnl')) for t in broke)))}.")
     if top_mistakes: cost.append("Execution errors logged: " + "; ".join(html.escape(v["label"]) + (f" (×{v['n']})" if v["n"] > 1 else "") for _, v in top_mistakes[:3]) + ".")
     if st["longest_loss"] >= 3: cost.append(f"Longest losing streak: {b(st['longest_loss'])} consecutive trades.")
+    fees_wk = sum(abs(num(t.get("fees"))) for t in week)
+    if fees_wk >= 0.01: cost.append(f"Fees and commission: {b(money(-fees_wk))} across {plural(sum(1 for t in week if num(t.get('fees'))), 'trade')} (already taken off your P&amp;L).")
 
     if we: focus.append(f"Stand aside when you feel {html.escape(emo_word(we['name']))}: those entries went {rec(we)} this week.")
     if mistakes.get("early_exit", {}).get("n", 0) >= 2: focus.append(f"Allow winners to reach target. {mistakes['early_exit']['n']} trades were exited early; set the take profit and let the trade play out.")

@@ -1476,6 +1476,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="field"><label for="qSetup">Setup</label><input type="text" id="qSetup" list="setupList" autocomplete="off" placeholder="e.g. Asia Sweep" required></div>
             <div class="field"><label for="qPnl">P&amp;L</label><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150 or -100" required>
               <label class="open-toggle"><input type="checkbox" id="qOpen"> Still open</label></div>
+            <div class="field"><label for="qFees">Fees <span class="muted">(optional)</span></label><input type="number" step="any" id="qFees" inputmode="decimal" placeholder="e.g. 7"></div>
             <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
             <div class="field" id="qAccountWrap" hidden><label for="qAccount">Account</label><select id="qAccount"></select></div>
             <div class="field q-wide"><label for="qNotes">Notes</label><input type="text" id="qNotes" placeholder="Why did you take it?"></div>
@@ -1775,7 +1776,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <label class="toggle open-row"><input type="checkbox" id="tOpen"> <span><b>Trade still open</b> <span class="muted">Save it now and add the result when it closes. Open trades aren't counted in your stats.</span></span></label>
             <div class="fields">
               <div class="field">
-                <label for="tPnl">Net P&amp;L <span class="req" aria-hidden="true">*</span></label>
+                <label for="tPnl">P&amp;L before fees <span class="req" aria-hidden="true">*</span></label>
                 <input type="number" step="any" id="tPnl" required aria-required="true" inputmode="decimal" aria-describedby="tPnlHint" placeholder="e.g. 250 or -100">
                 <span class="hint" id="tPnlHint">Negative for a loss, 0 for breakeven</span>
               </div>
@@ -1787,7 +1788,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <div class="field">
                 <label for="tFees">Fees / commission</label>
                 <input type="number" step="any" id="tFees" inputmode="decimal" aria-describedby="tFeesHint">
-                <span class="hint" id="tFeesHint">Recorded only; P&amp;L should already be net</span>
+                <span class="hint" id="tFeesHint">Taken off your P&amp;L automatically</span>
               </div>
             </div>
           </fieldset>
@@ -2740,6 +2741,7 @@ async function sbSync() {
     setSync("cloud", "Synced · " + sb.session.user.email);
     if (settingsChanged) { refreshLists(); renderListEditors(); renderAccount(); }
     if (changed || settingsChanged) { syncView(); onDataChanged(); }
+    migrateFees();
     sbRender();
     maybeAskAccount();
   } catch (e) {
@@ -3001,6 +3003,7 @@ async function connectCloud() {
         extra.forEach(t => { const body = clean(t); enqueue(() => tradesCol().doc(t.id).set(body)); });
         persist.loading = false;
         applyImports().catch(() => {});
+        setTimeout(migrateFees, 0);
       } else {
         realTrades = incoming;
       }
@@ -3032,6 +3035,7 @@ function finishLoading(mode) {
   persist.loading = false;
   syncView();
   onDataChanged();
+  if (!SB && !DEMO) migrateFees();
 }
 
 /* Trade sets placed in the shared "imports" collection (e.g. a Notion export) are copied
@@ -3147,6 +3151,30 @@ const hasCharts = t => !!(beforeChart(t) || afterChart(t) || (t.shotBefore && t.
 function tradeCharts(t) {
   const b = t.shotBefore && t.shotBefore.path ? t.shotBefore : null, a = t.shotAfter && t.shotAfter.path ? t.shotAfter : null;
   return `<div class="chart-pair">${b || beforeChart(t) ? chartSide("Before", b, beforeChart(t)) : ""}${a || afterChart(t) ? chartSide("After", a, afterChart(t)) : ""}</div>`;
+}
+
+// Fees and commission come off the P&L: the form takes P&L before fees, and the trade stores the net.
+// Fees are kept as a positive cost whatever sign was typed. Trades from this date on are always net.
+const FEES_NET_FROM = "2026-10-12";
+const feeOf = t => Math.abs(Number(t && t.fees) || 0);
+const grossOf = t => t.gross != null ? Number(t.gross) : (Number(t.pnl) || 0) + feeOf(t);
+const netOf = (gross, fees) => Math.round(((Number(gross) || 0) - Math.abs(Number(fees) || 0)) * 100) / 100;
+// R worked out from the old P&L (not typed in) is recalculated when the net changes.
+const autoR = t => t.r != null && t.risk && t.pnl != null && Math.abs(t.r - Math.round(t.pnl / t.risk * 100) / 100) < 0.005;
+// Trades from this week that were saved before fees were deducted: take the fees off once.
+function migrateFees() {
+  if (persist.readOnly) return 0;
+  let n = 0;
+  realTrades.forEach(t => {
+    // MT4/MT5 imports already had commission and swap taken off, so they're skipped.
+    if (!t || isOpen(t) || t.gross != null || !feeOf(t) || String(t.date || "") < FEES_NET_FROM || t.pnl == null || /^mt-/.test(t.id || "")) return;
+    const wasAuto = autoR(t), gross = Number(t.pnl) || 0;
+    const next = Object.assign({}, t, { gross, fees: feeOf(t), pnl: netOf(gross, t.fees) });
+    if (wasAuto || next.r == null) next.r = next.risk ? Math.round(next.pnl / next.risk * 100) / 100 : null;
+    putTrade(next); n++;
+  });
+  if (n) { syncView(); onDataChanged(); }
+  return n;
 }
 
 function resultOf(t) { return isOpen(t) ? "Open" : isScratch(t) ? "BE" : t.pnl > 0 ? "Win" : "Loss"; }
@@ -3810,6 +3838,7 @@ function buildWeek(start) {
   clusters.forEach(c => cost.push(`On ${fmtDate(c[0].date, { weekday: "short", day: "numeric", month: "short" })}, the ${N(esc(c[0].setup))} ${esc(c[0].direction.toLowerCase())} idea was taken on ${new Set(c.map(t => t.pair)).size} correlated pairs (${[...new Set(c.map(t => t.pair))].map(esc).join(", ")}), compounding the loss to ${N(money(sum(c.map(t => t.pnl))))}.`));
   if (topMistakes.length) cost.push(`Execution errors logged: ${topMistakes.slice(0, 3).map(([, v]) => `${esc(v.label)}${v.n > 1 ? ` (×${v.n})` : ""}`).join("; ")}.`);
   if (st.longestLoss >= 3) cost.push(`Longest losing streak: ${N(st.longestLoss)} consecutive trades.`);
+  const feesWk = sum(list.map(feeOf)); if (feesWk >= 0.01) cost.push(`Fees and commission: ${N(money(-feesWk))} across ${plural(list.filter(feeOf).length, "trade")} (already taken off your P&L).`);
 
   if (worstEmo) focus.push(`Stand aside when you feel ${esc(emoWord(worstEmo.name))}: those entries went ${rec(worstEmo)} this week.`);
   if (clusters.length) focus.push(`Limit exposure to one position per idea. When a setup appears across correlated pairs, take only the strongest.`);
@@ -4268,7 +4297,8 @@ function readForm() {
     entry: num(F("tEntry").value), stop: num(F("tStop").value), target: num(F("tTarget").value), exit: num(F("tExit").value),
     size: num(F("tSize").value), risk: num(F("tRisk").value),
     status: F("tOpen").checked ? "open" : "",
-    pnl: F("tOpen").checked ? null : num(F("tPnl").value), r: F("tOpen").checked ? null : num(F("tR").value), fees: num(F("tFees").value),
+    gross: F("tOpen").checked ? null : num(F("tPnl").value), fees: num(F("tFees").value) == null ? null : Math.abs(num(F("tFees").value)),
+    pnl: F("tOpen").checked || num(F("tPnl").value) == null ? null : netOf(num(F("tPnl").value), num(F("tFees").value)), r: F("tOpen").checked ? null : num(F("tR").value),
     emotionBefore: F("tEmoBefore").value, emotionAfter: F("tEmoAfter").value,
     confidence: Number(F("tConf").value),
     planChecks: readPlanChecks("tPlanChecks"),
@@ -4297,7 +4327,7 @@ function loadIntoForm(t) {
   F("tSetup").value = t.setup || "";
   const setNum = (id, v) => F(id).value = v == null ? "" : v;
   setNum("tEntry", t.entry); setNum("tStop", t.stop); setNum("tTarget", t.target); setNum("tExit", t.exit);
-  setNum("tSize", t.size); setNum("tRisk", t.risk); setNum("tPnl", t.pnl); setNum("tR", t.r); setNum("tFees", t.fees);
+  setNum("tSize", t.size); setNum("tRisk", t.risk); setNum("tPnl", t.pnl == null ? null : Math.round(grossOf(t) * 100) / 100); setNum("tR", autoR(t) ? null : t.r); setNum("tFees", t.fees == null ? null : feeOf(t));
   F("tOpen").checked = isOpen(t); syncOpenFields();
   fillSelect(F("tEmoBefore"), settings.emotions, { placeholder: "—", value: t.emotionBefore || "" });
   fillSelect(F("tEmoAfter"), settings.emotionsAfter, { placeholder: "—", value: t.emotionAfter || "" });
@@ -4339,7 +4369,7 @@ function validate(t) {
   mark("tPair", !t.pair, "Pair / instrument is required");
   mark("tSessionSel", !t.session, "Session is required");
   mark("tSetup", !t.setup, "Setup is required");
-  mark("tPnl", t.pnl == null && !isOpen(t), "Net P&L is required (use 0 for breakeven), or tick Trade still open");
+  mark("tPnl", t.pnl == null && !isOpen(t), "P&L is required (use 0 for breakeven), or tick Trade still open");
   mark("tRisk", t.risk != null && t.risk < 0, "Risk can't be negative");
   return errs;
 }
@@ -4775,6 +4805,7 @@ function rowsToTrades(rows) {
       setup: String(g("setup")).trim() || "Unspecified",
       entry: parseMoney(g("entry")), stop: parseMoney(g("stop")), target: parseMoney(g("target")), exit: parseMoney(g("exit")),
       size: parseMoney(g("size")), risk, pnl: Math.round(pnl * 100) / 100, r: rr, fees: parseMoney(g("fees")),
+      gross: parseMoney(g("fees")) ? Math.round((pnl + Math.abs(parseMoney(g("fees")))) * 100) / 100 : null, // spreadsheet P&L is taken as already net
       emotionBefore: String(g("emotionBefore")).trim(), emotionAfter: String(g("emotionAfter")).trim(),
       confidence: parseMoney(g("confidence")) || null,
       followedPlan: plan ? !/^(n|no|false|0|x)$/.test(plan) : true,
@@ -4871,7 +4902,7 @@ function mtTrades(rows, accountId, zone, platform) {
     out.push({
       id: "mt-" + (ticket || uid()) + (accountId ? "-" + accountId.slice(0, 20) : ""), date: when.date, time: when.time, pair, account: accountId || "",
       session: guessSession(when.time, when.date) || "Unspecified", direction: type === "buy" ? "Long" : "Short", setup: "Unspecified",
-      entry, stop, target, exit, size, risk: risk || null, pnl: Math.round((profit + costs) * 100) / 100, r: risk ? Math.round((profit + costs) / risk * 100) / 100 : null,
+      entry, stop, target, exit, size, risk: risk || null, pnl: Math.round((profit + costs) * 100) / 100, gross: Math.round(profit * 100) / 100, r: risk ? Math.round((profit + costs) / risk * 100) / 100 : null,
       fees: costs ? Math.round(-costs * 100) / 100 : null, emotionBefore: "", emotionAfter: "", confidence: null, followedPlan: true, mistakes: "",
       notes: `Imported from ${platform}${ticket ? " #" + ticket : ""}`, chartBefore: "", chartAfter: "", screenshot: ""
     });
@@ -5256,11 +5287,12 @@ function commitTrade(t) {
 
 /* ---------- Quick log (Overview) ---------- */
 function quickTrade() {
-  const pnl = num(F("qPnl").value), risk = num(settings.defaultRisk) || null;
+  const gross = num(F("qPnl").value), fees = num(F("qFees").value) == null ? null : Math.abs(num(F("qFees").value)), risk = num(settings.defaultRisk) || null;
+  const pnl = gross == null ? null : netOf(gross, fees);
   return {
     id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value, account: F("qAccount").value,
     direction: ($("input[name=qDir]:checked") || {}).value || "Long", setup: F("qSetup").value.trim(),
-    entry: null, stop: null, target: null, exit: null, size: null, risk, pnl: F("qOpen").checked ? null : pnl, r: null, fees: null, status: F("qOpen").checked ? "open" : "",
+    entry: null, stop: null, target: null, exit: null, size: null, risk, pnl: F("qOpen").checked ? null : pnl, gross: F("qOpen").checked ? null : gross, r: null, fees: F("qOpen").checked ? null : fees, status: F("qOpen").checked ? "open" : "",
     emotionBefore: F("qEmo").value, emotionAfter: "", confidence: null, planChecks: readPlanChecks("qPlanChecks"),
     followedPlan: (c => c ? Object.values(c).every(Boolean) : true)(readPlanChecks("qPlanChecks")), mistakes: "",
     notes: F("qNotes").value.trim(), chartBefore: "", chartAfter: "", screenshot: ""
@@ -5334,7 +5366,9 @@ function openTrade(t) {
     <div class="td-grid">
       ${item("Account", esc(acctLabel(acctById(t.account))))}
       ${item("Result", `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : res === "Open" ? "open" : "be"}">${res === "BE" ? "Breakeven" : res}</span>`)}
-      ${isOpen(t) ? "" : item("P&amp;L", `<span class="mono">${money(t.pnl)}</span>`, tone(t.pnl))}
+      ${isOpen(t) ? "" : item(feeOf(t) ? "Net P&amp;L" : "P&amp;L", `<span class="mono">${money(t.pnl)}</span>`, tone(t.pnl))}
+      ${isOpen(t) || !feeOf(t) ? "" : item("Fees", `<span class="mono">${money(-feeOf(t))}</span>`, "neg")}
+      ${isOpen(t) || !feeOf(t) ? "" : item("Before fees", `<span class="mono">${money(grossOf(t))}</span>`)}
       ${isOpen(t) ? "" : item("R multiple", `<span class="mono">${fmtR(r)}</span>`, tone(r))}
       ${item("Entry", price(t.entry))}${item("Stop loss", price(t.stop))}${item("Take profit", price(t.target))}${item("Exit", price(t.exit))}
       ${item("Size", price(t.size))}${t.risk ? item("Risk", `<span class="mono">${money(t.risk, { signed: false })}</span>`) : ""}
