@@ -1001,6 +1001,13 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .tour-btns { display: flex; gap: 8px; align-items: center; }
 .tour-btns span { flex: 1; }
 :root.light-mode .tour-tip { background: #fff; }
+.signed { display: flex; gap: 8px; align-items: stretch; }
+.signed input { flex: 1; min-width: 0; }
+.sign-btn { flex: none; min-width: 52px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-2);
+  font: 600 16px var(--font-mono); cursor: pointer; }
+.sign-btn[aria-pressed="true"] { background: var(--red-soft); border-color: rgba(255, 92, 122, .55); color: var(--red); }
+.sign-btn:disabled { opacity: .45; cursor: default; }
+.signed.neg input { color: var(--red); }
 .demo-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin: 0 0 18px; padding: 14px 18px; border-radius: var(--radius-sm);
   background: linear-gradient(120deg, rgba(42,127,217,.16), rgba(47,208,200,.12)); border: 1px solid rgba(47,208,200,.32); position: relative; z-index: 2; }
 .demo-bar .demo-txt { display: grid; gap: 2px; }
@@ -1474,7 +1481,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               </div>
             </div>
             <div class="field"><label for="qSetup">Setup</label><input type="text" id="qSetup" list="setupList" autocomplete="off" placeholder="e.g. Asia Sweep" required></div>
-            <div class="field"><label for="qPnl">P&amp;L</label><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150 or -100" required>
+            <div class="field"><label for="qPnl">P&amp;L</label><div class="signed"><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150" required><button type="button" class="sign-btn" data-sign-for="qPnl" aria-pressed="false" aria-label="Make it a loss">+/−</button></div>
               <label class="open-toggle"><input type="checkbox" id="qOpen"> Still open</label></div>
             <div class="field"><label for="qFees">Fees <span class="muted">(optional)</span></label><input type="number" step="any" id="qFees" inputmode="decimal" placeholder="e.g. 7"></div>
             <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
@@ -1778,8 +1785,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="fields">
               <div class="field">
                 <label for="tPnl">P&amp;L before fees <span class="req" aria-hidden="true">*</span></label>
-                <input type="number" step="any" id="tPnl" required aria-required="true" inputmode="decimal" aria-describedby="tPnlHint" placeholder="e.g. 250 or -100">
-                <span class="hint" id="tPnlHint">Negative for a loss, 0 for breakeven</span>
+                <div class="signed"><input type="number" step="any" id="tPnl" required aria-required="true" inputmode="decimal" aria-describedby="tPnlHint" placeholder="e.g. 250"><button type="button" class="sign-btn" data-sign-for="tPnl" aria-pressed="false" aria-label="Make it a loss">+/−</button></div>
+                <span class="hint" id="tPnlHint">Tap +/− for a loss, 0 for breakeven</span>
               </div>
               <div class="field">
                 <label for="tR">R multiple</label>
@@ -3163,6 +3170,31 @@ function tradeCharts(t) {
   return `<div class="chart-pair">${b || beforeChart(t) ? chartSide("Before", b, beforeChart(t)) : ""}${a || afterChart(t) ? chartSide("After", a, afterChart(t)) : ""}</div>`;
 }
 
+// P&L boxes: the iPhone number pad has no minus key, so +/− marks the amount as a loss.
+// The box shows the size of the move; signedVal() gives the value with its sign. Typing "-" still works.
+function setSign(id, neg) {
+  const btn = document.querySelector(`[data-sign-for="${id}"]`);
+  btn.setAttribute("aria-pressed", String(!!neg));
+  btn.setAttribute("aria-label", neg ? "Loss: tap to make it a win" : "Make it a loss");
+  btn.textContent = neg ? "−" : "+/−";
+  F(id).closest(".signed").classList.toggle("neg", !!neg);
+}
+const isNegSign = id => document.querySelector(`[data-sign-for="${id}"]`).getAttribute("aria-pressed") === "true";
+function signedVal(id) { const v = num(F(id).value); return v == null ? null : isNegSign(id) ? -Math.abs(v) : v; }
+function putSigned(id, v) { setSign(id, v != null && v < 0); F(id).value = v == null ? "" : Math.abs(v); }
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-sign-for]");
+  if (!b || b.disabled) return;
+  const id = b.dataset.signFor;
+  setSign(id, !isNegSign(id));
+  F(id).dispatchEvent(new Event("input", { bubbles: true }));
+  F(id).focus({ preventScroll: true });
+});
+["qPnl", "tPnl"].forEach(id => { const el = document.getElementById(id); el.addEventListener("input", () => {
+  const v = num(el.value);
+  if (v != null && v < 0) { setSign(id, true); el.value = Math.abs(v); }
+}); });
+
 // Fees and commission come off the P&L: the form takes P&L before fees, and the trade stores the net.
 // Fees are kept as a positive cost whatever sign was typed. Trades from this date on are always net.
 const FEES_NET_FROM = "2026-10-12";
@@ -4264,7 +4296,7 @@ function restoreDraft() {
 function resetForm(keepDate, keepDraft) {
   if (!keepDraft) store.del(KEY_DRAFT);
   const d = F("tDate").value;
-  $("#tradeForm").reset();
+  $("#tradeForm").reset(); setSign("tPnl", false);
   F("tId").value = "";
   F("tDate").value = keepDate && d ? d : isoDate(new Date());
   F("tRisk").value = settings.defaultRisk || "";
@@ -4339,8 +4371,8 @@ function readForm() {
     status: F("tOpen").checked ? "open" : "",
     closedDate: F("tOpen").checked || !F("tClosedDate").value || (F("tClosedDate").value === F("tDate").value && !F("tClosedTime").value) ? "" : F("tClosedDate").value,
     closedTime: F("tOpen").checked || !F("tClosedDate").value ? "" : F("tClosedTime").value,
-    gross: F("tOpen").checked ? null : num(F("tPnl").value), fees: num(F("tFees").value) == null ? null : Math.abs(num(F("tFees").value)),
-    pnl: F("tOpen").checked || num(F("tPnl").value) == null ? null : netOf(num(F("tPnl").value), num(F("tFees").value)), r: F("tOpen").checked ? null : num(F("tR").value),
+    gross: F("tOpen").checked ? null : signedVal("tPnl"), fees: num(F("tFees").value) == null ? null : Math.abs(num(F("tFees").value)),
+    pnl: F("tOpen").checked || signedVal("tPnl") == null ? null : netOf(signedVal("tPnl"), num(F("tFees").value)), r: F("tOpen").checked ? null : num(F("tR").value),
     emotionBefore: F("tEmoBefore").value, emotionAfter: F("tEmoAfter").value,
     confidence: Number(F("tConf").value),
     planChecks: readPlanChecks("tPlanChecks"),
@@ -4369,7 +4401,7 @@ function loadIntoForm(t) {
   F("tSetup").value = t.setup || "";
   const setNum = (id, v) => F(id).value = v == null ? "" : v;
   setNum("tEntry", t.entry); setNum("tStop", t.stop); setNum("tTarget", t.target); setNum("tExit", t.exit);
-  setNum("tSize", t.size); setNum("tRisk", t.risk); setNum("tPnl", t.pnl == null ? null : Math.round(grossOf(t) * 100) / 100); setNum("tR", autoR(t) ? null : t.r); setNum("tFees", t.fees == null ? null : feeOf(t));
+  setNum("tSize", t.size); setNum("tRisk", t.risk); putSigned("tPnl", t.pnl == null ? null : Math.round(grossOf(t) * 100) / 100); setNum("tR", autoR(t) ? null : t.r); setNum("tFees", t.fees == null ? null : feeOf(t));
   F("tClosedDate").value = t.closedDate || ""; F("tClosedTime").value = t.closedDate ? t.closedTime || "" : "";
   F("tOpen").checked = isOpen(t); syncOpenFields();
   fillSelect(F("tEmoBefore"), settings.emotions, { placeholder: "—", value: t.emotionBefore || "" });
@@ -4393,15 +4425,16 @@ function loadIntoForm(t) {
 function syncOpenFields() {
   const open = F("tOpen").checked;
   ["tPnl", "tR", "tClosedDate", "tClosedTime"].forEach(id => { F(id).disabled = open; if (open) { F(id).value = ""; F(id).removeAttribute("aria-invalid"); } });
-  F("tPnl").placeholder = open ? "When it closes" : "e.g. 250 or -100";
+  document.querySelector('[data-sign-for="tPnl"]').disabled = open; if (open) setSign("tPnl", false);
+  F("tPnl").placeholder = open ? "When it closes" : "e.g. 250";
   F("tPnl").closest("fieldset").classList.toggle("is-open", open);
   F("formSubmit").textContent = trades.some(x => x.id === F("tId").value) ? (open ? "Update open trade" : "Update trade") : open ? "Save open trade" : "Save trade";
 }
 function syncQuickOpen() {
   const open = F("qOpen").checked;
-  F("qPnl").disabled = open;
+  F("qPnl").disabled = open; document.querySelector('[data-sign-for="qPnl"]').disabled = open; if (open) setSign("qPnl", false);
   if (open) { F("qPnl").value = ""; F("qPnl").removeAttribute("aria-invalid"); }
-  F("qPnl").placeholder = open ? "When it closes" : "e.g. 150 or -100";
+  F("qPnl").placeholder = open ? "When it closes" : "e.g. 150";
 }
 F("tOpen").addEventListener("change", syncOpenFields);
 F("qOpen").addEventListener("change", syncQuickOpen);
@@ -5332,7 +5365,7 @@ function commitTrade(t) {
 
 /* ---------- Quick log (Overview) ---------- */
 function quickTrade() {
-  const gross = num(F("qPnl").value), fees = num(F("qFees").value) == null ? null : Math.abs(num(F("qFees").value)), risk = num(settings.defaultRisk) || null;
+  const gross = signedVal("qPnl"), fees = num(F("qFees").value) == null ? null : Math.abs(num(F("qFees").value)), risk = num(settings.defaultRisk) || null;
   const pnl = gross == null ? null : netOf(gross, fees);
   return {
     id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value, account: F("qAccount").value,
@@ -5345,7 +5378,7 @@ function quickTrade() {
 }
 function resetQuick() {
   const date = F("qDate").value;
-  F("quickForm").reset();
+  F("quickForm").reset(); setSign("qPnl", false);
   F("qDate").value = date || isoDate(new Date());
   $$("[aria-invalid]", F("quickForm")).forEach(el => el.removeAttribute("aria-invalid"));
   F("qMsg").textContent = "";
