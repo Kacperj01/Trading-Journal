@@ -169,6 +169,19 @@ section.block { padding-block: 110px 0; }
 @media (max-width: 460px) { .rules { grid-template-columns: 1fr; } }
 
 
+
+/* iPhone peek: a large phone cropped to the part of the screen that matters, fading out at the bottom */
+.peek { position: relative; width: 100%; max-width: 380px; aspect-ratio: 780/980; border-radius: 46px 46px 0 0; padding: 12px 12px 0; background: linear-gradient(160deg, #1d2d45, #0b1626 60%); box-shadow: 0 0 0 1px rgba(150,195,245,.22), 0 0 90px -20px rgba(47,208,200,.28); overflow: hidden; -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); }
+.peek::before { content: ""; position: absolute; top: 24px; left: 50%; transform: translateX(-50%); width: 28%; height: 24px; border-radius: 14px; background: #000; z-index: 3; }
+.peek img { position: absolute; left: 12px; right: 12px; top: 12px; width: calc(100% - 24px); max-width: none; border-radius: 34px 34px 0 0; }
+.peek.duo img { opacity: 0; transition: opacity .45s; }
+.peek.duo img.on { opacity: 1; }
+.duo-wrap { width: 100%; max-width: 380px; display: grid; justify-items: center; gap: 14px; position: relative; z-index: 1; }
+.duo-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(6,17,31,.82); border: 1px solid rgba(150,195,245,.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.duo-tabs button { font: 600 13px/1 var(--display); padding: 8px 14px; border-radius: 999px; border: 0; background: transparent; color: var(--text-2); cursor: pointer; white-space: nowrap; }
+.duo-tabs button[aria-selected="true"] { background: var(--grad); color: var(--ink); }
+.duo-tabs button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
 /* phone layout */
 .dots, .faq-more, .mbar { display: none; }
 details.cat > summary { list-style: none; }
@@ -180,12 +193,17 @@ details.cat > summary::-webkit-details-marker { display: none; }
   .feats::-webkit-scrollbar { display: none; }
   .feats .feature { flex: 0 0 86%; scroll-snap-align: center; display: flex; flex-direction: column; gap: 18px; padding: 22px 20px 24px; border-radius: 22px; border: 1px solid var(--line); background: var(--ink-2); }
   .feats .feature .visual { order: -1; }
+  .feats .feature { flex: 0 0 88%; padding: 18px 16px 22px; }
+  .feats .feature .duo-wrap { max-width: 100%; gap: 10px; }
+  .feats .feature .peek { max-width: 100%; border-radius: 38px 38px 0 0; padding: 9px 9px 0; }
+  .feats .feature .peek img { left: 9px; top: 9px; width: calc(100% - 18px); border-radius: 30px 30px 0 0; }
+  .feats .feature .peek::before { top: 18px; height: 18px; }
   .feats .feature .copy { gap: 12px; }
   .feats .feature h3 { font-size: 25px; }
   .feats .feature .lead { font-size: 15.5px; }
   .feats .feature li { font-size: 14.5px; }
   /* Device mockups scale with the card on every phone width, and sit centred with room around them. */
-  .feats .feature .visual { justify-content: center; padding: 6px 0 2px; }
+  .feats .feature .visual { justify-content: center; padding: 6px 0 2px; align-self: stretch; }
   .feats .feature .visual > .phone { width: 54%; border-radius: 26px; padding: 6px; }
   .feats .feature .visual > .phone .scr { border-radius: 21px; }
   .feats .feature .visual > .phone::before { top: 11px; height: 11px; }
@@ -356,7 +374,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
             <li><svg><use href="#i-check"/></svg>One tap to flip a result negative on iPhone</li>
           </ul>
         </div>
-        <div class="visual"><div class="glow"></div><div class="phone"><div class="scr"><img src="img/quicklog.jpg" alt="Quick log panel" loading="lazy"></div></div></div>
+        <div class="visual"><div class="glow"></div><div class="peek"><img src="img/z-quicklog.jpg" alt="Quick log panel" loading="lazy"></div></div>
       </div>
 
       <div class="feature flip">
@@ -370,7 +388,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
             <li><svg><use href="#i-check"/></svg>Share a clean trade card to Instagram or Discord</li>
           </ul>
         </div>
-        <div class="visual"><div class="glow"></div><div class="phone"><div class="scr"><img src="img/trade.jpg" alt="Trade view with before and after charts" loading="lazy"></div></div></div>
+        <div class="visual"><div class="glow"></div><div class="peek"><img src="img/z-trade.jpg" alt="Trade view with before and after charts" loading="lazy"></div></div>
       </div>
 
       <div class="feature" id="prop">
@@ -394,7 +412,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
           <p class="lead">Every Monday the stats reset and you get a written review: what worked, what cost you, and what to focus on next. It reads your trade notes too.</p>
           <div class="review-quote"><span class="k">EXAMPLE REVIEW</span>Strong week so far: <b>+$1,424.00 (+7.1R)</b> across 7 trades. London Breakout was your best setup. Two entries came before confirmation; wait for the trigger next week.</div>
         </div>
-        <div class="visual"><div class="glow"></div><div class="pair"><div class="phone"><div class="scr"><img src="img/weekly.jpg" alt="Weekly review" loading="lazy"></div></div><div class="phone"><div class="scr"><img src="img/insights.jpg" alt="Insights" loading="lazy"></div></div></div></div>
+        <div class="visual"><div class="glow"></div><div class="duo-wrap" data-duo><div class="duo-tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Weekly review</button><button type="button" role="tab" aria-selected="false">Insights</button></div><div class="peek duo"><img class="on" src="img/z-weekly.jpg" alt="Weekly review" loading="lazy"><img src="img/z-insights.jpg" alt="Insights" loading="lazy"></div></div></div>
       </div>
 
       <div class="feature">
@@ -408,7 +426,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
             <li><svg><use href="#i-check"/></svg>Green and red days by month</li>
           </ul>
         </div>
-        <div class="visual"><div class="glow"></div><div class="pair"><div class="phone"><div class="scr"><img src="img/calc.jpg" alt="Position size calculator" loading="lazy"></div></div><div class="phone"><div class="scr"><img src="img/calendar.jpg" alt="P&L calendar" loading="lazy"></div></div></div></div>
+        <div class="visual"><div class="glow"></div><div class="duo-wrap" data-duo><div class="duo-tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Lot size</button><button type="button" role="tab" aria-selected="false">Calendar</button></div><div class="peek duo"><img class="on" src="img/z-calc.jpg" alt="Lot size" loading="lazy"><img src="img/z-calendar.jpg" alt="Calendar" loading="lazy"></div></div></div>
       </div>
       </div>
       <div class="dots" id="featDots" aria-hidden="true"></div>
@@ -567,4 +585,13 @@ const hero = document.querySelector(".hero"), bar = document.getElementById("mba
 const nav = document.querySelector(".nav");
 // Past the hero on a phone, the bottom bar takes over from the top bar.
 if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => { bar.classList.toggle("show", !e.isIntersecting); nav.classList.toggle("away", !e.isIntersecting); }).observe(hero);
+
+// Two screens in one phone: switch with the labels, or every 4 seconds until someone taps.
+document.querySelectorAll("[data-duo]").forEach(d => {
+  const imgs = [...d.querySelectorAll("img")], tabs = [...d.querySelectorAll("[role=tab]")];
+  let i = 0, auto = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const show = n => { i = n; imgs.forEach((im, k) => im.classList.toggle("on", k === n)); tabs.forEach((t, k) => t.setAttribute("aria-selected", k === n)); };
+  tabs.forEach((t, k) => t.addEventListener("click", () => { auto = false; show(k); }));
+  setInterval(() => { if (auto) show((i + 1) % imgs.length); }, 4000);
+});
 </script>
