@@ -171,9 +171,9 @@ section.block { padding-block: 110px 0; }
 
 
 /* iPhone peek: a large phone cropped to the part of the screen that matters, fading out at the bottom */
-.peek { position: relative; width: 100%; max-width: 380px; aspect-ratio: 780/980; border-radius: 46px 46px 0 0; padding: 12px 12px 0; background: linear-gradient(160deg, #1d2d45, #0b1626 60%); box-shadow: 0 0 0 1px rgba(150,195,245,.22), 0 0 90px -20px rgba(47,208,200,.28); overflow: hidden; -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); }
-.peek::before { content: ""; position: absolute; top: 24px; left: 50%; transform: translateX(-50%); width: 28%; height: 24px; border-radius: 14px; background: #000; z-index: 3; }
-.peek img { position: absolute; left: 12px; right: 12px; top: 12px; width: calc(100% - 24px); max-width: none; border-radius: 34px 34px 0 0; }
+.peek { position: relative; width: 100%; max-width: 330px; aspect-ratio: 393/852; border-radius: 48px; padding: 11px; background: linear-gradient(160deg, #1d2d45, #0b1626 60%); box-shadow: 0 0 0 1px rgba(150,195,245,.22), 0 50px 100px -30px rgba(0,0,0,.9), 0 0 90px -20px rgba(47,208,200,.28); }
+.peek picture { display: contents; }
+.peek img { position: absolute; inset: 11px; width: calc(100% - 22px); height: calc(100% - 22px); max-width: none; object-fit: cover; object-position: top; border-radius: 38px; }
 .peek.duo img { opacity: 0; transition: opacity .45s; }
 .peek.duo img.on { opacity: 1; }
 .duo-wrap { width: 100%; max-width: 380px; display: grid; justify-items: center; gap: 14px; position: relative; z-index: 1; }
@@ -181,6 +181,9 @@ section.block { padding-block: 110px 0; }
 .duo-tabs button { font: 600 13px/1 var(--display); padding: 8px 14px; border-radius: 999px; border: 0; background: transparent; color: var(--text-2); cursor: pointer; white-space: nowrap; }
 .duo-tabs button[aria-selected="true"] { background: var(--grad); color: var(--ink); }
 .duo-tabs button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* No notch pill on any phone mockup: it covered the top of the app screens. */
+.phone::before, .peek::before { display: none !important; }
 
 /* phone layout */
 .dots, .faq-more, .mbar { display: none; }
@@ -195,8 +198,8 @@ details.cat > summary::-webkit-details-marker { display: none; }
   .feats .feature .visual { order: -1; }
   .feats .feature { flex: 0 0 88%; padding: 18px 16px 22px; }
   .feats .feature .duo-wrap { max-width: 100%; gap: 10px; }
-  .feats .feature .peek { max-width: 100%; border-radius: 38px 38px 0 0; padding: 9px 9px 0; }
-  .feats .feature .peek img { left: 9px; top: 9px; width: calc(100% - 18px); border-radius: 30px 30px 0 0; }
+  .feats .feature .peek { max-width: 100%; aspect-ratio: 780/980; border-radius: 38px 38px 0 0; padding: 9px 9px 0; overflow: hidden; box-shadow: 0 0 0 1px rgba(150,195,245,.22), 0 0 90px -20px rgba(47,208,200,.28); -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); }
+  .feats .feature .peek img { inset: auto; left: 9px; top: 9px; width: calc(100% - 18px); height: auto; border-radius: 30px 30px 0 0; }
   .feats .feature .peek::before { top: 18px; height: 18px; }
   .feats .feature .copy { gap: 12px; }
   .feats .feature h3 { font-size: 25px; }
@@ -374,7 +377,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
             <li><svg><use href="#i-check"/></svg>One tap to flip a result negative on iPhone</li>
           </ul>
         </div>
-        <div class="visual"><div class="glow"></div><div class="peek"><img src="img/z-quicklog.jpg" alt="Quick log panel" loading="lazy"></div></div>
+        <div class="visual"><div class="glow"></div><div class="peek"><picture><source media="(min-width: 761px)" srcset="img/quicklog.jpg"><img src="img/z-quicklog.jpg" alt="Quick log panel" loading="lazy"></picture></div></div>
       </div>
 
       <div class="feature flip">
@@ -388,7 +391,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
             <li><svg><use href="#i-check"/></svg>Share a clean trade card to Instagram or Discord</li>
           </ul>
         </div>
-        <div class="visual"><div class="glow"></div><div class="peek"><img src="img/z-trade.jpg" alt="Trade view with before and after charts" loading="lazy"></div></div>
+        <div class="visual"><div class="glow"></div><div class="peek"><picture><source media="(min-width: 761px)" srcset="img/trade.jpg"><img src="img/z-trade.jpg" alt="Trade view with before and after charts" loading="lazy"></picture></div></div>
       </div>
 
       <div class="feature" id="prop">
@@ -412,7 +415,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
           <p class="lead">Every Monday the stats reset and you get a written review: what worked, what cost you, and what to focus on next. It reads your trade notes too.</p>
           <div class="review-quote"><span class="k">EXAMPLE REVIEW</span>Strong week so far: <b>+$1,424.00 (+7.1R)</b> across 7 trades. London Breakout was your best setup. Two entries came before confirmation; wait for the trigger next week.</div>
         </div>
-        <div class="visual"><div class="glow"></div><div class="duo-wrap" data-duo><div class="duo-tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Weekly review</button><button type="button" role="tab" aria-selected="false">Insights</button></div><div class="peek duo"><img class="on" src="img/z-weekly.jpg" alt="Weekly review" loading="lazy"><img src="img/z-insights.jpg" alt="Insights" loading="lazy"></div></div></div>
+        <div class="visual"><div class="glow"></div><div class="duo-wrap" data-duo><div class="duo-tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Weekly review</button><button type="button" role="tab" aria-selected="false">Insights</button></div><div class="peek duo"><picture><source media="(min-width: 761px)" srcset="img/weekly.jpg"><img class="on" src="img/z-weekly.jpg" alt="Weekly review" loading="lazy"></picture><picture><source media="(min-width: 761px)" srcset="img/insights.jpg"><img src="img/z-insights.jpg" alt="Insights" loading="lazy"></picture></div></div></div>
       </div>
 
       <div class="feature">
@@ -426,7 +429,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
             <li><svg><use href="#i-check"/></svg>Green and red days by month</li>
           </ul>
         </div>
-        <div class="visual"><div class="glow"></div><div class="duo-wrap" data-duo><div class="duo-tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Lot size</button><button type="button" role="tab" aria-selected="false">Calendar</button></div><div class="peek duo"><img class="on" src="img/z-calc.jpg" alt="Lot size" loading="lazy"><img src="img/z-calendar.jpg" alt="Calendar" loading="lazy"></div></div></div>
+        <div class="visual"><div class="glow"></div><div class="duo-wrap" data-duo><div class="duo-tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Lot size</button><button type="button" role="tab" aria-selected="false">Calendar</button></div><div class="peek duo"><picture><source media="(min-width: 761px)" srcset="img/calc.jpg"><img class="on" src="img/z-calc.jpg" alt="Lot size" loading="lazy"></picture><picture><source media="(min-width: 761px)" srcset="img/calendar.jpg"><img src="img/z-calendar.jpg" alt="Calendar" loading="lazy"></picture></div></div></div>
       </div>
       </div>
       <div class="dots" id="featDots" aria-hidden="true"></div>
