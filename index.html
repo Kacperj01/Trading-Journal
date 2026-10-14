@@ -463,12 +463,14 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--re
 .day.blank { background: transparent; border-color: transparent; }
 .day .d { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
 .day .p { font: 600 12.5px var(--font-mono); }
+.day .p { white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.day .pc { display: none; }
 .day .n { color: var(--muted); font-size: 10.5px; }
 .day.up { background: var(--green-soft); border-color: rgba(52, 210, 123, 0.35); }
 .day.down { background: var(--red-soft); border-color: rgba(255, 92, 122, 0.35); }
 .day.flat { background: var(--blue-soft); border-color: rgba(74, 154, 240, 0.3); }
 .day.today { box-shadow: inset 0 0 0 1px var(--accent); }
-@media (max-width: 640px) { .calendar { --day-h: 56px; } .day { padding: 4px 5px; } .day .p { font-size: 10px; } .day .n { display: none; } }
+@media (max-width: 640px) { .calendar { --day-h: 56px; } .day { padding: 4px 5px; } .day .p { font-size: 10px; letter-spacing: -.03em; } .day .pf { display: none; } .day .pc { display: inline; } .day .n { display: none; } }
 
 /* Insights */
 .insights { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
@@ -1133,6 +1135,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 /* Trading accounts */
 .acct-dlg { width: min(540px, calc(100vw - 32px)); }
 .acct-dlg:not(.is-prop) .prop-only { display: none; }
+.acct-dlg:not(.is-backtest) .bt-only { display: none; }
 .acct-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
 @media (max-width: 520px) { .acct-grid { grid-template-columns: 1fr; } }
 .seg.theme-seg label:has(input:checked), .seg.acct-type label:has(input:checked) { background: var(--blue-soft); color: var(--text); }
@@ -1144,6 +1147,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .acct-badge { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; white-space: nowrap; align-self: flex-start; margin-top: 2px; }
 .acct-badge.live { background: var(--green-soft); color: var(--green); }
 .acct-badge.demo { background: var(--surface-hover); color: var(--text-2); }
+.acct-badge.backtest { background: var(--warn-soft); color: var(--warn); }
 .acct-badge.prop { background: var(--accent-soft); color: var(--accent); }
 .acct-empty { padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); color: var(--muted); font-size: 13.5px; }
 .acct-unassigned { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--warn-soft); font-size: 13.5px; }
@@ -2192,6 +2196,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <label><input type="radio" name="aType" value="Live" checked> Live</label>
         <label><input type="radio" name="aType" value="Demo"> Demo</label>
         <label><input type="radio" name="aType" value="Prop firm"> Prop firm</label>
+        <label><input type="radio" name="aType" value="Backtest"> Backtest</label>
       </div>
     </div>
     <div class="acct-grid">
@@ -2202,7 +2207,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
       <div class="field prop-only"><label for="aStart">Stage started</label><input type="date" id="aStart"></div>
       <div class="field"><label for="aSize">Account size</label><input type="number" id="aSize" inputmode="decimal" min="0" step="any" placeholder="e.g. 10000"></div>
-      <div class="field"><label for="aBroker">Broker<span class="prop-only"> (optional)</span></label><input type="text" id="aBroker" list="brokerList" autocomplete="off" placeholder="e.g. IC Markets"></div>
+      <div class="field"><label for="aBroker">Broker<span class="prop-only"> (optional)</span><span class="bt-only"> or tool (optional)</span></label><input type="text" id="aBroker" list="brokerList" autocomplete="off" placeholder="e.g. IC Markets"></div>
       <div class="field"><label for="aPlatform">Platform</label>
         <select id="aPlatform"><option value="">Select</option><option>MetaTrader 4</option><option>MetaTrader 5</option><option>cTrader</option><option>TradingView</option><option>DXtrade</option><option>Match-Trader</option><option>NinjaTrader</option><option>Tradovate</option><option>Other</option></select>
       </div>
@@ -3131,6 +3136,12 @@ function money(v, { signed = true, decimals = 2 } = {}) {
   const sign = v > 0 ? (signed ? "+" : "") : v < 0 ? "−" : "";
   return sign + settings.currency + abs;
 }
+// Compact amount for small calendar cells: +$850, −$1.2k, +$12k.
+function moneyShort(v) {
+  const a = Math.abs(v), sign = v > 0 ? "+" : v < 0 ? "−" : "";
+  const body = a < 1000 ? Math.round(a).toLocaleString("en-US") : a < 10000 ? (a / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.round(a / 1000) + "k";
+  return sign + settings.currency + body;
+}
 const fmtR = r => (r == null || !Number.isFinite(r)) ? "—" : (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r).toFixed(2) + "R";
 const pct = (v, d = 1) => (v == null || !Number.isFinite(v)) ? "—" : (v * 100).toFixed(d) + "%";
 const tone = v => v > 0 ? "pos" : v < 0 ? "neg" : "neu";
@@ -3830,7 +3841,7 @@ function renderCalendar(list) {
     const cls = ts ? (p > 0 ? "up" : p < 0 ? "down" : "flat") : "";
     const lbl = ts ? `${fmtDate(iso)}: ${money(p)} from ${plural(ts.length, "trade")}` : `${fmtDate(iso)}: no trades`;
     html += `<div class="day ${cls} ${iso === todayIso ? "today" : ""}" role="gridcell" aria-label="${esc(lbl)}" title="${esc(lbl)}">
-      <span class="d">${d}</span>${ts ? `<span class="p ${tone(p)}">${money(p, { decimals: 0 })}</span><span class="n">${plural(ts.length, "trade")}</span>` : ""}</div>`;
+      <span class="d">${d}</span>${ts ? `<span class="p ${tone(p)}"><span class="pf">${money(p, { decimals: 0 })}</span><span class="pc">${moneyShort(p)}</span></span><span class="n">${plural(ts.length, "trade")}</span>` : ""}</div>`;
   }
   $("#calendar").innerHTML = html;
   saveUi();
@@ -5649,7 +5660,7 @@ F("wkShare").addEventListener("click", () => { const w = buildWeek(wkStart || la
 /* ---------- Accounts page: every account, its progress, and the archive ---------- */
 const ACCT_SHOW = [["", "All"], ["standard", "Live & demo"], ["progress", "In progress"], ["funded", "Funded"], ["passed", "Passed"], ["failed", "Failed"]];
 const acctKind = a => a.type === "Prop firm" ? propState(a) : "standard";
-const badgeFor = a => firmLogo(a) || `<span class="acct-badge ${a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : "live"}">${esc(a.type)}</span>`;
+const badgeFor = a => firmLogo(a) || `<span class="acct-badge ${a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : a.type === "Backtest" ? "backtest" : "live"}">${esc(a.type)}</span>`;
 function manageRow(a) {
   const active = a.id === defaultAccount();
   return `<div class="ac-btns"><button class="btn sm ghost" type="button" data-acct-view="${esc(a.id)}">View trades</button>${active ? "" : `<button class="btn sm ghost" type="button" data-make-active="${esc(a.id)}">Make active</button>`}<button class="btn sm" type="button" data-acct-edit="${esc(a.id)}">Edit</button><button class="btn sm ghost" type="button" data-acct-del="${esc(a.id)}">Remove</button></div>`;
@@ -5689,7 +5700,7 @@ function renderAccounts() {
   const cards = inArchive ? [] : live.filter(a => !show || acctKind(a) === show)
     .sort((x, y) => (y.id === defaultAccount()) - (x.id === defaultAccount()));
   F("acctGrid").innerHTML = !every.length
-    ? `<div class="card rw-empty"><h3>Add your first account</h3><p class="muted">Add the live, demo or prop firm account you trade. Prop firm accounts are tracked against the firm's rules.</p><div><button class="btn primary" type="button" data-acct-new>+ Add account</button></div></div>`
+    ? `<div class="card rw-empty"><h3>Add your first account</h3><p class="muted">Add the live, demo, prop firm or backtest account you trade. Prop firm accounts are tracked against the firm's rules.</p><div><button class="btn primary" type="button" data-acct-new>+ Add account</button></div></div>`
     : cards.map(a => propStatus(a) ? propCard(a, true) : plainCard(a)).join("");
   F("acctGrid").hidden = inArchive || (!cards.length && !!every.length);
   // Trades not linked to an account
@@ -5804,7 +5815,8 @@ F("aProgram").addEventListener("change", () => syncProgramFields(F("aProgram").v
 function setAcctType(type) {
   $$("input[name=aType]").forEach(r => r.checked = r.value === type);
   F("acctDlg").classList.toggle("is-prop", type === "Prop firm");
-  F("aBroker").placeholder = type === "Prop firm" ? "e.g. the firm's broker" : "e.g. IC Markets";
+  F("aBroker").placeholder = type === "Prop firm" ? "e.g. the firm's broker" : type === "Backtest" ? "e.g. TradingView replay" : "e.g. IC Markets";
+  F("acctDlg").classList.toggle("is-backtest", type === "Backtest");
 }
 const acctType = () => ($("input[name=aType]:checked") || {}).value || "Live";
 function openAccountDlg(a, first) {
@@ -5821,7 +5833,7 @@ function openAccountDlg(a, first) {
   F("acctDlgTitle").textContent = first ? "Register your trading account" : a ? "Edit account" : "Add a trading account";
   F("acctDlgIntro").textContent = first
     ? "Tell us which account you trade so your balance and stats match it. You can add more accounts later on the Accounts page."
-    : a ? "Changes apply to every trade linked to this account." : "Add another live, demo or prop firm account.";
+    : a ? "Changes apply to every trade linked to this account." : "Add another live, demo, prop firm or backtest account.";
   F("aCancel").hidden = first;
   F("aSubmit").textContent = first ? "Register account" : "Save account";
   const loose = a ? [] : unassignedTrades();
@@ -5846,7 +5858,7 @@ F("acctDlgForm").addEventListener("submit", e => {
   if (persist.readOnly) { toast("You don't have permission to save changes to this journal"); return; }
   const type = acctType(), prop = type === "Prop firm";
   const size = num(F("aSize").value), broker = F("aBroker").value.trim(), firm = F("aFirm").value.trim();
-  const checks = [["aFirm", prop && !firm, "prop firm"], ["aSize", !(size > 0), "account size"], ["aBroker", !prop && !broker, "broker"]];
+  const checks = [["aFirm", prop && !firm, "prop firm"], ["aSize", !(size > 0), "account size"], ["aBroker", !prop && type !== "Backtest" && !broker, "broker"]];
   checks.forEach(([id, bad]) => bad ? F(id).setAttribute("aria-invalid", "true") : F(id).removeAttribute("aria-invalid"));
   const bad = checks.filter(c => c[1]);
   if (bad.length) { F("aMsg").textContent = "Add the " + bad.map(c => c[2]).join(", ") + "."; F(bad[0][0]).focus(); return; }
