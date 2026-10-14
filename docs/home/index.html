@@ -94,7 +94,15 @@ p { margin: 0; }
 .stage .phone { position: absolute; right: -2%; bottom: -8%; width: 24%; max-width: 250px; border-radius: 36px; padding: 8px; }
 .stage .phone .scr { border-radius: 29px; }
 .stage .phone::before { top: 15px; height: 16px; }
-@media (max-width: 640px) { .stage .phone { width: 34%; right: -1%; bottom: -14%; border-radius: 26px; padding: 6px; } .stage .phone .scr { border-radius: 21px; } .stage .phone::before { top: 11px; height: 11px; } }
+@media (max-width: 640px) {
+  /* Laptop and phone sized down and centred as one group, the phone inside the edges. */
+  .stage { margin: 36px auto 0; padding-right: 9%; padding-bottom: 5%; }
+  .stage .laptop { width: 100%; }
+  .stage .phone { width: 27%; right: 0; bottom: 0; border-radius: 22px; padding: 5px; }
+  .stage .phone .scr { border-radius: 18px; }
+  .stage .phone::before { top: 9px; height: 9px; }
+  main .strip { margin-top: 28px; }
+}
 
 /* proof strip */
 .strip { border-block: 1px solid var(--line); background: var(--ink-2); margin-top: 90px; }
