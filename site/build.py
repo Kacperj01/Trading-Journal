@@ -34,9 +34,9 @@ page = f"""<!doctype html>
 <script>window.ELEV8_BUILD = "{version}";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
-  // email confirmation links and ?login / ?signup / ?demo / ?app all open the journal directly.
+  // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
   (function () {{ try {{
-    if (/[?&](app|login|signup|demo)(=|&|$)/.test(location.search) || /access_token|error_code|type=/.test(location.hash)) return;
+    if (/[?&](app|login|signup|demo|verify)(=|&|$)/.test(location.search) || /access_token|error_code|type=/.test(location.hash)) return;
     if ((window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone) return;
     if (localStorage.getItem("tj.sb.session.v1") || localStorage.getItem("tj.sb.email.v1") || localStorage.getItem("tj.trades.v1")) return;
     location.replace("home/");

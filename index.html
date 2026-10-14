@@ -2828,8 +2828,29 @@ async function sbFromLink() {
     sb.note = "Your email is confirmed. Sign in below.";
   }
 }
+// Arriving from an ELEV8 email button: ?verify=<token hash>&type=signup|recovery|email_change|magiclink|invite.
+// The journal confirms the link with Supabase itself, so the button works whatever Supabase's
+// redirect settings are, and email scanners that open links can't use it up first.
+async function sbFromVerify() {
+  const q = new URLSearchParams(location.search);
+  const hash = q.get("verify"), type = q.get("type") || "signup";
+  if (!hash) return;
+  try { history.replaceState(null, "", location.pathname); } catch (e) { /* ignore */ }
+  try {
+    const s = await sbAuth("verify", { type, token_hash: hash });
+    if (!s.access_token || !s.user) { sb.note = type === "email_change" ? "Confirmed. Open the link sent to your other email address too, then sign in." : "Your email is confirmed. Sign in below."; return; }
+    sbSaveSession(s);
+    if (type === "recovery") setTimeout(() => openPasswordDlg(true), 600);
+    else toast(type === "email_change" ? "Email address updated." : type === "magiclink" ? "You're signed in." : "Email confirmed. You're signed in.");
+  } catch (e) {
+    sb.note = type === "recovery"
+      ? "That reset button has expired or was already used. Tap Forgot password to get a new email."
+      : "That button has expired or was already used. If you've confirmed already, sign in below. If not, try to sign in and tap Resend confirmation email.";
+  }
+}
 async function sbStart() {
   if (!SB || inViewer()) return;
+  await sbFromVerify();
   await sbFromLink();
   sbRender();
   if (!sb.session) {

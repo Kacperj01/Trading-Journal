@@ -56,12 +56,17 @@ NOTE = {
 FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 
 
-def button(label):
+VERIFY_TYPE = {"confirmation": "signup", "recovery": "recovery", "email_change": "email_change", "magic_link": "magiclink", "invite": "invite"}
+
+
+def button(label, kind):
+    # The button opens the journal, which confirms the link itself (see sbFromVerify in index.html).
+    href = f"{SITE}/?verify={{{{ .TokenHash }}}}&amp;type={VERIFY_TYPE[kind]}"
     # Bulletproof button: the whole pill is the link; a solid colour sits behind the gradient for Outlook.
     return f"""<tr><td align="center" style="padding:8px 32px 6px">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
     <td align="center" bgcolor="#1f9fcf" style="border-radius:12px;background:#1f9fcf;background-image:linear-gradient(120deg,#2a7fd9 0%,#1f9fcf 55%,#2fd0c8 100%)">
-      <a href="{{{{ .ConfirmationURL }}}}" target="_blank" style="display:inline-block;padding:15px 34px;font-family:{FONT};font-size:16px;font-weight:700;color:#06111f;text-decoration:none;border-radius:12px">{label}</a>
+      <a href="{href}" target="_blank" style="display:inline-block;padding:15px 34px;font-family:{FONT};font-size:16px;font-weight:700;color:#06111f;text-decoration:none;border-radius:12px">{label}</a>
     </td>
   </tr></table>
 </td></tr>"""
@@ -74,7 +79,7 @@ def code_box():
 
 
 def page(kind, pre, heading, body, label):
-    action = button(label) if label else code_box()
+    action = button(label, kind) if label else code_box()
     expiry = "The button works once and expires in 24 hours." if label else "The code works once and expires in 24 hours."
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"><title>{heading}</title></head>
