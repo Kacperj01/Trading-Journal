@@ -175,6 +175,74 @@ section.block { padding-block: 110px 0; }
 @media (max-width: 900px) { .firms { grid-template-columns: 1fr; } .rules { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 460px) { .rules { grid-template-columns: 1fr; } }
 
+
+/* phone layout */
+.dots, .faq-more, .mbar { display: none; }
+details.cat > summary { list-style: none; }
+details.cat > summary::-webkit-details-marker { display: none; }
+@media (max-width: 760px) {
+  section.block { padding-block: 72px 0; }
+  .head { margin-bottom: 30px; }
+  .feats { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * max(20px, env(safe-area-inset-left, 0px))); padding-inline: max(20px, env(safe-area-inset-left, 0px)); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .feats::-webkit-scrollbar { display: none; }
+  .feats .feature { flex: 0 0 86%; scroll-snap-align: center; display: flex; flex-direction: column; gap: 18px; padding: 22px 20px 24px; border-radius: 22px; border: 1px solid var(--line); background: var(--ink-2); }
+  .feats .feature .visual { order: -1; }
+  .feats .feature .copy { gap: 12px; }
+  .feats .feature h3 { font-size: 25px; }
+  .feats .feature .lead { font-size: 15.5px; }
+  .feats .feature li { font-size: 14.5px; }
+  .feats .feature .phone { width: 200px; border-radius: 30px; padding: 7px; }
+  .feats .feature .phone .scr { border-radius: 24px; }
+  .feats .feature .phone::before { top: 13px; height: 13px; }
+  .feats .feature .visual .pair .phone { width: 138px; max-width: none; border-radius: 22px; padding: 5px; }
+  .feats .feature .visual .pair .phone .scr { border-radius: 18px; }
+  .feats .feature .visual .pair .phone:last-child { margin-top: 30px; }
+  .feats .feature .visual .pair .phone::before { top: 9px; height: 9px; }
+  .feats .feature .shot { max-width: 100% !important; }
+  .feats .feature .review-quote { font-size: 14px; }
+  .dots { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
+  .dots i { width: 7px; height: 7px; border-radius: 4px; background: rgba(150,195,245,.25); transition: width .2s, background .2s; }
+  .dots i.on { width: 22px; background: var(--teal); }
+  .seg button { padding: 9px 12px; font-size: 13.5px; }
+  .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { padding: 16px 14px; gap: 6px; }
+  .tile .ic { width: 36px; height: 36px; border-radius: 10px; }
+  .tile .ic svg { width: 18px; height: 18px; }
+  .tile h4 { font-size: 15.5px; }
+  .tile p { font-size: 13px; line-height: 1.45; }
+  .cats { columns: 1; }
+  .cat { margin-bottom: 10px; padding: 0; }
+  details.cat > summary { cursor: pointer; padding: 16px 18px; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-items: center; }
+  details.cat > summary::after { content: "+"; grid-row: 1 / span 2; grid-column: 2; font: 400 24px/1 var(--display); color: var(--teal); transition: transform .2s; }
+  details.cat[open] > summary::after { transform: rotate(45deg); }
+  details.cat > summary h4 { font-size: 17px; margin: 0; }
+  details.cat > summary p.k { margin: 2px 0 0; font-size: 13.5px; }
+  details.cat ul { padding: 0 18px 18px; font-size: 14.5px; }
+  .firms { gap: 10px; }
+  .firm { padding: 16px 18px; gap: 10px; }
+  .firm h4 { font-size: 17px; }
+  .firm .progs span { font-size: 12px; padding: 4px 9px; }
+  .rules { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+  .rules div { padding: 12px 13px; font-size: 13px; }
+  .rules b { font-size: 14px; }
+  .steps { gap: 10px; }
+  .step { padding: 18px 20px; grid-template-columns: auto 1fr; column-gap: 16px; align-items: start; }
+  .step .n { font-size: 30px; grid-row: span 2; }
+  .step h4 { font-size: 18px; }
+  .step p { font-size: 14.5px; }
+  .faq summary { padding: 16px 18px; font-size: 16px; }
+  .faq details p { padding: 0 18px 16px; font-size: 15px; }
+  .faq.short details:nth-of-type(n+7) { display: none; }
+  .faq.short .faq-more { display: inline-flex; justify-self: center; margin-top: 6px; }
+  .final { margin-top: 80px; }
+  .final .wrap { padding-block: 64px; }
+  .mbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; align-items: center; justify-content: space-between; gap: 12px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: rgba(6,17,31,.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); transform: translateY(110%); transition: transform .25s; }
+  .mbar.show { transform: none; }
+  .mbar span { font-size: 14px; font-weight: 600; color: var(--text-2); }
+  .mbar .btn { padding: 11px 18px; font-size: 15px; }
+  footer .wrap { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+}
+
 /* steps */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: s; }
 .step { padding: 28px 26px; border-radius: 18px; border: 1px solid var(--line); background: var(--ink-2); display: grid; gap: 10px; }
@@ -278,6 +346,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
     <div class="wrap">
       <div class="head"><span class="eyebrow">Features</span><h2>Everything a serious trader tracks. <span class="g">Nothing they don't.</span></h2></div>
 
+      <div class="feats" id="feats">
       <div class="feature">
         <div class="copy">
           <span class="eyebrow">Quick log</span>
@@ -343,6 +412,8 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
         </div>
         <div class="visual"><div class="glow"></div><div class="pair"><div class="phone"><div class="scr"><img src="img/calc.jpg" alt="Position size calculator" loading="lazy"></div></div><div class="phone"><div class="scr"><img src="img/calendar.jpg" alt="P&L calendar" loading="lazy"></div></div></div></div>
       </div>
+      </div>
+      <div class="dots" id="featDots" aria-hidden="true"></div>
     </div>
   </section>
 
@@ -380,14 +451,14 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
     <div class="wrap">
       <div class="head"><span class="eyebrow">Everything inside</span><h2>The full list. <span class="g">No small print.</span></h2><p class="lead">Every feature in the ELEV8 journal today, grouped by what it helps you do.</p></div>
       <div class="cats">
-<div class="cat"><h4><span class="dot"></span>Logging trades</h4><p class="k">Fast on your phone, detailed when you want it.</p><ul><li><b>Quick log</b>: pair, long or short, P&amp;L and setup in one panel</li><li><b>More details</b>: entry, stop, target, lot size and risk</li><li><b>+/− button</b> to enter losses on iPhone's number pad</li><li><b>Open trades</b>: log now, close later with the close date and time</li><li><b>Fees and commission</b> taken off the result (gross and net both kept)</li><li><b>R multiple</b> worked out from your risk</li><li><b>Breakeven</b> when a result is within 0.1R of zero, so it doesn't skew your win rate</li><li><b>Session filled in</b> from the time of the trade (Asia, London, New York)</li><li><b>Emotion before and after</b>: Confident, Unsure, Neutral, Stressed, FOMO, Proud, Disappointed, Lesson learned, Angry</li><li><b>Mistakes, notes</b> and your <b>trading plan checklist</b> on every trade</li><li><b>Before and after screenshots</b> with full-size view</li><li>Save and you're straight back on your Overview</li></ul></div>
-<div class="cat"><h4><span class="dot"></span>Accounts</h4><p class="k">Every account you trade, kept separate.</p><ul><li><b>Live, demo, prop firm and backtest</b> accounts</li><li>Broker or tool, platform (MT4, MT5, cTrader, TradingView, DXtrade, NinjaTrader, Tradovate) and nickname</li><li><b>Active account switcher</b> in the sidebar</li><li>Filter any page by account, or see them all together</li><li>Combined balance across active accounts</li><li><b>Archive</b> old or failed accounts and keep their history</li><li>Link older trades to the right account in one tap</li></ul></div>
-<div class="cat"><h4><span class="dot"></span>Prop firm tracking</h4><p class="k">Know where you stand before every trade.</p><ul><li><b>Profit target</b> progress and amount to go</li><li><b>Daily loss</b> used today, with the firm's reset time</li><li><b>Max loss</b>, static or trailing, and the balance you must stay above</li><li><b>Minimum trading days</b>, news and weekend rules</li><li><b>Warnings on your Overview</b> when you get close to a limit</li><li>Mark a phase <b>passed or failed</b> and move to the next phase</li><li><b>Rewards</b>: log payouts, attach your payout certificate, see totals</li></ul></div>
-<div class="cat"><h4><span class="dot"></span>Analytics</h4><p class="k">See where your edge actually is.</p><ul><li><b>Overview</b>: total P&amp;L, win rate, profit factor, average R and expectancy, average win vs loss, best and worst trade</li><li><b>Equity curve</b> per account, in the order trades closed, with max drawdown</li><li><b>P&amp;L by pair</b> and <b>setup performance</b>, best to worst</li><li><b>Sessions</b>, <b>long vs short</b> and <b>day of week</b></li><li><b>Win / loss distribution</b></li><li><b>P&amp;L calendar</b> with green days for the month</li><li>Filters: this week, last week, custom dates, session, setup and account</li><li><b>Stats start fresh every Monday</b>; every past week stays saved</li></ul></div>
-<div class="cat"><h4><span class="dot"></span>Weekly review &amp; insights</h4><p class="k">Your week, written up like a coach would.</p><ul><li><b>What worked</b> and <b>what cost you</b>, in clear professional wording</li><li>Mistakes grouped into standard types (early entry, moved stop, oversized and more)</li><li><b>Reads your trade notes</b>, not just the numbers</li><li><b>What to focus on</b> next week</li><li><b>Emailed to you every Sunday evening</b> if you switch it on</li><li><b>Insights</b>: your strongest session, best market, best setup and risk check</li><li><b>Plan score</b>: how often you followed your own rules</li><li>Fees for the week shown separately</li></ul></div>
-<div class="cat"><h4><span class="dot"></span>Built-in tools</h4><p class="k">Everything next to your journal.</p><ul><li><b>Lot size calculator</b>: risk by % or amount, entry and stop or pips, pip value, profit at 2R</li><li>Log a trade straight from the calculator</li><li><b>News</b>: high-impact events for the week, filtered by currency</li><li><b>Share cards</b> for a trade or a week, sized for Instagram (1080 × 1350)</li><li><b>Guided tour</b> for new users</li><li><b>Demo journal</b> full of sample trades to explore</li></ul></div>
-<div class="cat"><h4><span class="dot"></span>Your data</h4><p class="k">Yours to keep, move and back up.</p><ul><li><b>Syncs</b> between your phone and desktop</li><li>Keeps working with a bad connection and syncs when you're back online</li><li><b>Import MT4 / MT5</b> statements (.htm or .xlsx)</li><li><b>Import and export</b> Excel, CSV or JSON</li><li><b>Your own lists</b>: pairs, setups, mistakes and plan rules</li><li>Currency symbol of your choice</li><li>Private to your account</li></ul></div>
-<div class="cat"><h4><span class="dot"></span>The app</h4><p class="k">Feels like an app, without an app store.</p><ul><li><b>Install to your home screen</b> on iPhone and Android</li><li>Built for phone and desktop, with a full sidebar on desktop</li><li><b>Dark and light mode</b></li><li>Profile, password change and email change</li><li>Report a bug from inside the app</li></ul></div>
+<details class="cat" open><summary><h4><span class="dot"></span>Logging trades</h4><p class="k">Fast on your phone, detailed when you want it.</p></summary><ul><li><b>Quick log</b>: pair, long or short, P&amp;L and setup in one panel</li><li><b>More details</b>: entry, stop, target, lot size and risk</li><li><b>+/− button</b> to enter losses on iPhone's number pad</li><li><b>Open trades</b>: log now, close later with the close date and time</li><li><b>Fees and commission</b> taken off the result (gross and net both kept)</li><li><b>R multiple</b> worked out from your risk</li><li><b>Breakeven</b> when a result is within 0.1R of zero, so it doesn't skew your win rate</li><li><b>Session filled in</b> from the time of the trade (Asia, London, New York)</li><li><b>Emotion before and after</b>: Confident, Unsure, Neutral, Stressed, FOMO, Proud, Disappointed, Lesson learned, Angry</li><li><b>Mistakes, notes</b> and your <b>trading plan checklist</b> on every trade</li><li><b>Before and after screenshots</b> with full-size view</li><li>Save and you're straight back on your Overview</li></ul></details>
+<details class="cat" open><summary><h4><span class="dot"></span>Accounts</h4><p class="k">Every account you trade, kept separate.</p></summary><ul><li><b>Live, demo, prop firm and backtest</b> accounts</li><li>Broker or tool, platform (MT4, MT5, cTrader, TradingView, DXtrade, NinjaTrader, Tradovate) and nickname</li><li><b>Active account switcher</b> in the sidebar</li><li>Filter any page by account, or see them all together</li><li>Combined balance across active accounts</li><li><b>Archive</b> old or failed accounts and keep their history</li><li>Link older trades to the right account in one tap</li></ul></details>
+<details class="cat" open><summary><h4><span class="dot"></span>Prop firm tracking</h4><p class="k">Know where you stand before every trade.</p></summary><ul><li><b>Profit target</b> progress and amount to go</li><li><b>Daily loss</b> used today, with the firm's reset time</li><li><b>Max loss</b>, static or trailing, and the balance you must stay above</li><li><b>Minimum trading days</b>, news and weekend rules</li><li><b>Warnings on your Overview</b> when you get close to a limit</li><li>Mark a phase <b>passed or failed</b> and move to the next phase</li><li><b>Rewards</b>: log payouts, attach your payout certificate, see totals</li></ul></details>
+<details class="cat" open><summary><h4><span class="dot"></span>Analytics</h4><p class="k">See where your edge actually is.</p></summary><ul><li><b>Overview</b>: total P&amp;L, win rate, profit factor, average R and expectancy, average win vs loss, best and worst trade</li><li><b>Equity curve</b> per account, in the order trades closed, with max drawdown</li><li><b>P&amp;L by pair</b> and <b>setup performance</b>, best to worst</li><li><b>Sessions</b>, <b>long vs short</b> and <b>day of week</b></li><li><b>Win / loss distribution</b></li><li><b>P&amp;L calendar</b> with green days for the month</li><li>Filters: this week, last week, custom dates, session, setup and account</li><li><b>Stats start fresh every Monday</b>; every past week stays saved</li></ul></details>
+<details class="cat" open><summary><h4><span class="dot"></span>Weekly review &amp; insights</h4><p class="k">Your week, written up like a coach would.</p></summary><ul><li><b>What worked</b> and <b>what cost you</b>, in clear professional wording</li><li>Mistakes grouped into standard types (early entry, moved stop, oversized and more)</li><li><b>Reads your trade notes</b>, not just the numbers</li><li><b>What to focus on</b> next week</li><li><b>Emailed to you every Sunday evening</b> if you switch it on</li><li><b>Insights</b>: your strongest session, best market, best setup and risk check</li><li><b>Plan score</b>: how often you followed your own rules</li><li>Fees for the week shown separately</li></ul></details>
+<details class="cat" open><summary><h4><span class="dot"></span>Built-in tools</h4><p class="k">Everything next to your journal.</p></summary><ul><li><b>Lot size calculator</b>: risk by % or amount, entry and stop or pips, pip value, profit at 2R</li><li>Log a trade straight from the calculator</li><li><b>News</b>: high-impact events for the week, filtered by currency</li><li><b>Share cards</b> for a trade or a week, sized for Instagram (1080 × 1350)</li><li><b>Guided tour</b> for new users</li><li><b>Demo journal</b> full of sample trades to explore</li></ul></details>
+<details class="cat" open><summary><h4><span class="dot"></span>Your data</h4><p class="k">Yours to keep, move and back up.</p></summary><ul><li><b>Syncs</b> between your phone and desktop</li><li>Keeps working with a bad connection and syncs when you're back online</li><li><b>Import MT4 / MT5</b> statements (.htm or .xlsx)</li><li><b>Import and export</b> Excel, CSV or JSON</li><li><b>Your own lists</b>: pairs, setups, mistakes and plan rules</li><li>Currency symbol of your choice</li><li>Private to your account</li></ul></details>
+<details class="cat" open><summary><h4><span class="dot"></span>The app</h4><p class="k">Feels like an app, without an app store.</p></summary><ul><li><b>Install to your home screen</b> on iPhone and Android</li><li>Built for phone and desktop, with a full sidebar on desktop</li><li><b>Dark and light mode</b></li><li>Profile, password change and email change</li><li>Report a bug from inside the app</li></ul></details>
       </div>
     </div>
   </section>
@@ -439,6 +510,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
         <details><summary>How does the weekly email work?</summary><p>Switch it on in Settings and every Sunday evening you get your week's review by email, from reviews@elev8tradingjournal.com: your results, what worked, what cost you and what to focus on next.</p></details>
         <details><summary>Who can see my journal?</summary><p>Only you. Your data is private to your account, and you can export a full backup from Settings at any time.</p></details>
         <details><summary>Do you give trading signals?</summary><p>No. ELEV8 is a journal and an education brand. Everything here is for education only and is not financial advice.</p></details>
+        <button class="btn faq-more" type="button" id="faqMore">Show all questions</button>
       </div>
     </div>
   </section>
@@ -462,6 +534,8 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
 </footer>
 
 
+<div class="mbar" id="mbar"><span>Know why you win and lose.</span><a class="btn primary" href="../?signup">Start now</a></div>
+
 <script>
 document.querySelectorAll('.desk .seg button').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.desk .seg button').forEach(x => x.setAttribute('aria-selected', x === b));
@@ -471,6 +545,28 @@ document.querySelectorAll('.billing button').forEach(b => b.addEventListener('cl
   document.querySelectorAll('.billing button').forEach(x => x.setAttribute('aria-selected', x === b));
   document.querySelectorAll('.plan [data-m]').forEach(el => { el.textContent = el.dataset[b.dataset.bill]; });
 }));
+
+// Phones: features swipe sideways with dots, the full feature list opens per category,
+// the FAQ starts with six questions, and a Start now bar appears once the hero is passed.
+const phone = matchMedia("(max-width: 760px)");
+const feats = document.getElementById("feats"), dots = document.getElementById("featDots");
+const cards = [...feats.querySelectorAll(".feature")];
+dots.innerHTML = cards.map(() => "<i></i>").join("");
+const markDot = () => {
+  const mid = feats.scrollLeft + feats.clientWidth / 2;
+  let best = 0; cards.forEach((c, i) => { if (Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid) < Math.abs(cards[best].offsetLeft + cards[best].offsetWidth / 2 - mid)) best = i; });
+  [...dots.children].forEach((d, i) => d.classList.toggle("on", i === best));
+};
+feats.addEventListener("scroll", () => requestAnimationFrame(markDot), { passive: true });
+const layout = () => {
+  document.querySelectorAll("details.cat").forEach(d => { d.open = !phone.matches; });
+  document.querySelector(".faq").classList.toggle("short", phone.matches);
+  markDot();
+};
+phone.addEventListener("change", layout); layout();
+document.getElementById("faqMore").addEventListener("click", () => document.querySelector(".faq").classList.remove("short"));
+const hero = document.querySelector(".hero"), bar = document.getElementById("mbar");
+if ("IntersectionObserver" in window) new IntersectionObserver(([e]) => bar.classList.toggle("show", !e.isIntersecting)).observe(hero);
 </script>
 
 </body>
