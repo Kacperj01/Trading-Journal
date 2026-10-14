@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "314f6ad142";</script>
+<script>window.ELEV8_BUILD = "41bbcf6a1d";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email confirmation links and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -7519,6 +7519,8 @@ async function signOutFlow() {
     resetForm(false, true);
     sbRender();
     setSync("local", "Signed out");
+    // On the website, signing out goes back to the homepage.
+    if (document.documentElement.classList.contains("hosted")) { location.replace("home/"); return; }
     showHome();
 }
 if (SB) {

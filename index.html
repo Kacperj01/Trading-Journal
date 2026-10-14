@@ -7486,6 +7486,8 @@ async function signOutFlow() {
     resetForm(false, true);
     sbRender();
     setSync("local", "Signed out");
+    // On the website, signing out goes back to the homepage.
+    if (document.documentElement.classList.contains("hosted")) { location.replace("home/"); return; }
     showHome();
 }
 if (SB) {

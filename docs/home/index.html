@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: one long dark scroll. Hero with laptop + phone, then alternating screenshot/feature rows, a feature grid, pricing, FAQ, final CTA. */
+/* Layout: one long dark scroll. Hero with laptop + phone, then alternating screenshot/feature rows, a feature grid, FAQ, final CTA. */
 :root {
   color-scheme: dark;
   --ink: #06111f; --ink-2: #0b1a2e; --panel: #0f2038; --line: rgba(150,195,245,.14);
@@ -241,8 +241,8 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
 <header class="nav">
   <div class="wrap">
     <a class="logo" href="#top" aria-label="ELEV8 Trading Journal home"><img src="img/mark.svg" alt=""><span><b class="g">ELEV8</b><small>TRADING JOURNAL</small></span></a>
-    <nav aria-label="Sections"><a href="#features">Features</a><a href="#everything">All features</a><a href="#firms">Prop firms</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></nav>
-    <div class="act"><a class="btn login" href="../?login">Log in</a><a class="btn primary" href="../?signup">Start free</a></div>
+    <nav aria-label="Sections"><a href="#features">Features</a><a href="#everything">All features</a><a href="#firms">Prop firms</a><a href="#faq">FAQ</a></nav>
+    <div class="act"><a class="btn login" href="../?login">Log in</a><a class="btn primary" href="../?signup">Start now</a></div>
   </div>
 </header>
 
@@ -255,8 +255,8 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
         <h1>Know exactly why you <span class="g">win and lose.</span></h1>
         <p class="lead">Log a trade in seconds, track your prop firm rules live, and get a plain-English review of your week every Monday. On your phone and your desktop.</p>
         <div class="types" aria-label="Account types"><span>Live</span><span>Prop firm</span><span>Demo</span><span>Backtest</span></div>
-        <div class="ctas"><a class="btn primary" href="../?signup">Start your journal free</a><a class="btn" href="../?demo">Try the live demo</a></div>
-        <p class="note">No card needed. Works in your browser and installs like an app.</p>
+        <div class="ctas"><a class="btn primary" href="../?signup">Start now</a><a class="btn" href="../?demo">Try the live demo</a></div>
+        <p class="note">Works in your browser and installs like an app.</p>
       </div>
       <div class="stage">
         <div class="laptop"><div class="lid"><div class="screen"><img src="img/overview-desk.jpg" alt="ELEV8 overview on desktop: total P&L, win rate, prop firm progress and equity curve"></div></div><div class="base"></div></div>
@@ -421,66 +421,10 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
     </div>
   </section>
 
-  <section class="block" id="pricing">
-    <div class="wrap">
-      <div class="head center"><span class="eyebrow">Pricing</span><h2>Start free. <span class="g">Upgrade when it pays.</span></h2><p class="lead" style="text-align:center">ELEV8 is in early access. <b style="color:var(--text)">Every feature is free while paid plans are being set up</b>, and early members get first pick of founding spots.</p></div>
-      <div class="billing"><div class="seg" role="tablist" aria-label="Billing period">
-        <button role="tab" aria-selected="false" data-bill="m">Monthly</button>
-        <button role="tab" aria-selected="true" data-bill="y">Yearly · save 30%</button>
-      </div></div>
-      <div class="plans">
-        <div class="plan">
-          <h4>Free</h4>
-          <div class="price"><b>£0</b><span>forever</span></div>
-          <p class="sub">Everything you need to start journaling properly.</p>
-          <ul>
-            <li><svg><use href="#i-check"/></svg>1 trading account</li>
-            <li><svg><use href="#i-check"/></svg>Unlimited trades</li>
-            <li><svg><use href="#i-check"/></svg>Overview, calendar and lot size calculator</li>
-            <li><svg><use href="#i-check"/></svg>Phone and desktop sync</li>
-            <li class="off"><svg><use href="#i-x"/></svg>Prop firm rule tracking</li>
-            <li class="off"><svg><use href="#i-x"/></svg>Weekly review and insights</li>
-          </ul>
-          <a class="btn" href="../?signup">Start free</a>
-        </div>
-        <div class="plan pro">
-          <span class="tag">Most popular</span>
-          <h4>Pro</h4>
-          <div class="price"><b data-m="£12" data-y="£8.25">£8.25</b><span data-m="per month" data-y="per month, billed £99 yearly">per month, billed £99 yearly</span></div>
-          <p class="sub">For prop traders and anyone serious about reviewing.</p>
-          <ul>
-            <li><svg><use href="#i-check"/></svg>Unlimited accounts, including backtest</li>
-            <li><svg><use href="#i-check"/></svg>Prop firm rules and payout tracker</li>
-            <li><svg><use href="#i-check"/></svg>Weekly review in the app and by email every Sunday</li>
-            <li><svg><use href="#i-check"/></svg>Insights, analytics and trading plan score</li>
-            <li><svg><use href="#i-check"/></svg>Before and after screenshots</li>
-            <li><svg><use href="#i-check"/></svg>MT4/MT5 import and share cards</li>
-          </ul>
-          <a class="btn primary" href="../?signup">Join early access free</a>
-        </div>
-        <div class="plan">
-          <h4>Founding member</h4>
-          <div class="price"><b>£59</b><span>per year, for life</span></div>
-          <p class="sub">First 100 members only. Lock in the price for as long as you stay.</p>
-          <ul>
-            <li><svg><use href="#i-check"/></svg>Everything in Pro</li>
-            <li><svg><use href="#i-check"/></svg>Founding member badge</li>
-            <li><svg><use href="#i-check"/></svg>Private Discord channel</li>
-            <li><svg><use href="#i-check"/></svg>Early access to new features</li>
-            <li><svg><use href="#i-check"/></svg>A say in what gets built next</li>
-          </ul>
-          <a class="btn" href="../?signup">Join early access free</a>
-        </div>
-      </div>
-      <p class="price-note">Planned pricing. Nothing is charged during early access, and you'll be told before anything changes.</p>
-    </div>
-  </section>
-
   <section class="block" id="faq">
     <div class="wrap">
       <div class="head center"><span class="eyebrow">FAQ</span><h2>Questions, <span class="g">answered.</span></h2></div>
       <div class="faq">
-        <details><summary>Is ELEV8 really free?</summary><p>Yes. During early access every feature is free. When paid plans launch, the Free plan stays free with no time limit and no trade limit, and Pro adds prop firm tracking, the weekly review, insights and the other advanced features.</p></details>
         <details><summary>Does it work on iPhone and Android?</summary><p>Yes. Open elev8tradingjournal.com in Safari or Chrome and tap Add to Home Screen. It opens full screen like a normal app, and your trades sync to your desktop.</p></details>
         <details><summary>Which prop firms are supported?</summary><p>FTMO, Funding Pips and Alpha Capital come built in, with every program's profit target, daily loss, max loss, trading days, news and weekend rules. Trading with another firm? Add it as a prop account by name and ELEV8 tracks the balance and P&amp;L. More firms are being added.</p></details>
         <details><summary>Does it connect to my broker?</summary><p>No. ELEV8 never asks for your broker login. You log trades yourself or import an MT4/MT5 statement, so nothing can ever place a trade on your account.</p></details>
@@ -495,7 +439,6 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
         <details><summary>How does the weekly email work?</summary><p>Switch it on in Settings and every Sunday evening you get your week's review by email, from reviews@elev8tradingjournal.com: your results, what worked, what cost you and what to focus on next.</p></details>
         <details><summary>Who can see my journal?</summary><p>Only you. Your data is private to your account, and you can export a full backup from Settings at any time.</p></details>
         <details><summary>Do you give trading signals?</summary><p>No. ELEV8 is a journal and an education brand. Everything here is for education only and is not financial advice.</p></details>
-        <details><summary>Can I cancel Pro?</summary><p>Yes. When paid plans launch you can cancel anytime. You keep Pro until the end of the period you paid for, then drop back to Free with all your trades kept.</p></details>
       </div>
     </div>
   </section>
@@ -504,8 +447,8 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
     <div class="wrap">
       <img src="img/mark.svg" alt="">
       <h2>Your next trade is <span class="g">your next lesson.</span></h2>
-      <p class="lead" style="text-align:center">Start your journal free today. Set up takes two minutes.</p>
-      <div class="ctas" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><a class="btn primary" href="../?signup">Start free</a><a class="btn" href="../?demo">Try the demo</a></div>
+      <p class="lead" style="text-align:center">Set up takes two minutes.</p>
+      <div class="ctas" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><a class="btn primary" href="../?signup">Start now</a><a class="btn" href="../?demo">Try the demo</a></div>
     </div>
   </section>
 </main>
@@ -513,7 +456,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
 <footer>
   <div class="wrap">
     <a class="logo" href="#top"><img src="img/mark.svg" alt="" style="width:32px"><span><b class="g" style="font-size:17px">ELEV8</b><small>TRADING JOURNAL</small></span></a>
-    <div class="links"><a href="#features">Features</a><a href="#everything">All features</a><a href="#firms">Prop firms</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="../?login">Log in</a><span>Instagram</span><span>Discord</span></div>
+    <div class="links"><a href="#features">Features</a><a href="#everything">All features</a><a href="#firms">Prop firms</a><a href="#faq">FAQ</a><a href="../?login">Log in</a><span>Instagram</span><span>Discord</span></div>
     <p class="disc">© 2026 ELEV8. Trading involves significant risk of loss. ELEV8 is a journaling and education tool and does not provide financial advice, signals or brokerage services. Prop firm names and logos belong to their owners and are shown for identification only.</p>
   </div>
 </footer>
