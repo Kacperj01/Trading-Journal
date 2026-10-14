@@ -1,15 +1,17 @@
 # ELEV8 account emails
 
-The footer link in each email goes to the homepage at elev8tradingjournal.com/home/.
+Every account email (confirm sign-up, reset password, change email, sign-in link, invite and
+security code) uses one ELEV8 design: the logo, a short message and a single button. The link
+itself is never shown in the email.
 
-Paste each file into Supabase › Authentication › Emails › Templates (switch the editor to the
-"Source"/HTML view), with these subjects:
+- `make_templates.py` builds the six `.html` files from that design. Edit the wording there.
+- `site/apply_auth_config.py` sends them to Supabase with their subjects, and also sets the Site URL
+  (https://elev8tradingjournal.com), the allowed redirect URLs and a 24-hour link expiry, so the
+  buttons always bring people back to the journal.
+- The **Account emails** GitHub Action runs that script. It needs one secret,
+  `SUPABASE_ACCESS_TOKEN`: a personal access token from supabase.com/dashboard/account/tokens,
+  added under GitHub > Settings > Secrets and variables > Actions. It runs by hand from the
+  Actions tab and again whenever the templates change.
 
-| Supabase template | File | Subject |
-|---|---|---|
-| Confirm signup | confirm-signup.html | Confirm your ELEV8 account |
-| Reset Password | reset-password.html | Reset your ELEV8 password |
-| Change Email Address | change-email.html | Confirm your new ELEV8 email |
-| Reauthentication | reauthentication.html | Your ELEV8 security code |
-
-They're sent from noreply@elev8tradingjournal.com once Custom SMTP (Resend) is on.
+The logo loads from https://elev8tradingjournal.com/email/elev8-email-logo.png (copied there by
+`site/build.py`). Emails are sent from noreply@elev8tradingjournal.com through Custom SMTP (Resend).

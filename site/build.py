@@ -160,5 +160,8 @@ home_page = f"""<!doctype html>
 (docs / "home").mkdir(exist_ok=True)
 (docs / "home" / "index.html").write_text(home_page, encoding="utf-8")
 shutil.copytree(root / "site" / "home" / "img", docs / "home" / "img", dirs_exist_ok=True)
+# Logo the account and weekly-review emails load from the website.
+(docs / "email").mkdir(exist_ok=True)
+shutil.copy(root / "site" / "email-templates" / "img" / "elev8-email-logo.png", docs / "email" / "elev8-email-logo.png")
 subprocess.run([sys.executable, str(root / "site" / "make_icons.py"), str(docs / "icons")], check=True)
 print("built docs/ (version", version + ")")
