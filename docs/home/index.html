@@ -199,14 +199,17 @@ details.cat > summary::-webkit-details-marker { display: none; }
   .feats .feature h3 { font-size: 25px; }
   .feats .feature .lead { font-size: 15.5px; }
   .feats .feature li { font-size: 14.5px; }
-  .feats .feature .phone { width: 200px; border-radius: 30px; padding: 7px; }
-  .feats .feature .phone .scr { border-radius: 24px; }
-  .feats .feature .phone::before { top: 13px; height: 13px; }
-  .feats .feature .visual .pair .phone { width: 138px; max-width: none; border-radius: 22px; padding: 5px; }
-  .feats .feature .visual .pair .phone .scr { border-radius: 18px; }
-  .feats .feature .visual .pair .phone:last-child { margin-top: 30px; }
-  .feats .feature .visual .pair .phone::before { top: 9px; height: 9px; }
-  .feats .feature .shot { max-width: 100% !important; }
+  /* Device mockups scale with the card on every phone width, and sit centred with room around them. */
+  .feats .feature .visual { justify-content: center; padding: 6px 0 2px; }
+  .feats .feature .visual > .phone { width: 54%; border-radius: 26px; padding: 6px; }
+  .feats .feature .visual > .phone .scr { border-radius: 21px; }
+  .feats .feature .visual > .phone::before { top: 11px; height: 11px; }
+  .feats .feature .visual .pair { width: 84%; gap: 6%; justify-content: center; }
+  .feats .feature .visual .pair .phone { width: 47%; max-width: none; border-radius: 18px; padding: 4px; }
+  .feats .feature .visual .pair .phone .scr { border-radius: 15px; }
+  .feats .feature .visual .pair .phone:last-child { margin-top: 9%; }
+  .feats .feature .visual .pair .phone::before { top: 7px; height: 7px; }
+  .feats .feature .shot { max-width: 88% !important; border-radius: 16px; }
   .feats .feature .review-quote { font-size: 14px; }
   .dots { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
   .dots i { width: 7px; height: 7px; border-radius: 4px; background: rgba(150,195,245,.25); transition: width .2s, background .2s; }
