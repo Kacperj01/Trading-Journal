@@ -1,5 +1,7 @@
 # ELEV8 account emails
 
+The footer link in each email goes to the homepage at elev8tradingjournal.com/home/.
+
 Paste each file into Supabase › Authentication › Emails › Templates (switch the editor to the
 "Source"/HTML view), with these subjects:
 

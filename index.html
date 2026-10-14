@@ -2677,6 +2677,7 @@ function sbSaveSession(s) {
   store.set(KEY_SB_SESSION, sb.session);
 }
 let homeMode = "signin";
+let signupLink = (() => { try { return /[?&]signup(=|&|$)/.test(location.search); } catch (e) { return false; } })();
 const firstName = () => (sb.session && sb.session.user.name || "").trim().split(/\s+/)[0] || "";
 
 async function sbToken() {
@@ -2840,7 +2841,10 @@ async function sbStart() {
 // Sign-in window shown when the app opens and this device isn't signed in.
 function showHome(note) {
   if (!SB || inViewer()) return;
-  if (homeMode !== "signin") setHomeMode("signin");
+  // The homepage's "Start free" buttons arrive with ?signup: open once on the create-account form.
+  const want = signupLink ? "signup" : "signin";
+  signupLink = false;
+  if (homeMode !== want) setHomeMode(want);
   F("dlgMsg").textContent = note || "";
   if (!F("dlgEmail").value && sb.lastEmail) F("dlgEmail").value = sb.lastEmail;
   document.documentElement.classList.add("gated");

@@ -32,6 +32,16 @@ page = f"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <script>window.ELEV8_BUILD = "{version}";</script>
+<script>
+  // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
+  // email confirmation links and ?login / ?signup / ?demo / ?app all open the journal directly.
+  (function () {{ try {{
+    if (/[?&](app|login|signup|demo)(=|&|$)/.test(location.search) || /access_token|error_code|type=/.test(location.hash)) return;
+    if ((window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone) return;
+    if (localStorage.getItem("tj.sb.session.v1") || localStorage.getItem("tj.sb.email.v1") || localStorage.getItem("tj.trades.v1")) return;
+    location.replace("home/");
+  }} catch (e) {{}} }})();
+</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -89,6 +99,11 @@ self.addEventListener("fetch", e => {{
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   // The page: try the network for the latest version, fall back to the saved copy offline.
+  if (req.mode === "navigate" && url.pathname.includes("/home/")) {{
+    // The homepage: always from the network, never stored as the journal's offline copy.
+    e.respondWith(fetch(req).catch(() => caches.match("./index.html")));
+    return;
+  }}
   if (req.mode === "navigate") {{
     // Bypass the HTTP cache (GitHub Pages caches pages for 10 minutes) so updates show on the next open.
     e.respondWith(fetch(req, {{ cache: "no-store" }}).then(res => {{ const copy = res.clone(); caches.open(CACHE).then(c => c.put("./index.html", copy)); return res; }})
@@ -117,5 +132,33 @@ docs.mkdir(exist_ok=True)
 (docs / ".nojekyll").write_text("", encoding="utf-8")
 # Custom domain for GitHub Pages (DNS is set up at Cloudflare).
 (docs / "CNAME").write_text("elev8tradingjournal.com\n", encoding="utf-8")
+# Homepage at /home/: site/home/index.html is page content (like index.html), wrapped here.
+import shutil
+home_src = (root / "site" / "home" / "index.html").read_text(encoding="utf-8")
+home_title = re.search(r"<title>(.*?)</title>", home_src).group(1)
+home_body = re.sub(r"<title>.*?</title>\s*", "", home_src, count=1)
+home_page = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{home_title}</title>
+<meta name="description" content="The trading journal for prop and retail traders: log trades in seconds, track prop firm rules live and get a written review of your week.">
+<meta name="theme-color" content="#06111f">
+<meta property="og:title" content="ELEV8 Trading Journal">
+<meta property="og:description" content="Know exactly why you win and lose. Log trades, track prop firm rules and review every week.">
+<meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="canonical" href="https://elev8tradingjournal.com/home/">
+</head>
+<body>
+{home_body}
+</body>
+</html>
+"""
+(docs / "home").mkdir(exist_ok=True)
+(docs / "home" / "index.html").write_text(home_page, encoding="utf-8")
+shutil.copytree(root / "site" / "home" / "img", docs / "home" / "img", dirs_exist_ok=True)
 subprocess.run([sys.executable, str(root / "site" / "make_icons.py"), str(docs / "icons")], check=True)
 print("built docs/ (version", version + ")")

@@ -3,7 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "7fbfdd6c3b";</script>
+<script>window.ELEV8_BUILD = "314f6ad142";</script>
+<script>
+  // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
+  // email confirmation links and ?login / ?signup / ?demo / ?app all open the journal directly.
+  (function () { try {
+    if (/[?&](app|login|signup|demo)(=|&|$)/.test(location.search) || /access_token|error_code|type=/.test(location.hash)) return;
+    if ((window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone) return;
+    if (localStorage.getItem("tj.sb.session.v1") || localStorage.getItem("tj.sb.email.v1") || localStorage.getItem("tj.trades.v1")) return;
+    location.replace("home/");
+  } catch (e) {} })();
+</script>
 <title>ELEV8 Trading Journal</title>
 <meta name="theme-color" content="#06111f">
 <meta name="color-scheme" content="dark">
@@ -2700,6 +2710,7 @@ function sbSaveSession(s) {
   store.set(KEY_SB_SESSION, sb.session);
 }
 let homeMode = "signin";
+let signupLink = (() => { try { return /[?&]signup(=|&|$)/.test(location.search); } catch (e) { return false; } })();
 const firstName = () => (sb.session && sb.session.user.name || "").trim().split(/\s+/)[0] || "";
 
 async function sbToken() {
@@ -2863,7 +2874,10 @@ async function sbStart() {
 // Sign-in window shown when the app opens and this device isn't signed in.
 function showHome(note) {
   if (!SB || inViewer()) return;
-  if (homeMode !== "signin") setHomeMode("signin");
+  // The homepage's "Start free" buttons arrive with ?signup: open once on the create-account form.
+  const want = signupLink ? "signup" : "signin";
+  signupLink = false;
+  if (homeMode !== want) setHomeMode(want);
   F("dlgMsg").textContent = note || "";
   if (!F("dlgEmail").value && sb.lastEmail) F("dlgEmail").value = sb.lastEmail;
   document.documentElement.classList.add("gated");
