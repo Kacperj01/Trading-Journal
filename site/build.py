@@ -160,6 +160,55 @@ home_page = f"""<!doctype html>
 (docs / "home").mkdir(exist_ok=True)
 (docs / "home" / "index.html").write_text(home_page, encoding="utf-8")
 shutil.copytree(root / "site" / "home" / "img", docs / "home" / "img", dirs_exist_ok=True)
+# Privacy Policy and Terms at /privacy/ and /terms/: site/legal/*.html are content, wrapped here.
+LEGAL_CSS = """
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #06111f; color: #b0bfd3; font: 400 16.5px/1.7 Outfit, system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+.top { border-bottom: 1px solid rgba(150,195,245,.14); }
+.top div, main { max-width: 760px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.top div { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.top a.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; letter-spacing: .12em; color: #2fd0c8; }
+.top a.logo img { width: 34px; }
+.top a.back { color: #b0bfd3; font-size: 14.5px; text-decoration: none; }
+main { padding-block: 44px 80px; }
+h1 { color: #e6eef8; font-size: 40px; line-height: 1.1; letter-spacing: -.02em; margin: 0 0 6px; }
+h2 { color: #e6eef8; font-size: 21px; margin: 34px 0 8px; }
+.meta { color: #8394ad; font-size: 14px; margin: 0 0 26px; }
+p, ul { margin: 0 0 14px; } ul { padding-left: 22px; } li { margin-bottom: 6px; }
+b { color: #e6eef8; font-weight: 600; }
+a { color: #2fd0c8; }
+footer { border-top: 1px solid rgba(150,195,245,.14); color: #5d7190; font-size: 13px; }
+footer div { max-width: 760px; margin: 0 auto; padding: 22px max(20px, env(safe-area-inset-left, 0px)) 40px; display: flex; gap: 18px; flex-wrap: wrap; }
+footer a { color: #8394ad; }
+"""
+for slug in ("privacy", "terms"):
+    src_l = (root / "site" / "legal" / f"{slug}.html").read_text(encoding="utf-8")
+    title_l = re.search(r"<title>(.*?)</title>", src_l).group(1)
+    body_l = re.sub(r"<title>.*?</title>\s*", "", src_l, count=1)
+    page_l = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{title_l}</title>
+<meta name="theme-color" content="#06111f">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap">
+<style>{LEGAL_CSS}</style>
+</head>
+<body>
+<header class="top"><div><a class="logo" href="../home/"><img src="../home/img/mark.svg" alt="">ELEV8</a><a class="back" href="../home/">Back to home</a></div></header>
+<main>
+{body_l}
+</main>
+<footer><div><span>ELEV8 Trading Journal</span><a href="../privacy/">Privacy Policy</a><a href="../terms/">Terms of Use</a><a href="../home/">Home</a></div></footer>
+</body>
+</html>
+"""
+    (docs / slug).mkdir(exist_ok=True)
+    (docs / slug / "index.html").write_text(page_l, encoding="utf-8")
+
 # Logo the account and weekly-review emails load from the website.
 (docs / "email").mkdir(exist_ok=True)
 shutil.copy(root / "site" / "email-templates" / "img" / "elev8-email-logo.png", docs / "email" / "elev8-email-logo.png")

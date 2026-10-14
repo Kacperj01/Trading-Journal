@@ -1087,6 +1087,8 @@ html.hosted .home { padding-top: 72px; }
 .home-card { width: 100%; display: grid; gap: 12px; text-align: left; padding: 22px; }
 .home-card h1 { margin: 0 0 2px; font-size: 20px; font-weight: 600; text-align: center; }
 .home-card .btn { justify-content: center; }
+.home-legal { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-2); text-align: center; }
+.home-legal a { color: var(--accent); }
 #dlgMsg { margin: 0; font-size: 13px; color: var(--text-2); }
 #dlgMsg:empty { display: none; }
 .home-points { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 10px; width: 100%; text-align: left; }
@@ -2021,7 +2023,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <p class="muted" style="margin:0;font-size:13.5px">Sign in with the same email on each device. Trades on this device are added to your account the first time you sign in.</p>
             <form id="syncForm" class="stack" novalidate>
               <div class="field"><label for="syncEmail">Email</label><input type="email" id="syncEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
-              <div class="field"><label for="syncPassword">Password</label><input type="password" id="syncPassword" autocomplete="current-password" minlength="6" required></div>
+              <div class="field"><label for="syncPassword">Password</label><input type="password" id="syncPassword" autocomplete="current-password" required></div>
               <p id="syncMsg" class="muted" role="status" aria-live="polite" style="margin:0;font-size:13px"></p>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn primary" type="submit" id="syncSignIn">Sign in</button>
@@ -2152,8 +2154,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="field signup-only" hidden><label for="dlgName">Full name</label><input type="text" id="dlgName" autocomplete="name" autocapitalize="words"></div>
       <div class="field signup-only" hidden><label for="dlgDob">Date of birth</label><input type="date" id="dlgDob" autocomplete="bday"></div>
       <div class="field"><label for="dlgEmail">Email</label><input type="email" id="dlgEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
-      <div class="field"><div class="pw-label"><label for="dlgPassword">Password</label><button type="button" class="link-btn signin-only" id="dlgForgot">Forgot password?</button></div><input type="password" id="dlgPassword" autocomplete="current-password" minlength="6" required></div>
+      <div class="field"><div class="pw-label"><label for="dlgPassword">Password</label><button type="button" class="link-btn signin-only" id="dlgForgot">Forgot password?</button></div><input type="password" id="dlgPassword" autocomplete="current-password" required></div>
       <p id="dlgMsg" role="status" aria-live="polite"></p>
+      <p class="signup-only home-legal" hidden>By creating an account you agree to the <a href="terms/" target="_blank" rel="noopener">Terms of Use</a> and <a href="privacy/" target="_blank" rel="noopener">Privacy Policy</a>. ELEV8 is a journal, not financial advice.</p>
       <button class="btn primary" type="submit" id="dlgSubmit">Sign in</button>
       <button class="btn" type="button" id="dlgSignUp">Create account</button>
       <a class="link-btn home-demo" href="./?demo">Not ready yet? Explore a demo journal →</a>
@@ -2169,9 +2172,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 <dialog id="pwDlg" class="bug-dlg" aria-labelledby="pwTitle" aria-describedby="pwIntro">
   <form id="pwForm" class="dlg-body" novalidate>
     <h3 id="pwTitle">Change password</h3>
-    <p id="pwIntro">Choose a new password of at least 6 characters.</p>
-    <div class="field"><label for="pwNew">New password</label><input type="password" id="pwNew" autocomplete="new-password" minlength="6"></div>
-    <div class="field"><label for="pwNew2">Confirm new password</label><input type="password" id="pwNew2" autocomplete="new-password" minlength="6"></div>
+    <p id="pwIntro">Choose a new password of at least 8 characters.</p>
+    <div class="field"><label for="pwNew">New password</label><input type="password" id="pwNew" autocomplete="new-password" minlength="8"></div>
+    <div class="field"><label for="pwNew2">Confirm new password</label><input type="password" id="pwNew2" autocomplete="new-password" minlength="8"></div>
     <p id="pwMsg" class="q-msg" role="alert"></p>
     <div class="dlg-actions">
       <button class="btn ghost" type="button" id="pwCancel">Cancel</button>
@@ -2956,7 +2959,9 @@ async function sbSignIn(signUp, from = "card") {
     if (dobProblem(dob)) { msg.textContent = dobProblem(dob); F("dlgDob").focus(); return; }
     profile = { full_name: name, dob, age: ageFromDob(dob) };
   }
-  if (!email || password.length < 6) { msg.textContent = "Enter your email and a password of at least 6 characters."; return; }
+  if (!email || !password) { msg.textContent = "Enter your email and password."; return; }
+  // New accounts need 8+ characters; existing accounts made under the old 6-character rule can still sign in.
+  if (signUp && password.length < 8) { msg.textContent = "Choose a password of at least 8 characters."; return; }
   msg.textContent = signUp ? "Creating your account…" : "Signing in…";
   try {
     const back = encodeURIComponent(location.origin + location.pathname);
@@ -3013,7 +3018,7 @@ document.getElementById("dlgMsg").addEventListener("click", e => {
 function openPasswordDlg(fromReset) {
   F("pwForm").reset(); F("pwMsg").textContent = "";
   F("pwTitle").textContent = fromReset ? "Set a new password" : "Change password";
-  F("pwIntro").textContent = fromReset ? "You opened a password reset link. Choose a new password to finish." : "Choose a new password of at least 6 characters.";
+  F("pwIntro").textContent = fromReset ? "You opened a password reset link. Choose a new password to finish." : "Choose a new password of at least 8 characters.";
   const dlg = F("pwDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   F("pwNew").focus();
@@ -3023,7 +3028,7 @@ document.getElementById("pwChange").addEventListener("click", () => openPassword
 document.getElementById("pwForm").addEventListener("submit", async e => {
   e.preventDefault();
   const a = F("pwNew").value, b = F("pwNew2").value, msg = F("pwMsg");
-  if (a.length < 6) { msg.textContent = "Use at least 6 characters."; F("pwNew").focus(); return; }
+  if (a.length < 8) { msg.textContent = "Use at least 8 characters."; F("pwNew").focus(); return; }
   if (a !== b) { msg.textContent = "The two passwords don't match."; F("pwNew2").focus(); return; }
   msg.textContent = "Saving…";
   try {
