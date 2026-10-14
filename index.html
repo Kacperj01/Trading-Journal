@@ -549,6 +549,9 @@ input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-dat
 .seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
 .seg label:has(input:checked).long-opt { background: var(--green-soft); color: var(--green); }
 .seg label:has(input:checked).short-opt { background: var(--red-soft); color: var(--red); }
+.seg.acct-type { display: grid; grid-template-columns: repeat(4, 1fr); }
+.seg.acct-type label { display: grid; place-items: center; padding: 10px 4px; white-space: nowrap; border-left: 1px solid var(--border); }
+.seg.acct-type label:first-child { border-left: 0; }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
 .toggle { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--input-bg); cursor: pointer; font-size: 14px; }
 .range-row { display: flex; gap: 12px; align-items: center; }
@@ -2510,7 +2513,7 @@ const DEFAULT_SETTINGS = {
   emotionsSplit: false, // set once the old single emotion list has been split into before / after
   planRules: ["Traded one of my setups", "Waited for confirmation", "Risk within my plan", "Stop loss set before entry", "No red news within 30 min"],
   mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"],
-  accounts: [],     // trading accounts: { id, type: Live | Demo | Prop firm, size, broker, firm, phase, platform, name }
+  accounts: [],     // trading accounts: { id, type: Live | Demo | Prop firm | Backtest, size, broker, firm, phase, platform, name }
   lastAccount: "",  // the active account, chosen in Preferences: new trades start on it
   weeklyEmail: false // email me my weekly review (sent Sundays by the weekly-review GitHub Action)
 };
@@ -3370,7 +3373,7 @@ function acctLabel(a) {
   if (a.name) return a.name;
   return a.type === "Prop firm"
     ? [a.firm || "Prop firm", shortSize(a.size), a.phase].filter(Boolean).join(" ")
-    : [a.broker || a.type, shortSize(a.size), a.type].filter(Boolean).join(" ");
+    : [a.broker, shortSize(a.size), a.type].filter(Boolean).join(" ");
 }
 // Balance before any trades: the account's size when one account is in view, every account's size added up
 // for all accounts, or the starting balance from Preferences when no sizes are set.
@@ -5658,8 +5661,8 @@ F("tdShare").addEventListener("click", () => { if (viewing && !isOpen(viewing)) 
 F("wkShare").addEventListener("click", () => { const w = buildWeek(wkStart || latestWeek()); if (w.list.length) openShare("week", w); else toast("No trades in this week to share yet"); });
 
 /* ---------- Accounts page: every account, its progress, and the archive ---------- */
-const ACCT_SHOW = [["", "All"], ["standard", "Live & demo"], ["progress", "In progress"], ["funded", "Funded"], ["passed", "Passed"], ["failed", "Failed"]];
-const acctKind = a => a.type === "Prop firm" ? propState(a) : "standard";
+const ACCT_SHOW = [["", "All"], ["standard", "Live & demo"], ["backtest", "Backtest"], ["progress", "In progress"], ["funded", "Funded"], ["passed", "Passed"], ["failed", "Failed"]];
+const acctKind = a => a.type === "Prop firm" ? propState(a) : a.type === "Backtest" ? "backtest" : "standard";
 const badgeFor = a => firmLogo(a) || `<span class="acct-badge ${a.type === "Prop firm" ? "prop" : a.type === "Demo" ? "demo" : a.type === "Backtest" ? "backtest" : "live"}">${esc(a.type)}</span>`;
 function manageRow(a) {
   const active = a.id === defaultAccount();
