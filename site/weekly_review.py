@@ -366,7 +366,9 @@ def main():
             if not u.get("email_confirmed_at"): continue
         elif not s.get("weeklyEmail") or not u.get("email_confirmed_at"):
             continue
-        w = build_week(trades.get(u["id"], []), start, s.get("currency") or "$", s)
+        # Same rule as the app: the symbol goes into HTML, so only up to 4 plain characters.
+        cur = re.sub(r"[<>&\"'`\\]", "", str(s.get("currency") or "$")).strip()[:4] or "$"
+        w = build_week(trades.get(u["id"], []), start, cur, s)
         if not w["st"]["n"] and not ONLY and not PREVIEW_ALL:
             skipped += 1  # nothing logged this week: no email
             continue

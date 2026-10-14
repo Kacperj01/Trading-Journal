@@ -2810,6 +2810,15 @@ function sbRender() {
     F("syncLast").textContent = sb.lastSync ? "Last synced " + new Date(sb.lastSync).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "Not synced yet";
   }
 }
+// A sign-in link could have been sent by someone else. Ask before switching this device to a different
+// account, or before trades saved only on this device are added to the account in the link.
+async function okToSwitch(user) {
+  const cur = sb.session && sb.session.user;
+  if (cur && cur.id === user.id) return true;
+  if (!cur && !realTrades.length) return true;
+  return askConfirm(`This link signs you in as ${user.email || "another account"}. ${cur ? `You're signed in as ${cur.email} on this device.` : "The trades saved on this device will be added to that account."} Only continue if it's your account.`,
+    { title: "Sign in with this link?", ok: "Sign in" });
+}
 // Arriving from a confirmation email: Supabase puts the new session (or an error) after "#".
 async function sbFromLink() {
   const h = new URLSearchParams(location.hash.slice(1));
@@ -2823,6 +2832,7 @@ async function sbFromLink() {
     const res = await fetch(SB.url + "/auth/v1/user", { headers: { apikey: SB.key, Authorization: "Bearer " + h.get("access_token") } });
     const user = await res.json();
     if (!res.ok || !user.id) throw new Error("bad link");
+    if (!(await okToSwitch(user))) return;
     sbSaveSession({ access_token: h.get("access_token"), refresh_token: h.get("refresh_token"), expires_in: Number(h.get("expires_in")) || 3600, expires_at: Number(h.get("expires_at")) || 0, user });
     const kind = h.get("type");
     if (kind === "recovery") setTimeout(() => openPasswordDlg(true), 600);
@@ -2842,6 +2852,7 @@ async function sbFromVerify() {
   try {
     const s = await sbAuth("verify", { type, token_hash: hash });
     if (!s.access_token || !s.user) { sb.note = type === "email_change" ? "Confirmed. Open the link sent to your other email address too, then sign in." : "Your email is confirmed. Sign in below."; return; }
+    if (!(await okToSwitch(s.user))) return;
     sbSaveSession(s);
     if (type === "recovery") setTimeout(() => openPasswordDlg(true), 600);
     else toast(type === "email_change" ? "Email address updated." : type === "magiclink" ? "You're signed in." : "Email confirmed. You're signed in.");
@@ -3170,17 +3181,19 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const calm = () => reduced() || document.documentElement.classList.contains("calm");
 
+// The currency symbol from settings, limited to 4 plain characters (it's shown inside HTML everywhere).
+const curSym = () => String(settings.currency || "$").replace(/[<>&"'`\\]/g, "").trim().slice(0, 4) || "$";
 function money(v, { signed = true, decimals = 2 } = {}) {
   if (v == null || !Number.isFinite(v)) return "—";
   const abs = Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   const sign = v > 0 ? (signed ? "+" : "") : v < 0 ? "−" : "";
-  return sign + settings.currency + abs;
+  return sign + curSym() + abs;
 }
 // Compact amount for small calendar cells: +$850, −$1.2k, +$12k.
 function moneyShort(v) {
   const a = Math.abs(v), sign = v > 0 ? "+" : v < 0 ? "−" : "";
   const body = a < 1000 ? Math.round(a).toLocaleString("en-US") : a < 10000 ? (a / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.round(a / 1000) + "k";
-  return sign + settings.currency + body;
+  return sign + curSym() + body;
 }
 const fmtR = r => (r == null || !Number.isFinite(r)) ? "—" : (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r).toFixed(2) + "R";
 const pct = (v, d = 1) => (v == null || !Number.isFinite(v)) ? "—" : (v * 100).toFixed(d) + "%";
@@ -3629,7 +3642,7 @@ function renderEquity(list, startBal, st) {
     const v = minY + (maxY - minY) * (i / gridN);
     const y = sy(v);
     grid += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-dasharray="${i === 0 ? "" : "3 5"}"/>`;
-    grid += `<text class="axis-label" x="${pad.l - 10}" y="${y + 4}" text-anchor="end">${settings.currency}${Math.round(v).toLocaleString("en-US")}</text>`;
+    grid += `<text class="axis-label" x="${pad.l - 10}" y="${y + 4}" text-anchor="end">${curSym()}${Math.round(v).toLocaleString("en-US")}</text>`;
   }
   // X labels: up to 6 dates.
   const ticks = Math.min(W < 520 ? 3 : 6, list.length);
@@ -4086,14 +4099,14 @@ function renderInsights(list, st) {
   if (worstSess) out.push({
     icon: ico("moon"), tone: "bad", tag: "Session leak",
     title: `You're losing money in ${worstSess.name}`,
-    text: `${N(worstSess.wins + "W–" + worstSess.losses + "L")} (${N(pct(worstSess.winRate, 0))}) for ${N(money(worstSess.pnl))} across ${N(worstSess.n)} trades.${bestSess ? ` Compare that with ${bestSess.name} at ${N(money(bestSess.pnl))}.` : ""}`,
-    action: `Stop trading ${worstSess.name} for the next 2 weeks, or restrict it to your best setup only.`
+    text: `${N(worstSess.wins + "W–" + worstSess.losses + "L")} (${N(pct(worstSess.winRate, 0))}) for ${N(money(worstSess.pnl))} across ${N(worstSess.n)} trades.${bestSess ? ` Compare that with ${esc(bestSess.name)} at ${N(money(bestSess.pnl))}.` : ""}`,
+    action: `Stop trading ${esc(worstSess.name)} for the next 2 weeks, or restrict it to your best setup only.`
   });
   if (bestSess) out.push({
     icon: ico("clock"), tone: "good", tag: "Focus",
     title: `${bestSess.name} is your strongest session`,
     text: `${N(pct(bestSess.winRate, 0))} win rate and ${N(money(bestSess.pnl))} from ${N(bestSess.n)} trades (${N(fmtR(bestSess.avgR))} avg).`,
-    action: `Make sure you're at the screen, rested and prepared, for the ${bestSess.name} open. Schedule your day around it.`
+    action: `Make sure you're at the screen, rested and prepared, for the ${esc(bestSess.name)} open. Schedule your day around it.`
   });
 
   // Pairs.
@@ -4103,8 +4116,8 @@ function renderInsights(list, st) {
   if (bestPair) out.push({
     icon: ico("target"), tone: "good", tag: "Focus",
     title: `${bestPair.name} is your best market`,
-    text: `${N(money(bestPair.pnl))} over ${N(bestPair.n)} trades at ${N(pct(bestPair.winRate, 0))} win rate.${worstPair ? ` Meanwhile ${worstPair.name} is at ${N(money(worstPair.pnl))}.` : ""}`,
-    action: `Narrow your watchlist to your top 2–3 pairs${worstPair ? ` and drop ${worstPair.name} until you review what's going wrong there` : ""}.`
+    text: `${N(money(bestPair.pnl))} over ${N(bestPair.n)} trades at ${N(pct(bestPair.winRate, 0))} win rate.${worstPair ? ` Meanwhile ${esc(worstPair.name)} is at ${N(money(worstPair.pnl))}.` : ""}`,
+    action: `Narrow your watchlist to your top 2–3 pairs${worstPair ? ` and drop ${esc(worstPair.name)} until you review what's going wrong there` : ""}.`
   });
 
   // Risk management.
@@ -4128,8 +4141,8 @@ function renderInsights(list, st) {
   if (worstEmo && worstEmo.pnl < 0) out.push({
     icon: ico("pulse"), tone: "warn", tag: "Psychology",
     title: `Trading while “${worstEmo.name}” is expensive`,
-    text: `${N(worstEmo.n)} trades entered feeling ${worstEmo.name.toLowerCase()} returned ${N(money(worstEmo.pnl))} at ${N(pct(worstEmo.winRate, 0))} win rate.${bestEmo && bestEmo.pnl > 0 ? ` Trades taken feeling ${bestEmo.name.toLowerCase()} made ${N(money(bestEmo.pnl))}.` : ""}`,
-    action: `Add a pre-trade check: if you feel ${worstEmo.name.toLowerCase()}, step away for 15 minutes before placing an order.`
+    text: `${N(worstEmo.n)} trades entered feeling ${esc(worstEmo.name.toLowerCase())} returned ${N(money(worstEmo.pnl))} at ${N(pct(worstEmo.winRate, 0))} win rate.${bestEmo && bestEmo.pnl > 0 ? ` Trades taken feeling ${esc(bestEmo.name.toLowerCase())} made ${N(money(bestEmo.pnl))}.` : ""}`,
+    action: `Add a pre-trade check: if you feel ${esc(worstEmo.name.toLowerCase())}, step away for 15 minutes before placing an order.`
   });
 
   // The plan rule that costs the most when broken.
@@ -4161,8 +4174,8 @@ function renderInsights(list, st) {
     if (b.pnl < 0 && a.pnl > 0 && b.n >= minN) out.push({
       icon: ico("updown"), tone: "info", tag: "Bias",
       title: `Your ${a.name.toLowerCase()}s outperform your ${b.name.toLowerCase()}s`,
-      text: `${a.name}: ${N(money(a.pnl))} (${N(pct(a.winRate, 0))}). ${b.name}: ${N(money(b.pnl))} (${N(pct(b.winRate, 0))}).`,
-      action: `Require extra confirmation, such as higher-timeframe alignment, before taking ${b.name.toLowerCase()} trades.`
+      text: `${esc(a.name)}: ${N(money(a.pnl))} (${N(pct(a.winRate, 0))}). ${esc(b.name)}: ${N(money(b.pnl))} (${N(pct(b.winRate, 0))}).`,
+      action: `Require extra confirmation, such as higher-timeframe alignment, before taking ${esc(b.name.toLowerCase())} trades.`
     });
   }
 
@@ -4262,7 +4275,7 @@ function renderTable(list) {
       <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${isOpen(t) ? "Open" : money(t.pnl)}</strong></td>
       <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : result === "Open" ? "open" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
       <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span class="plan-flag" title="${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}" role="img" aria-label="Plan broken">${ico("warn")}</span>` : ""}</td>
-      <td class="notes${t.notes || t.mistakes || hasCharts(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${(t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? ` <button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : ""}${t.sourceUrl ? ` <a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
+      <td class="notes${t.notes || t.mistakes || hasCharts(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${(t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? ` <button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : ""}${t.sourceUrl ? ` <a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
         <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">View</button>
         ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}" aria-label="Close trade ${idx}, ${esc(t.pair)}">Close</button>` : ""}<button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
@@ -5510,7 +5523,7 @@ function openTrade(t) {
     </div>
     ${newsNear(t).length ? `<p class="td-news"><span class="imp High" aria-hidden="true"></span> High-impact news within an hour: ${newsNear(t).map(e => `${esc(e.cur)} ${esc(e.title)} (${fmtTime(new Date(e.t))})`).join(", ")}</p>` : ""}
     ${t.notes ? `<p class="td-notes" style="margin-top:14px">${esc(t.notes)}</p>` : ""}
-    ${t.sourceUrl ? `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(t.sourceUrl)}" target="_blank" rel="noopener noreferrer">Open in Notion ↗</a></p>` : ""}`;
+    ${safeLink(t.sourceUrl) ? `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Open in Notion ↗</a></p>` : ""}`;
   loadShots(F("tdBody"));
   const dlg = F("tradeDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
@@ -5880,7 +5893,7 @@ function openAccountDlg(a, first) {
   F("aAssignWrap").hidden = !loose.length;
   F("aAssign").checked = !accounts().length;
   F("aAssignText").textContent = `Link my ${plural(loose.length, "existing trade")} to this account`;
-  F("aSize").placeholder = "e.g. " + settings.currency + "10,000";
+  F("aSize").placeholder = "e.g. " + curSym() + "10,000";
   F("aMsg").textContent = "";
   $$("[aria-invalid]", F("acctDlgForm")).forEach(el => el.removeAttribute("aria-invalid"));
   const dlg = F("acctDlg");
@@ -7074,7 +7087,7 @@ F("setNav").addEventListener("click", e => {
 F("acctForm").addEventListener("submit", e => {
   e.preventDefault();
   if (!accounts().length) settings.balance = num(F("sBalance").value) ?? 0;
-  settings.currency = F("sCurrency").value.trim() || "$";
+  settings.currency = F("sCurrency").value.trim().replace(/[<>&"'`\\]/g, "").slice(0, 4) || "$";
   settings.defaultRisk = num(F("sRisk").value) ?? 0;
   settings.sessionMode = F("sSessionMode").value;
   saveSettings();
@@ -7510,10 +7523,12 @@ async function signOutFlow() {
       : "Your trades stay safe in your account and load again when you sign in.",
       { title: unsent ? "Sign out and lose unsynced changes?" : "Sign out?", ok: "Sign out" });
     if (!ok) return;
+    // End the session on the server too, so a copied token stops working.
+    try { await fetch(SB.url + "/auth/v1/logout", { method: "POST", headers: { apikey: SB.key, Authorization: "Bearer " + await sbToken() } }); } catch (e) { /* offline: the session still ends on this device */ }
     sbSaveSession(null);
     realTrades = []; saveLocal(); syncView();
     // The next person to sign in here shouldn't see this account's trading accounts.
-    settings.accounts = []; settings.lastAccount = ""; store.set(KEY_SETTINGS, settings); ui.account = ""; saveUi();
+    settings = Object.assign({}, DEFAULT_SETTINGS); store.set(KEY_SETTINGS, settings); ui.account = ""; saveUi();
     store.set(KEY_SB_OUTBOX, []);
     try { localStorage.removeItem(KEY_SB_USER); localStorage.removeItem(KEY_DRAFT); } catch (e) { /* ignore */ }
     resetForm(false, true);
