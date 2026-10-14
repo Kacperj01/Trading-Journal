@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "46f9cb8c2e";</script>
+<script>window.ELEV8_BUILD = "8ebc9cd238";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -2946,7 +2946,7 @@ function ageFromDob(dob) {
 function dobProblem(dob) {
   const age = ageFromDob(dob);
   if (age == null) return "Enter your date of birth.";
-  if (age < 13) return "You need to be 13 or over to use ELEV8.";
+  if (age < 18) return "You need to be 18 or over to use ELEV8.";
   if (age > 120) return "Check your date of birth.";
   return "";
 }

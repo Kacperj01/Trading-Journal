@@ -2913,7 +2913,7 @@ function ageFromDob(dob) {
 function dobProblem(dob) {
   const age = ageFromDob(dob);
   if (age == null) return "Enter your date of birth.";
-  if (age < 13) return "You need to be 13 or over to use ELEV8.";
+  if (age < 18) return "You need to be 18 or over to use ELEV8.";
   if (age > 120) return "Check your date of birth.";
   return "";
 }
