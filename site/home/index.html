@@ -185,6 +185,41 @@ section.block { padding-block: 110px 0; }
 /* No notch pill on any phone mockup: it covered the top of the app screens. */
 .phone::before, .peek::before { display: none !important; }
 
+
+/* Desktop: shorter page. Features become one tabbed showcase, the full list opens per category in two
+   columns, the FAQ sits in two columns, and the big pictures are a little smaller. */
+.ftabs { display: none; }
+@media (min-width: 761px) {
+  section.block { padding-block: 84px 0; }
+  .head { margin-bottom: 40px; }
+  .hero { padding-block: 56px 24px; }
+  .stage { max-width: 860px; margin-top: 44px; }
+  main .strip { margin-top: 70px; }
+  .ftabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; border-radius: 14px; border: 1px solid var(--line); background: var(--ink-2); width: fit-content; max-width: 100%; margin: -10px 0 8px; }
+  .ftabs button { font: 600 15px/1 var(--display); padding: 11px 18px; border-radius: 10px; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
+  .ftabs button[aria-selected="true"] { background: rgba(47,208,200,.14); color: var(--teal); }
+  .ftabs button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .feats .feature { display: none; padding-block: 26px 0; }
+  .feats .feature.cur { display: grid; animation: fin .35s ease; }
+  @keyframes fin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .feature .peek, .feature .duo-wrap { max-width: 300px; }
+  .desk .laptop { max-width: 860px; }
+  .cats { columns: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  .cat { margin: 0; padding: 0; }
+  details.cat > summary { cursor: pointer; padding: 18px 22px; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-items: center; }
+  details.cat > summary::after { content: "+"; grid-row: 1 / span 2; grid-column: 2; font: 400 24px/1 var(--display); color: var(--teal); transition: transform .2s; }
+  details.cat[open] > summary::after { transform: rotate(45deg); }
+  details.cat > summary h4 { margin: 0; }
+  details.cat > summary p.k { margin: 2px 0 0; }
+  details.cat ul { padding: 0 22px 20px; }
+  .firm { padding: 20px 22px; }
+  .step { padding: 22px 24px; }
+  .faq { max-width: none; grid-template-columns: 1fr 1fr; align-items: start; gap: 10px 12px; }
+  .faq summary { padding: 17px 20px; font-size: 16.5px; }
+  .final { margin-top: 90px; }
+  .final .wrap { padding-block: 70px; }
+}
+
 /* phone layout */
 .dots, .faq-more, .mbar { display: none; }
 details.cat > summary { list-style: none; }
@@ -365,6 +400,7 @@ footer .disc { flex-basis: 100%; font-size: 12.5px; line-height: 1.6; max-width:
     <div class="wrap">
       <div class="head"><span class="eyebrow">Features</span><h2>Everything a serious trader tracks. <span class="g">Nothing they don't.</span></h2></div>
 
+      <div class="ftabs" id="ftabs" role="tablist" aria-label="Features"></div>
       <div class="feats" id="feats">
       <div class="feature">
         <div class="copy">
@@ -578,10 +614,17 @@ const markDot = () => {
 };
 feats.addEventListener("scroll", () => requestAnimationFrame(markDot), { passive: true });
 const layout = () => {
-  document.querySelectorAll("details.cat").forEach(d => { d.open = !phone.matches; });
+  document.querySelectorAll("details.cat").forEach(d => { d.open = false; });
   document.querySelector(".faq").classList.toggle("short", phone.matches);
   markDot();
 };
+
+// Desktop: one feature at a time, picked from the tabs (named after each feature's label).
+const ftabs = document.getElementById("ftabs");
+ftabs.innerHTML = cards.map((c, i) => `<button type="button" role="tab" aria-selected="${i === 0}">${c.querySelector(".eyebrow").textContent}</button>`).join("");
+const pickFeat = n => { cards.forEach((c, i) => c.classList.toggle("cur", i === n)); [...ftabs.children].forEach((b, i) => b.setAttribute("aria-selected", i === n)); };
+[...ftabs.children].forEach((b, i) => b.addEventListener("click", () => pickFeat(i)));
+pickFeat(0);
 phone.addEventListener("change", layout); layout();
 document.getElementById("faqMore").addEventListener("click", () => document.querySelector(".faq").classList.remove("short"));
 const hero = document.querySelector(".hero"), bar = document.getElementById("mbar");
