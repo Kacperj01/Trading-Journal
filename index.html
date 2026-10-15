@@ -1389,8 +1389,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 @media (min-width: 761px) { .mobile-only { display: none; } }
 
 /* After the first visit the journal opens as you left it: no entrance animations or growing charts. */
-.calm .reveal { animation: none; opacity: 1; transform: none; }
-.calm .bar-fill, .calm .wr-bar i, .calm .ring .prog, .calm .donut .arc { transition: none; }
+.calm .reveal, .touring .reveal { animation: none; opacity: 1; transform: none; }
+.calm .bar-fill, .calm .wr-bar i, .calm .ring .prog, .calm .donut .arc,
+.touring .bar-fill, .touring .wr-bar i, .touring .ring .prog, .touring .donut .arc { transition: none; }
+.touring .eq-area, .touring .eq-dot { transition: none !important; } /* their draw-in timing is set inline */
+.touring .tab, .touring .tab .ni { transition: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; }
@@ -2495,6 +2498,8 @@ const urlHas = k => { try { return new URLSearchParams(location.search).has(k); 
 const TOUR_FROM_JOURNAL = DEMO && urlHas("tour");
 let afterDemoTour = !DEMO && urlHas("toured");
 const JOURNAL_AFTER_TOUR = "./?app&toured";
+// Straight into the tour: keep the page still from the start, so nothing animates behind it.
+if (TOUR_FROM_JOURNAL) document.documentElement.classList.add("touring");
 const memStore = new Map();
 const store = DEMO ? {
   get(k, d) { return memStore.has(k) ? JSON.parse(memStore.get(k)) : d; },
@@ -3232,7 +3237,7 @@ const num = v => { if (v === "" || v == null) return null; const n = Number(v); 
 const sum = a => a.reduce((s, v) => s + v, 0);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const reduced = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const calm = () => reduced() || document.documentElement.classList.contains("calm");
+const calm = () => reduced() || document.documentElement.classList.contains("calm") || document.documentElement.classList.contains("touring");
 
 // The currency symbol from settings, limited to 4 plain characters (it's shown inside HTML everywhere).
 const curSym = () => String(settings.currency || "$").replace(/[<>&"'`\\]/g, "").trim().slice(0, 4) || "$";
@@ -7550,6 +7555,8 @@ function startTour() {
   setMenu(false);
   document.querySelectorAll("dialog[open]").forEach(d => d.close());
   ui.welcomeDone = true; saveUi();
+  // Hold the page still behind the tour: no fade-ins replaying as it moves between sections.
+  document.documentElement.classList.add("touring");
   F("tour").hidden = false;
   tourAt = 0;
   tourStop(0);
@@ -7558,6 +7565,7 @@ function startTour() {
 function endTour() {
   tourAt = -1;
   F("tour").hidden = true;
+  document.documentElement.classList.remove("touring");
   markTourSeen();
   if (currentTab() !== "overview") showTab("overview", { push: false });
   window.scrollTo({ top: 0 });
