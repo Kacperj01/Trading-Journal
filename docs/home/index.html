@@ -112,6 +112,21 @@ html.touch .lap.rv{transform:translate3d(0,26px,0)!important}html.touch .lap.rv.
 .chev-in-wait svg{opacity:0;transform:translate3d(-60px,0,0);transition:opacity .7s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
 .chev-in svg{opacity:1;transform:none}
 .chev-in svg:nth-child(2){transition-delay:.08s}.chev-in svg:nth-child(3){transition-delay:.16s}.chev-in svg:nth-child(4){transition-delay:.24s}
+/* Time-based motion (not tied to the scroll, so it never lags): the wordmark rises in and floats,
+   the skyline slides up, the glow breathes, and the arrows keep pulsing forward in a chase. */
+@media (prefers-reduced-motion: no-preference) {
+  .word{animation:riseIn 1.4s cubic-bezier(.2,.7,.2,1) both,float 7s 1.4s ease-in-out infinite alternate}
+  .sub{animation:riseIn 1.4s .25s cubic-bezier(.2,.7,.2,1) both,float 7s 1.65s ease-in-out infinite alternate}
+  canvas.city{animation:cityIn 1.8s .1s cubic-bezier(.2,.7,.2,1) both}
+  .glow{animation:breathe 6s ease-in-out infinite alternate}
+  .chev-in svg{animation:chase 2.4s 1.2s ease-in-out infinite}
+  .chev-in svg:nth-child(2){animation-delay:1.35s}.chev-in svg:nth-child(3){animation-delay:1.5s}.chev-in svg:nth-child(4){animation-delay:1.65s}
+}
+@keyframes riseIn{from{opacity:0;transform:translate3d(0,50px,0) scale(.96)}to{opacity:1;transform:none}}
+@keyframes float{from{transform:none}to{transform:translate3d(0,-14px,0)}}
+@keyframes cityIn{from{opacity:0;transform:translate3d(0,60px,0)}to{opacity:1;transform:none}}
+@keyframes breathe{from{opacity:.55}to{opacity:1}}
+@keyframes chase{0%,100%{transform:none;opacity:1}50%{transform:translate3d(18px,0,0);opacity:.55}}
 /* details, firms, list, steps */
 .sec{padding:120px 0 0}.sh{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:40px}.sh h2{font-size:clamp(34px,4.6vw,64px);font-weight:800;letter-spacing:-.03em;line-height:1}.sh p{color:var(--t2);max-width:400px}
 .dets{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
