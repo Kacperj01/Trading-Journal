@@ -59,3 +59,20 @@ create policy "Own payout certificates: replace" on storage.objects for update t
 drop policy if exists "Own payout certificates: delete" on storage.objects;
 create policy "Own payout certificates: delete" on storage.objects for delete to authenticated
   using (bucket_id = 'payout-certificates' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Bug reports (sidebar › Report a bug). Anyone using the journal can send one, signed in or not;
+-- nobody can read them through the app. Read them in Table Editor › bug_reports.
+create table if not exists public.bug_reports (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  user_id uuid default auth.uid() references auth.users on delete set null,
+  title text not null check (char_length(title) between 1 and 200),
+  body text not null check (char_length(body) between 1 and 8000),
+  status text not null default 'new'
+);
+alter table public.bug_reports enable row level security;
+drop policy if exists "Anyone can send a bug report" on public.bug_reports;
+create policy "Anyone can send a bug report" on public.bug_reports
+  for insert to anon, authenticated with check (user_id is null or user_id = auth.uid());
+grant usage on schema public to anon, authenticated;
+grant insert (title, body) on public.bug_reports to anon, authenticated;

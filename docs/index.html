@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "8ebc9cd238";</script>
+<script>window.ELEV8_BUILD = "a10187ae35";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -7014,11 +7014,22 @@ setInterval(() => { renderNewsStrip(); if (!F("panel-news").hidden) renderNews()
 renderNewsStrip();
 loadNews();
 
-/* ---------- Report a bug: a pre-filled GitHub issue (no trades or email included) ---------- */
-const BUG_REPO = "https://github.com/Kacperj01/Trading-Journal/issues/new";
+/* ---------- Report a bug: sent straight to the journal's database (no trades or email included) ---------- */
+// Reports go into the bug_reports table, which anyone can add to but nobody can read through the app.
+// Read them in Supabase: Table Editor › bug_reports.
+const BUG_DB = window.ELEV8_SUPABASE && window.ELEV8_SUPABASE.url && window.ELEV8_SUPABASE.key ? window.ELEV8_SUPABASE : null;
+async function sendBugReport(r) {
+  if (!BUG_DB) throw new Error("No database in this copy of the journal");
+  let auth = BUG_DB.key;
+  if (sbOn() && sb.session.expires_at - 60 > Date.now() / 1000) auth = sb.session.access_token; // signed in: tag the report with the account
+  const res = await fetch(BUG_DB.url + "/rest/v1/bug_reports", { method: "POST",
+    headers: { apikey: BUG_DB.key, Authorization: "Bearer " + auth, "Content-Type": "application/json", Prefer: "return=minimal" },
+    body: JSON.stringify({ title: r.title.slice(0, 200), body: r.body.slice(0, 8000) }) });
+  if (!res.ok) throw new Error("Report not sent (" + res.status + ")");
+}
 function bugReport() {
   const what = F("bugText").value.trim(), steps = F("bugSteps").value.trim();
-  const where = window.ELEV8_BUILD ? "GitHub app (build " + window.ELEV8_BUILD + ")" : inViewer() ? "claude.ai journal" : "Local file";
+  const where = window.ELEV8_BUILD ? "Website (build " + window.ELEV8_BUILD + ")" : inViewer() ? "claude.ai journal" : "Local file";
   const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
   const body = [
     "**What happened**", what || "(not described)", "",
@@ -7043,22 +7054,24 @@ function openBugReport() {
 }
 F("sideBug").addEventListener("click", openBugReport);
 F("bugCancel").addEventListener("click", () => F("bugDlg").close());
-F("bugForm").addEventListener("submit", e => {
+F("bugForm").addEventListener("submit", async e => {
   e.preventDefault();
   if (!F("bugText").value.trim()) { F("bugMsg").textContent = "Describe what happened first."; F("bugText").focus(); return; }
-  const r = bugReport();
-  const a = document.createElement("a");
-  a.href = BUG_REPO + "?labels=bug&title=" + encodeURIComponent(r.title) + "&body=" + encodeURIComponent(r.body);
-  a.target = "_blank"; a.rel = "noopener noreferrer";
-  document.body.appendChild(a); a.click(); a.remove();
-  F("bugDlg").close();
-  F("bugText").value = ""; F("bugSteps").value = "";
-  toast("Opening GitHub to send your report…");
+  const btn = F("bugForm").querySelector("button[type=submit]");
+  btn.disabled = true; F("bugMsg").textContent = "Sending…";
+  try {
+    await sendBugReport(bugReport());
+    F("bugDlg").close();
+    F("bugText").value = ""; F("bugSteps").value = ""; F("bugMsg").textContent = "";
+    toast("Thanks, your report was sent");
+  } catch (err) {
+    F("bugMsg").textContent = "Couldn't send the report right now. Tap Copy report and send it to us another way, or try again later.";
+  } finally { btn.disabled = false; }
 });
 F("bugCopy").addEventListener("click", async () => {
   const r = bugReport();
   try { await navigator.clipboard.writeText(r.title + "\n\n" + r.body); toast("Report copied"); }
-  catch (e) { F("bugMsg").textContent = "Couldn't copy here. Use Send report instead."; }
+  catch (e) { F("bugMsg").textContent = "Couldn't copy here. Try Send report instead."; }
 });
 
 /* ---------- Slide-out menu (phones and narrow windows) ---------- */
