@@ -72,6 +72,17 @@ canvas.city{position:absolute;left:0;right:0;bottom:0;width:100%;height:62%}
 .cols img{border-radius:22px;width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;border:1px solid var(--line)}
 .cols .over{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:radial-gradient(60% 50% at 50% 50%,rgba(6,17,31,.85),rgba(6,17,31,.35));z-index:2;padding:24px}
 .cols .over h2{font-size:clamp(40px,7vw,110px);font-weight:800;letter-spacing:-.04em;line-height:.95}.cols .over p{color:var(--t2);margin-top:16px;font-size:18px}
+
+/* Touch devices: static scene, sections fade up once as they appear. */
+html.touch .layer,html.touch .cols .c,html.touch .chev,html.touch .lap{will-change:auto;transform:none!important}
+html.touch .hero{height:100svh}html.touch .stage{position:relative;height:100svh}
+html.touch .cols{height:auto;padding:70px 0}html.touch .cols .in{position:relative;inset:auto;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px}
+html.touch .cols .c{display:contents}html.touch .cols .c:nth-child(n+3){display:none}
+html.touch .cols .c img{border-radius:14px}html.touch .cols{display:flex;flex-direction:column-reverse}html.touch .cols .over{position:relative;inset:auto;background:none;margin-bottom:30px;padding:0 20px;width:100%;text-align:left;place-items:start}
+html.touch .cols .in{grid-template-columns:repeat(3,1fr)}
+.rv{opacity:0;transform:translate3d(0,26px,0);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}.rv.in{opacity:1;transform:none}
+html.touch .lap.rv{transform:translate3d(0,26px,0)!important}html.touch .lap.rv.in{transform:none!important}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
 /* details, firms, list, steps */
 .sec{padding:120px 0 0}.sh{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:40px}.sh h2{font-size:clamp(34px,4.6vw,64px);font-weight:800;letter-spacing:-.03em;line-height:1}.sh p{color:var(--t2);max-width:400px}
 .dets{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
@@ -180,7 +191,11 @@ draw();
 
 // Parallax on scroll. Smoothness rules: one update per frame, no layout reads while scrolling
 // (positions are measured once and on real resizes), and sections off screen are left alone.
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Phones and tablets: no scroll-linked movement (Safari runs it a frame behind the finger, which reads
+// as lag). They get reveal animations instead, which run entirely on the graphics chip.
+const touch = matchMedia("(hover: none), (pointer: coarse)").matches;
+const reduce = touch || matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (touch) document.documentElement.classList.add("touch");
 const layers = [...document.querySelectorAll(".hero .layer")], chev = document.getElementById("chev"), lap = document.getElementById("lap"),
       cols = [...document.querySelectorAll(".cols .c")], colsSec = document.getElementById("cols"), nav = document.getElementById("nav"), hero = document.getElementById("hero");
 const speeds = layers.map(l => +l.dataset.speed), cspeeds = cols.map(c => +c.dataset.speed);
@@ -218,4 +233,12 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
   document.getElementById("deskImg").src = "img/" + b.dataset.img + ".jpg";
 }));
+
+// Reveal sections as they come into view (touch devices).
+if (touch && "IntersectionObserver" in window) {
+  const els = document.querySelectorAll(".stmt h2, .stmt .row p, .stats, .chev, .show .lap, .how .head, .words, .cols .over, .sh, .dets, .firmsec > div, .steps, .faq, .fcta");
+  els.forEach(e => e.classList.add("rv"));
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" });
+  els.forEach(e => io.observe(e));
+}
 </script>
