@@ -1020,6 +1020,8 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .demo-bar .demo-txt span { color: var(--text-2); font-size: 14px; }
 .demo-bar .demo-btns, .welcome-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 .welcome-card { position: relative; margin-top: 22px; }
+.acct-first h3 { margin: 0 0 6px; }
+.acct-first p { margin: 0 0 14px; color: var(--muted); }
 .welcome-card h3 { margin: 0 0 6px; }
 .welcome-card p { margin: 0 0 16px; color: var(--text-2); max-width: 620px; }
 .welcome-x { position: absolute; top: 12px; right: 12px; }
@@ -1469,13 +1471,18 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div id="dashEmpty" class="card empty reveal" style="--d:1; margin-top:22px" hidden>
         <h3>No trades in this view</h3>
         <p id="dashEmptyText">Log your first trade to start seeing analytics.</p>
-        <button class="btn primary" type="button" data-goto="log">Log a trade</button>
+        <button class="btn primary" type="button" data-goto="log" id="dashEmptyBtn">Log a trade</button>
       </div>
     </div>
 
     <!-- =================== OVERVIEW =================== -->
     <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-analytics>
       <div class="prop-alerts" id="propAlerts" role="status" aria-live="polite" hidden></div>
+      <section class="card accent-teal section reveal acct-first" style="--d:1" id="acctFirstCard" aria-labelledby="acctFirstTitle" hidden>
+        <h3 id="acctFirstTitle">Register your trading account</h3>
+        <p>Add the account you trade (live, prop firm, demo or backtest) and your trades, rules and progress are tracked against it.</p>
+        <button class="btn primary" type="button" data-acct-first>Register an account</button>
+      </section>
       <section class="card accent-teal quick section reveal" style="--d:1" aria-labelledby="qTitle" id="quickLog">
         <div class="card-head">
           <div>
@@ -3564,8 +3571,12 @@ function renderDashboard() {
   $$(".needs-data").forEach(el => el.hidden = empty);
   const freshWeek = hasAny && ui.range === "week" && filterCount() === 0;
   F("welcomeCard").hidden = DEMO || hasAny || persist.loading || !!ui.welcomeDone || currentTab() !== "overview";
+  // No trading account yet: ask for one instead of offering to log a trade.
+  const noAcct = !DEMO && !persist.loading && !persist.readOnly && !allAccounts().length;
+  F("acctFirstCard").hidden = !noAcct; F("quickLog").hidden = noAcct;
+  F("dashEmptyBtn").textContent = noAcct && !hasAny ? "Register an account" : "Log a trade";
   $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
-  $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
+  $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
   renderOpen(open);
@@ -5217,6 +5228,9 @@ $$(".tab").forEach(tab => {
   });
 });
 document.addEventListener("click", e => {
+  if (e.target.closest("[data-acct-first]") || (e.target.closest("#dashEmptyBtn") && !DEMO && !allAccounts().length && !realTrades.length)) {
+    openAccountDlg(null, false); return;
+  }
   const go = e.target.closest("[data-goto]");
   if (go) {
     // Start a new trade, but keep an unsaved new-trade draft rather than wiping it.
