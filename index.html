@@ -7506,11 +7506,11 @@ function tourStop(i) {
   const last = i === TOUR.length - 1, n = TOUR.length - 1;
   F("tourStep").textContent = last ? "Tour complete" : `${i + 1} of ${n}`;
   F("tourTitle").textContent = step.title;
-  F("tourText").textContent = last ? (TOUR_FROM_JOURNAL ? "That's ELEV8 with a few weeks of trades in it. Head back to your journal to set it up." : DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log whenever you're ready, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
+  F("tourText").textContent = last ? (TOUR_FROM_JOURNAL ? "That's ELEV8 with a few weeks of trades in it. Keep exploring the demo, or head back to your journal to set it up. Back to my journal is always at the top." : DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log whenever you're ready, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
   F("tourNext").textContent = last ? (TOUR_FROM_JOURNAL ? "Back to my journal" : DEMO ? "Start your own journal" : "Explore my journal") : "Next";
   F("tourBack").hidden = i === 0 || last;
-  F("tourSkip").hidden = last && (!DEMO || TOUR_FROM_JOURNAL);
-  F("tourSkip").textContent = last && DEMO ? "Explore the demo" : "Skip";
+  F("tourSkip").hidden = last && !DEMO;
+  F("tourSkip").textContent = last && DEMO ? (TOUR_FROM_JOURNAL ? "Keep exploring the demo" : "Explore the demo") : "Skip";
   if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
   requestAnimationFrame(tourPlace);
 }
@@ -7559,7 +7559,11 @@ F("tourNext").addEventListener("click", () => {
   tourStop(tourAt + 1);
 });
 F("tourBack").addEventListener("click", () => tourStop(Math.max(0, tourAt - 1)));
-F("tourSkip").addEventListener("click", () => { endTour(); if (TOUR_FROM_JOURNAL) location.href = JOURNAL_AFTER_TOUR; });
+F("tourSkip").addEventListener("click", () => {
+  const last = tourAt === TOUR.length - 1;
+  endTour();
+  if (TOUR_FROM_JOURNAL && !last) location.href = JOURNAL_AFTER_TOUR; // skipped partway: back to their journal
+});
 
 /* Back button: closes an open window, the menu or the tour, then steps back through the sections
    you visited, before it leaves the journal (e.g. back to the email you came from). */
