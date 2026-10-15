@@ -1138,6 +1138,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .side-link.danger { color: var(--red); }
 .side-link.danger:hover { background: var(--red-soft); }
 .bug-dlg { width: min(480px, calc(100vw - 32px)); }
+.intro-dlg { width: min(420px, calc(100vw - 32px)); text-align: center; }
+.intro-dlg .dlg-actions { justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.intro-dlg p { color: var(--muted); }
 .bug-dlg textarea { min-height: 0; }
 .link-btn { appearance: none; border: 0; background: none; padding: 0; color: var(--accent); font: 500 13px var(--font-sans); cursor: pointer; }
 .link-btn:hover { text-decoration: underline; }
@@ -2181,6 +2184,17 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="btn primary" type="submit" id="pwSave">Save password</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="introDlg" class="intro-dlg" aria-labelledby="introTitle" aria-describedby="introText">
+  <div class="dlg-body">
+    <h3 id="introTitle">Welcome to ELEV8</h3>
+    <p id="introText">Want a one-minute tour of your journal, or would you rather look around yourself? You can take the tour any time from Settings.</p>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="introSelf">Look around myself</button>
+      <button class="btn primary" type="button" id="introTour">Take the tour</button>
+    </div>
+  </div>
 </dialog>
 
 <dialog id="bugDlg" class="bug-dlg" aria-labelledby="bugTitle" aria-describedby="bugIntro">
@@ -5964,7 +5978,7 @@ F("acctAssignBtn").addEventListener("click", () => {
   onDataChanged();
 });
 
-// A brand-new journal (loaded and synced, no accounts and no trades yet) starts with the tour.
+// A brand-new journal (loaded and synced, no accounts and no trades yet) offers the tour.
 // Accounts are added later from Accounts; trades can be logged without one.
 function maybeStartTour() {
   if (DEMO || ui.tourDone || allAccounts().length || realTrades.length || persist.loading || persist.readOnly) return;
@@ -5972,7 +5986,7 @@ function maybeStartTour() {
   if (persist.mode === "cloud" && !persist.settingsSeen) return;
   setTimeout(() => {
     if (tourAt >= 0 || ui.tourDone || document.documentElement.classList.contains("gated") || document.querySelector("dialog[open]")) return;
-    startTour();
+    offerTour();
   }, 900);
 }
 
@@ -7532,11 +7546,26 @@ document.addEventListener("keydown", e => { if (tourAt >= 0 && e.key === "Escape
 addEventListener("resize", () => requestAnimationFrame(tourPlace));
 addEventListener("scroll", () => { if (tourAt >= 0) requestAnimationFrame(tourPlace); }, { passive: true });
 document.addEventListener("click", e => { if (e.target.closest("[data-tour-start]")) startTour(); });
+// First visit: let people choose between the tour and finding their own way.
+function offerTour() {
+  const name = !DEMO && SB && firstName();
+  F("introTitle").textContent = DEMO ? "Welcome to the ELEV8 demo" : name ? `Welcome to ELEV8, ${name}` : "Welcome to ELEV8";
+  F("introText").textContent = DEMO
+    ? "This sample journal is full of example trades. Want a one-minute tour, or would you rather look around yourself?"
+    : "Want a one-minute tour of your journal, or would you rather look around yourself? You can take the tour any time from Settings.";
+  const dlg = F("introDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  F("introTour").focus();
+}
+F("introTour").addEventListener("click", () => { F("introDlg").close(); startTour(); });
+F("introSelf").addEventListener("click", () => { F("introDlg").close(); ui.tourDone = true; saveUi(); });
+// Closing it with Escape or Back counts as looking around.
+F("introDlg").addEventListener("close", () => { if (tourAt < 0 && !ui.tourDone) { ui.tourDone = true; saveUi(); } });
 F("welcomeX").addEventListener("click", () => { ui.welcomeDone = true; saveUi(); F("welcomeCard").hidden = true; });
 if (DEMO) {
   F("demoBar").hidden = false;
   document.title = "ELEV8 Trading Journal · Demo";
-  if (!ui.tourDone) setTimeout(() => { if (tourAt < 0 && !document.querySelector("dialog[open]")) startTour(); }, 900);
+  if (!ui.tourDone) setTimeout(() => { if (tourAt < 0 && !document.querySelector("dialog[open]")) offerTour(); }, 900);
 }
 
 // Every launch starts on Overview at the top (an unsaved trade form is still kept).
