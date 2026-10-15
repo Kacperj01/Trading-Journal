@@ -101,7 +101,7 @@ self.addEventListener("fetch", e => {{
   // The page: try the network for the latest version, fall back to the saved copy offline.
   if (req.mode === "navigate" && url.pathname.includes("/home/")) {{
     // The homepage: always from the network, never stored as the journal's offline copy.
-    e.respondWith(fetch(req).catch(() => caches.match("./index.html")));
+    e.respondWith(fetch(req, {{ cache: "no-store" }}).catch(() => caches.match("./index.html")));
     return;
   }}
   if (req.mode === "navigate") {{
