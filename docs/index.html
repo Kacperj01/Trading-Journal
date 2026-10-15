@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "392e716b7f";</script>
+<script>window.ELEV8_BUILD = "9e95cec087";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -7522,6 +7522,11 @@ const TOUR = [
   { tab: "accounts", sel: "#acctGrid", title: "Accounts and rewards", text: "Switch between challenges, live and demo accounts. Mark a phase passed or failed, and log your payouts under Rewards." },
   { tab: "overview", sel: null, title: "You're all set", text: "" }
 ];
+// In the demo, the tour opens by saying whose trades these are.
+if (DEMO) TOUR.unshift({ tab: "overview", sel: null, title: "This is a demo journal",
+  text: TOUR_FROM_JOURNAL
+    ? "These are sample trades, not yours. This is what your journal will look like once you've logged a few weeks of trading. Nothing you do here is saved, and your own journal is waiting for you after the tour."
+    : "These are sample trades, not real ones. This is what your journal will look like once you've logged a few weeks of trading. Nothing you do here is saved." });
 let tourAt = -1;
 // Whether the tour has been offered is remembered per account, so a new account on a phone that
 // has seen it before (someone else's, or a test account) still gets the welcome.
