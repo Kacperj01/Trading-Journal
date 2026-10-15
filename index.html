@@ -5141,7 +5141,7 @@ function showTab(name, { focus = false, push = true } = {}) {
     if (on) $$(".reveal", panel).forEach(el => { el.style.animation = "none"; el.offsetHeight; el.style.animation = ""; });
   });
   if (focus) F("tab-" + name).focus();
-  if (push && location.hash !== "#" + name) { try { history.replaceState(null, "", "#" + name); } catch (e) { /* sandboxed */ } }
+  if (push && location.hash !== "#" + name) navPush("#" + name);
   if (isAnalytics(name)) renderDashboard();
   if (name === "log") { renderRecent(); updatePreview(); }
   if (name === "news") { renderNews(); loadNews(); }
@@ -7432,7 +7432,7 @@ const tourVisible = el => el && el.offsetParent !== null && el.getBoundingClient
 function tourStop(i) {
   const step = TOUR[i];
   if (!step) return endTour();
-  if (currentTab() !== step.tab) showTab(step.tab);
+  if (currentTab() !== step.tab) showTab(step.tab, { push: false });
   const el = step.sel ? $(step.sel) : null;
   if (step.sel && !tourVisible(el)) return tourStop(i + (i >= tourAt ? 1 : -1)); // skip stops that aren't on screen
   tourAt = i;
@@ -7442,7 +7442,8 @@ function tourStop(i) {
   F("tourText").textContent = last ? (DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
   F("tourNext").textContent = last ? (DEMO ? "Start your own journal" : "Log a trade") : "Next";
   F("tourBack").hidden = i === 0 || last;
-  F("tourSkip").hidden = last;
+  F("tourSkip").hidden = last && !DEMO;
+  F("tourSkip").textContent = last && DEMO ? "Explore the demo" : "Skip";
   if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
   requestAnimationFrame(tourPlace);
 }
@@ -7476,7 +7477,7 @@ function endTour() {
   tourAt = -1;
   F("tour").hidden = true;
   ui.tourDone = true; saveUi();
-  if (currentTab() !== "overview") showTab("overview");
+  if (currentTab() !== "overview") showTab("overview", { push: false });
   window.scrollTo({ top: 0 });
 }
 F("tourNext").addEventListener("click", () => {
@@ -7490,6 +7491,40 @@ F("tourNext").addEventListener("click", () => {
 });
 F("tourBack").addEventListener("click", () => tourStop(Math.max(0, tourAt - 1)));
 F("tourSkip").addEventListener("click", endTour);
+
+/* Back button: closes an open window, the menu or the tour, then steps back through the sections
+   you visited, before it leaves the journal (e.g. back to the email you came from). */
+var navBackPending = false, navQueued = null; // var: showTab can run before this line on start-up
+function navPush(hash) {
+  if (navBackPending) { navQueued = { hash }; return; }
+  try { history.pushState({ elev8: hash ? "tab" : "layer" }, "", hash || location.href); } catch (e) { /* sandboxed */ }
+}
+const dlgShow = HTMLDialogElement.prototype.showModal;
+HTMLDialogElement.prototype.showModal = function () {
+  dlgShow.call(this);
+  if (!this.dataset.nav) { this.dataset.nav = "1"; navPush(); }
+};
+// A window closed with its own buttons: remove the history step it added.
+document.addEventListener("close", e => {
+  const d = e.target;
+  if (!(d instanceof HTMLDialogElement) || !d.dataset.nav) return;
+  delete d.dataset.nav;
+  if (history.state && history.state.elev8 === "layer") { navBackPending = true; history.back(); }
+}, true);
+addEventListener("popstate", () => {
+  if (navBackPending) {
+    navBackPending = false;
+    if (navQueued) { const q = navQueued; navQueued = null; navPush(q.hash); }
+    return;
+  }
+  const open = [...document.querySelectorAll("dialog[open]")].filter(d => d.dataset.nav);
+  if (open.length) { const d = open[open.length - 1]; delete d.dataset.nav; d.close(); return; }
+  if (F("mainNav").classList.contains("open")) setMenu(false);
+  if (tourAt >= 0) endTour();
+  const t = location.hash.slice(1);
+  if (TABS.includes(t) && t !== currentTab()) showTab(t, { push: false });
+  else if (!t && currentTab() !== "overview") showTab("overview", { push: false });
+});
 document.addEventListener("keydown", e => { if (tourAt >= 0 && e.key === "Escape") endTour(); });
 addEventListener("resize", () => requestAnimationFrame(tourPlace));
 addEventListener("scroll", () => { if (tourAt >= 0) requestAnimationFrame(tourPlace); }, { passive: true });
