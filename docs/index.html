@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "d2401e701b";</script>
+<script>window.ELEV8_BUILD = "5d6255370e";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -2870,7 +2870,7 @@ async function okToSwitch(user) {
 async function sbFromLink() {
   const h = new URLSearchParams(location.hash.slice(1));
   if (!h.get("access_token") && !h.get("error_description")) return;
-  try { history.replaceState(null, "", location.pathname + "#settings"); } catch (e) { /* ignore */ }
+  try { history.replaceState(null, "", location.pathname); } catch (e) { /* ignore */ }
   if (h.get("error_description")) {
     sb.note = h.get("error_description").replace(/\+/g, " ") + ". Sign in below, or create the account again to get a new email.";
     return;
@@ -6014,11 +6014,11 @@ F("acctAssignBtn").addEventListener("click", () => {
 // A brand-new journal (loaded and synced, no accounts and no trades yet) offers the tour.
 // Accounts are added later from Accounts; trades can be logged without one.
 function maybeStartTour() {
-  if (DEMO || ui.tourDone || allAccounts().length || realTrades.length || persist.loading || persist.readOnly) return;
+  if (DEMO || tourSeen() || allAccounts().length || realTrades.length || persist.loading || persist.readOnly) return;
   if (SB && !inViewer() && !(sb.session && sb.synced)) return;
   if (persist.mode === "cloud" && !persist.settingsSeen) return;
   setTimeout(() => {
-    if (tourAt >= 0 || ui.tourDone || document.documentElement.classList.contains("gated") || document.querySelector("dialog[open]")) return;
+    if (tourAt >= 0 || tourSeen() || document.documentElement.classList.contains("gated") || document.querySelector("dialog[open]")) return;
     offerTour();
   }, 900);
 }
@@ -7478,6 +7478,11 @@ const TOUR = [
   { tab: "overview", sel: null, title: "You're all set", text: "" }
 ];
 let tourAt = -1;
+// Whether the tour has been offered is remembered per account, so a new account on a phone that
+// has seen it before (someone else's, or a test account) still gets the welcome.
+function tourOwner() { return (SB && sb.session && sb.session.user.id) || "local"; }
+function tourSeen() { return !!(ui.tourSeen && ui.tourSeen[tourOwner()]); }
+function markTourSeen() { ui.tourSeen = Object.assign({}, ui.tourSeen, { [tourOwner()]: true }); ui.tourDone = true; saveUi(); }
 const tourVisible = el => el && el.offsetParent !== null && el.getBoundingClientRect().height > 0;
 function tourStop(i) {
   const step = TOUR[i];
@@ -7526,7 +7531,7 @@ function startTour() {
 function endTour() {
   tourAt = -1;
   F("tour").hidden = true;
-  ui.tourDone = true; saveUi();
+  markTourSeen();
   if (currentTab() !== "overview") showTab("overview", { push: false });
   window.scrollTo({ top: 0 });
 }
@@ -7590,14 +7595,14 @@ function offerTour() {
   F("introTour").focus();
 }
 F("introTour").addEventListener("click", () => { F("introDlg").close(); startTour(); });
-F("introSelf").addEventListener("click", () => { F("introDlg").close(); ui.tourDone = true; saveUi(); });
+F("introSelf").addEventListener("click", () => { F("introDlg").close(); markTourSeen(); });
 // Closing it with Escape or Back counts as looking around.
-F("introDlg").addEventListener("close", () => { if (tourAt < 0 && !ui.tourDone) { ui.tourDone = true; saveUi(); } });
+F("introDlg").addEventListener("close", () => { if (tourAt < 0 && !tourSeen()) markTourSeen(); });
 F("welcomeX").addEventListener("click", () => { ui.welcomeDone = true; saveUi(); F("welcomeCard").hidden = true; });
 if (DEMO) {
   F("demoBar").hidden = false;
   document.title = "ELEV8 Trading Journal · Demo";
-  if (!ui.tourDone) setTimeout(() => { if (tourAt < 0 && !document.querySelector("dialog[open]")) offerTour(); }, 900);
+  if (!tourSeen()) setTimeout(() => { if (tourAt < 0 && !document.querySelector("dialog[open]")) offerTour(); }, 900);
 }
 
 // Every launch starts on Overview at the top (an unsaved trade form is still kept).
