@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "5d6255370e";</script>
+<script>window.ELEV8_BUILD = "8bc9e66132";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -2727,7 +2727,7 @@ function sbSaveSession(s) {
     s.expires_at = s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
     const meta = s.user.user_metadata || {};
     sb.session = { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at,
-      user: { id: s.user.id, email: s.user.email, name: meta.full_name || "", dob: meta.dob || "", age: meta.age || null } };
+      user: { id: s.user.id, email: s.user.email, name: meta.full_name || "", dob: meta.dob || "", age: meta.age || null, created: s.user.created_at || "" } };
     sb.lastEmail = s.user.email;
     store.set("tj.sb.email.v1", s.user.email);
   } else { sb.session = null; sb.synced = false; }
@@ -2736,6 +2736,19 @@ function sbSaveSession(s) {
 let homeMode = "signin";
 let signupLink = (() => { try { return /[?&]signup(=|&|$)/.test(location.search); } catch (e) { return false; } })();
 const firstName = () => (sb.session && sb.session.user.name || "").trim().split(/\s+/)[0] || "";
+// "Welcome" the first time a new account (made in the last 3 days) opens its journal, "Welcome back" after that.
+// Decided once per visit, so the heading doesn't change while moving between sections.
+const greetedNow = {};
+function greeting() {
+  const id = sb.session && sb.session.user.id;
+  if (!id) return "Welcome back";
+  if (!(id in greetedNow)) {
+    const created = Date.parse(sb.session.user.created || ""), newAccount = created > 0 && Date.now() - created < 3 * 864e5;
+    greetedNow[id] = !newAccount || !!(ui.greeted && ui.greeted[id]) || realTrades.length > 0 || allAccounts().length > 0;
+    ui.greeted = Object.assign({}, ui.greeted, { [id]: true }); saveUi();
+  }
+  return greetedNow[id] ? "Welcome back" : "Welcome";
+}
 
 async function sbToken() {
   if (sb.session.expires_at - 60 < Date.now() / 1000) await sbRefresh();
@@ -2846,6 +2859,8 @@ function sbRender() {
   F("profileCard").hidden = !on;
   F("syncSignedOut").hidden = on;
   F("syncSignedIn").hidden = !on;
+  // Signing in (e.g. from a confirmation email) greets the person on Overview straight away.
+  try { if (currentTab() === "overview") F("pageTitle").textContent = on && firstName() ? `${greeting()}, ${firstName()}` : TAB_TITLES.overview; } catch (e) { /* still starting up */ }
   if (on && !F("profileForm").contains(document.activeElement)) {
     F("profName").value = sb.session.user.name || "";
     F("profDob").value = sb.session.user.dob || "";
@@ -2986,7 +3001,7 @@ async function saveProfile() {
     F("profEmail").value = sb.session.user.email || "";
     F("profEmailHint").textContent = sb.pendingEmail ? `Waiting for you to confirm ${sb.pendingEmail}` : "Changing it sends a confirmation link to the new address";
     toast(emailChanged && sb.pendingEmail ? `Saved. Check ${email} for a link to confirm your new email.` : `Profile saved. Hi, ${firstName()}!`);
-    if (currentTab() === "overview") F("pageTitle").textContent = `Welcome back, ${firstName()}`;
+    if (currentTab() === "overview") F("pageTitle").textContent = `${greeting()}, ${firstName()}`;
   } catch (e) {
     toast(e instanceof TypeError ? "Couldn't reach the sync service. Try again when you're online." : e.message);
   }
@@ -5176,7 +5191,7 @@ function showTab(name, { focus = false, push = true } = {}) {
   const header = F("analyticsHeader");
   header.hidden = !isAnalytics(name);
   if (isAnalytics(name)) {
-    F("pageTitle").textContent = name === "overview" && SB && firstName() ? `Welcome back, ${firstName()}` : TAB_TITLES[name];
+    F("pageTitle").textContent = name === "overview" && SB && firstName() ? `${greeting()}, ${firstName()}` : TAB_TITLES[name];
     $$(".reveal", header).forEach(el => { el.style.animation = "none"; el.offsetHeight; el.style.animation = ""; });
   }
   TABS.forEach(t => {
