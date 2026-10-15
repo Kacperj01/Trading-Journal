@@ -7456,8 +7456,8 @@ function tourStop(i) {
   const last = i === TOUR.length - 1, n = TOUR.length - 1;
   F("tourStep").textContent = last ? "Tour complete" : `${i + 1} of ${n}`;
   F("tourTitle").textContent = step.title;
-  F("tourText").textContent = last ? (DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
-  F("tourNext").textContent = last ? (DEMO ? "Start your own journal" : "Log a trade") : "Next";
+  F("tourText").textContent = last ? (DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log whenever you're ready, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
+  F("tourNext").textContent = last ? (DEMO ? "Start your own journal" : "Explore my journal") : "Next";
   F("tourBack").hidden = i === 0 || last;
   F("tourSkip").hidden = last && !DEMO;
   F("tourSkip").textContent = last && DEMO ? "Explore the demo" : "Skip";
@@ -7501,7 +7501,6 @@ F("tourNext").addEventListener("click", () => {
   if (tourAt === TOUR.length - 1) {
     endTour();
     if (DEMO) location.href = F("demoExit").href;
-    else { setQuickOpen(true); F("qPair").focus({ preventScroll: true }); F("quickLog").scrollIntoView({ block: "center" }); }
     return;
   }
   tourStop(tourAt + 1);
