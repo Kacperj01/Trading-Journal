@@ -1096,7 +1096,8 @@ html.hosted .home { padding-top: 72px; }
 .home-points .ni { width: 34px; height: 34px; padding: 8px; box-sizing: border-box; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--accent); opacity: 1; }
 .dlg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
 .btn.danger-solid { background: var(--red); border-color: transparent; color: #1a0208; font-weight: 600; }
-.sync { display: inline-flex; align-items: center; gap: 6px; }
+.sync { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.brand, .brand > div { min-width: 0; } /* a long email under the logo wraps instead of widening the page */
 .sync::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 .sync.cloud::before { background: var(--green); box-shadow: 0 0 8px var(--green); }
 .sync.local::before { background: var(--warn); }
@@ -2482,6 +2483,11 @@ const KEY_DRAFT = "tj.draft.v1";      // an unsaved trade form
 
 // Demo journal (?demo): sample data held in memory only. No sign-in, no sync, nothing saved on the device.
 const DEMO = (() => { try { return new URLSearchParams(location.search).has("demo"); } catch (e) { return false; } })();
+// The tour of a new, empty journal runs in the demo (?demo&tour) and comes back with ?toured.
+const urlHas = k => { try { return new URLSearchParams(location.search).has(k); } catch (e) { return false; } };
+const TOUR_FROM_JOURNAL = DEMO && urlHas("tour");
+let afterDemoTour = !DEMO && urlHas("toured");
+const JOURNAL_AFTER_TOUR = "./?app&toured";
 const memStore = new Map();
 const store = DEMO ? {
   get(k, d) { return memStore.has(k) ? JSON.parse(memStore.get(k)) : d; },
@@ -2704,15 +2710,19 @@ let homeMode = "signin";
 let signupLink = (() => { try { return /[?&]signup(=|&|$)/.test(location.search); } catch (e) { return false; } })();
 const firstName = () => (sb.session && sb.session.user.name || "").trim().split(/\s+/)[0] || "";
 // "Welcome" the first time a new account (made in the last 3 days) opens its journal, "Welcome back" after that.
-// Decided once per visit, so the heading doesn't change while moving between sections.
+// Decided once per browser tab, so the heading doesn't change while moving between sections.
 const greetedNow = {};
 function greeting() {
   const id = sb.session && sb.session.user.id;
   if (!id) return "Welcome back";
   if (!(id in greetedNow)) {
+    // Remembered for this tab, so coming back from the demo tour or reloading keeps the first greeting.
+    let kept = null; try { kept = sessionStorage.getItem("tj.greet." + id); } catch (e) { /* storage unavailable */ }
+    if (kept) { greetedNow[id] = kept === "back"; return greetedNow[id] ? "Welcome back" : "Welcome"; }
     const created = Date.parse(sb.session.user.created || ""), newAccount = created > 0 && Date.now() - created < 3 * 864e5;
     greetedNow[id] = !newAccount || !!(ui.greeted && ui.greeted[id]) || realTrades.length > 0 || allAccounts().length > 0;
     ui.greeted = Object.assign({}, ui.greeted, { [id]: true }); saveUi();
+    try { sessionStorage.setItem("tj.greet." + id, greetedNow[id] ? "back" : "first"); } catch (e) { /* storage unavailable */ }
   }
   return greetedNow[id] ? "Welcome back" : "Welcome";
 }
@@ -5996,6 +6006,12 @@ F("acctAssignBtn").addEventListener("click", () => {
 // A brand-new journal (loaded and synced, no accounts and no trades yet) offers the tour.
 // Accounts are added later from Accounts; trades can be logged without one.
 function maybeStartTour() {
+  if (afterDemoTour && !persist.loading && !persist.readOnly && !(SB && !inViewer() && !(sb.session && sb.synced))) {
+    afterDemoTour = false;
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* ignore */ }
+    if (!allAccounts().length) setTimeout(() => { if (!document.documentElement.classList.contains("gated") && !document.querySelector("dialog[open]")) offerSetup(); }, 500);
+    return;
+  }
   if (DEMO || tourSeen() || allAccounts().length || realTrades.length || persist.loading || persist.readOnly) return;
   if (SB && !inViewer() && !(sb.session && sb.synced)) return;
   if (persist.mode === "cloud" && !persist.settingsSeen) return;
@@ -7476,10 +7492,10 @@ function tourStop(i) {
   const last = i === TOUR.length - 1, n = TOUR.length - 1;
   F("tourStep").textContent = last ? "Tour complete" : `${i + 1} of ${n}`;
   F("tourTitle").textContent = step.title;
-  F("tourText").textContent = last ? (DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log whenever you're ready, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
-  F("tourNext").textContent = last ? (DEMO ? "Start your own journal" : "Explore my journal") : "Next";
+  F("tourText").textContent = last ? (TOUR_FROM_JOURNAL ? "That's ELEV8 with a few weeks of trades in it. Head back to your journal to set it up." : DEMO ? "Explore the demo as long as you like. When you're ready, start your own journal: it's the same app, with your trades." : "Log your first trade from the quick log whenever you're ready, or set up your accounts. You can replay this tour any time from Settings.") : step.text;
+  F("tourNext").textContent = last ? (TOUR_FROM_JOURNAL ? "Back to my journal" : DEMO ? "Start your own journal" : "Explore my journal") : "Next";
   F("tourBack").hidden = i === 0 || last;
-  F("tourSkip").hidden = last && !DEMO;
+  F("tourSkip").hidden = last && (!DEMO || TOUR_FROM_JOURNAL);
   F("tourSkip").textContent = last && DEMO ? "Explore the demo" : "Skip";
   if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
   requestAnimationFrame(tourPlace);
@@ -7501,7 +7517,10 @@ function tourPlace() {
   const x = Math.min(Math.max(16, r.left + r.width / 2 - tw / 2), vw - tw - 16);
   tip.style.left = Math.round(x) + "px"; tip.style.top = Math.round(y) + "px";
 }
+// An empty journal has nothing to show, so its tour runs in the sample journal.
+const tourInDemo = () => !DEMO && !realTrades.length && document.documentElement.classList.contains("hosted");
 function startTour() {
+  if (tourInDemo()) { markTourSeen(); location.replace("./?demo&tour"); return; }
   setMenu(false);
   document.querySelectorAll("dialog[open]").forEach(d => d.close());
   ui.welcomeDone = true; saveUi();
@@ -7520,13 +7539,13 @@ function endTour() {
 F("tourNext").addEventListener("click", () => {
   if (tourAt === TOUR.length - 1) {
     endTour();
-    if (DEMO) location.href = F("demoExit").href;
+    if (DEMO) location.href = TOUR_FROM_JOURNAL ? JOURNAL_AFTER_TOUR : F("demoExit").href;
     return;
   }
   tourStop(tourAt + 1);
 });
 F("tourBack").addEventListener("click", () => tourStop(Math.max(0, tourAt - 1)));
-F("tourSkip").addEventListener("click", endTour);
+F("tourSkip").addEventListener("click", () => { endTour(); if (TOUR_FROM_JOURNAL) location.href = JOURNAL_AFTER_TOUR; });
 
 /* Back button: closes an open window, the menu or the tour, then steps back through the sections
    you visited, before it leaves the journal (e.g. back to the email you came from). */
@@ -7566,7 +7585,10 @@ addEventListener("resize", () => requestAnimationFrame(tourPlace));
 addEventListener("scroll", () => { if (tourAt >= 0) requestAnimationFrame(tourPlace); }, { passive: true });
 document.addEventListener("click", e => { if (e.target.closest("[data-tour-start]")) startTour(); });
 // First visit: let people choose between the tour and finding their own way.
+let introMode = "tour";
 function offerTour() {
+  introMode = "tour";
+  F("introTour").textContent = "Take the tour"; F("introSelf").textContent = "Look around myself";
   const name = !DEMO && SB && firstName();
   F("introTitle").textContent = DEMO ? "Welcome to the ELEV8 demo" : name ? `Welcome to ELEV8, ${name}` : "Welcome to ELEV8";
   F("introText").textContent = DEMO
@@ -7576,15 +7598,32 @@ function offerTour() {
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   F("introTour").focus();
 }
-F("introTour").addEventListener("click", () => { F("introDlg").close(); startTour(); });
-F("introSelf").addEventListener("click", () => { F("introDlg").close(); markTourSeen(); });
+// Back from the demo tour: register the first trading account, or close and start from an empty journal.
+function offerSetup() {
+  introMode = "setup";
+  F("introTitle").textContent = "Set up your journal";
+  F("introText").textContent = "Register the trading account you want to track: live, prop firm, demo or backtest. Or close this and start with an empty journal. You can add accounts any time from Accounts.";
+  F("introTour").textContent = "Register an account"; F("introSelf").textContent = "Close";
+  const dlg = F("introDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  F("introTour").focus();
+}
+F("introTour").addEventListener("click", () => {
+  if (introMode === "tour" && tourInDemo()) { startTour(); return; } // leaving for the demo: closing first would step Back
+  F("introDlg").close();
+  if (introMode === "setup") setTimeout(() => openAccountDlg(null, false), 50); else startTour();
+});
+F("introSelf").addEventListener("click", () => { F("introDlg").close(); if (introMode === "tour") markTourSeen(); });
 // Closing it with Escape or Back counts as looking around.
-F("introDlg").addEventListener("close", () => { if (tourAt < 0 && !tourSeen()) markTourSeen(); });
+F("introDlg").addEventListener("close", () => { if (introMode === "tour" && tourAt < 0 && !tourSeen()) markTourSeen(); });
 F("welcomeX").addEventListener("click", () => { ui.welcomeDone = true; saveUi(); F("welcomeCard").hidden = true; });
 if (DEMO) {
   F("demoBar").hidden = false;
   document.title = "ELEV8 Trading Journal · Demo";
-  if (!tourSeen()) setTimeout(() => { if (tourAt < 0 && !document.querySelector("dialog[open]")) offerTour(); }, 900);
+  if (TOUR_FROM_JOURNAL) {
+    F("demoExit").textContent = "Back to my journal"; F("demoExit").href = JOURNAL_AFTER_TOUR;
+    setTimeout(() => { if (tourAt < 0) startTour(); }, 700);
+  } else if (!tourSeen()) setTimeout(() => { if (tourAt < 0 && !document.querySelector("dialog[open]")) offerTour(); }, 900);
 }
 
 // Every launch starts on Overview at the top (an unsaved trade form is still kept).
