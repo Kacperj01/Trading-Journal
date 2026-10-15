@@ -89,7 +89,7 @@ canvas.city{position:absolute;left:0;right:0;bottom:0;width:100%;height:62%}
 .cols .over h2{font-size:clamp(40px,7vw,110px);font-weight:800;letter-spacing:-.04em;line-height:.95}.cols .over p{color:var(--t2);margin-top:16px;font-size:18px}
 
 /* Touch devices: static scene, sections fade up once as they appear. */
-html.touch .layer,html.touch .cols .c,html.touch .chev,html.touch .lap{will-change:auto;transform:none!important}
+html.touch .cols .c,html.touch .lap{will-change:auto;transform:none!important}
 html.touch .hero{height:100svh}html.touch .stage{position:relative;height:100svh}
 html.touch .cols{height:auto;padding:70px 0}html.touch .cols .in{position:relative;inset:auto;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 14px}
 html.touch .cols .c{display:contents}html.touch .cols .c:nth-child(n+3){display:none}
@@ -98,6 +98,20 @@ html.touch .cols .in{grid-template-columns:repeat(3,1fr)}
 .rv{opacity:0;transform:translate3d(0,26px,0);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}.rv.in{opacity:1;transform:none}
 html.touch .lap.rv{transform:translate3d(0,26px,0)!important}html.touch .lap.rv.in{transform:none!important}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+
+/* Hero depth without code: the browser's own scroll animation (off the main thread). Browsers without it show a still hero. */
+.layer{will-change:auto;transform:none}
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .layer[data-speed]{animation:heroDrift linear both;animation-timeline:scroll(root);animation-range:0 100vh;will-change:transform}
+    .layer[data-speed="0.55"]{--d:-38vh}.layer[data-speed="0.3"]{--d:-20vh}.layer[data-speed="0.12"]{--d:-8vh}
+  }
+}
+@keyframes heroDrift{to{transform:translate3d(0,var(--d,0),0)}}
+.chev{will-change:auto}
+.chev-in-wait svg{opacity:0;transform:translate3d(-60px,0,0);transition:opacity .7s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+.chev-in svg{opacity:1;transform:none}
+.chev-in svg:nth-child(2){transition-delay:.08s}.chev-in svg:nth-child(3){transition-delay:.16s}.chev-in svg:nth-child(4){transition-delay:.24s}
 /* details, firms, list, steps */
 .sec{padding:120px 0 0}.sh{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:40px}.sh h2{font-size:clamp(34px,4.6vw,64px);font-weight:800;letter-spacing:-.03em;line-height:1}.sh p{color:var(--t2);max-width:400px}
 .dets{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
@@ -224,8 +238,6 @@ function tick() {
   const y = scrollY, s = y > vh * .6;
   if (s !== solid) { solid = s; nav.classList.toggle("solid", s); }
   if (reduce) return;
-  if (y < heroH) for (let i = 0; i < layers.length; i++) layers[i].style.transform = `translate3d(0,${(-y * speeds[i]).toFixed(1)}px,0)`;
-  const ct = chevY - y; if (ct > -400 && ct < vh + 200) chev.style.transform = `translate3d(${((ct - vh) * .35).toFixed(1)}px,0,0)`;
   const lt = lapY - y; if (lt > -vh && lt < vh * 1.5) { const k = Math.min(1, Math.max(0, 1 - lt / vh));
     lap.style.transform = `perspective(1400px) rotateX(${((1 - k) * 22).toFixed(2)}deg) translate3d(0,${((1 - k) * 80).toFixed(1)}px,0) scale(${(.9 + k * .1).toFixed(3)})`; }
   const st = colsY - y; if (st < vh && st > -colsH) for (let i = 0; i < cols.length; i++) cols[i].style.transform = `translate3d(0,${(st * cspeeds[i]).toFixed(1)}px,0)`;
@@ -251,11 +263,19 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
 
 // Reveal sections as they come into view (touch devices).
 if (touch && "IntersectionObserver" in window) {
-  const els = document.querySelectorAll(".stmt h2, .stmt .row p, .stats, .chev, .show .lap, .how .head, .words, .cols .over, .sh, .dets, .firmsec > div, .steps, .faq, .fcta");
+  const els = document.querySelectorAll(".stmt h2, .stmt .row p, .stats, .show .lap, .how .head, .words, .cols .over, .sh, .dets, .firmsec > div, .steps, .faq, .fcta");
   els.forEach(e => e.classList.add("rv"));
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -8% 0px" });
   els.forEach(e => io.observe(e));
 }
+
+// Arrows glide in once when they reach the screen (every device).
+{ const ch = document.getElementById("chev");
+  if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    ch.classList.add("chev-in-wait");
+    const o = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { ch.classList.add("chev-in"); o.disconnect(); } }), { rootMargin: "0px 0px -10% 0px" });
+    o.observe(ch);
+  } }
 </script>
 
 </body>
