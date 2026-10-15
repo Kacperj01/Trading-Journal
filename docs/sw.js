@@ -1,5 +1,5 @@
 // Offline support for the Trading Journal app. The version changes whenever the page does.
-const CACHE = "journal-15b69887b5";
+const CACHE = "journal-7bf5606f23";
 const FONTS = "journal-fonts";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png"];
 

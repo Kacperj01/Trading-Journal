@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "15b69887b5";</script>
+<script>window.ELEV8_BUILD = "7bf5606f23";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -2812,7 +2812,7 @@ async function sbSync() {
     if (changed || settingsChanged) { syncView(); onDataChanged(); }
     migrateFees();
     sbRender();
-    maybeAskAccount();
+    maybeStartTour();
   } catch (e) {
     if (!sb.session) { /* signed out during sync */ }
     else if (e instanceof TypeError || !navigator.onLine) { sb.offline = true; setSync("local", "Offline · changes will sync"); }
@@ -3120,12 +3120,12 @@ async function connectCloud() {
     }, err => { setSync("err", "Sync stopped. Reload to reconnect"); });
     persist.db.doc(persist.base + "/settings").onSnapshot(snap => {
       persist.settingsSeen = true;
-      if (!snap.exists) { maybeAskAccount(); return; }
+      if (!snap.exists) { maybeStartTour(); return; }
       settings = Object.assign({}, DEFAULT_SETTINGS, snap.data());
       store.set(KEY_SETTINGS, settings);
       refreshLists(); renderListEditors(); renderAccount();
       if (isAnalytics(currentTab())) renderDashboard();
-      maybeAskAccount();
+      maybeStartTour();
     }, () => {});
   } catch (e) {
     finishLoading("local");
@@ -3183,7 +3183,7 @@ function onDataChanged() {
     if (currentTab() === "log") updatePreview();
     renderAccounts();
     window.scrollTo(0, y);
-    maybeAskAccount();
+    maybeStartTour();
   }, 60);
 }
 
@@ -5997,13 +5997,16 @@ F("acctAssignBtn").addEventListener("click", () => {
   onDataChanged();
 });
 
-// Ask for a trading account once the journal (and its synced settings) has loaded and none is registered.
-function maybeAskAccount() {
-  if (allAccounts().length || persist.loading || persist.readOnly || F("acctDlg").open) return;
-  if (document.documentElement.classList.contains("gated") || document.querySelector("dialog[open]")) return;
+// A brand-new journal (loaded and synced, no accounts and no trades yet) starts with the tour.
+// Accounts are added later from Accounts; trades can be logged without one.
+function maybeStartTour() {
+  if (DEMO || ui.tourDone || allAccounts().length || realTrades.length || persist.loading || persist.readOnly) return;
   if (SB && !inViewer() && !(sb.session && sb.synced)) return;
   if (persist.mode === "cloud" && !persist.settingsSeen) return;
-  openAccountDlg(null, true);
+  setTimeout(() => {
+    if (tourAt >= 0 || ui.tourDone || document.documentElement.classList.contains("gated") || document.querySelector("dialog[open]")) return;
+    startTour();
+  }, 900);
 }
 
 /* ======================================================================
