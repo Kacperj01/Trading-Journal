@@ -1,8 +1,2 @@
 # Prop firm rules pages to read in the "Read prop firm pages" Action (one URL per line).
-https://help.fundingrock.com/en/articles/15777569-what-is-the-daily-loss-limit-and-how-is-it-calculated
-https://help.fundingrock.com/en/articles/15777603-what-is-the-consistency-rule
-https://help.fundingrock.com/en/articles/15777588-can-i-hold-trades-overnight
-https://help.fundingrock.com/en/articles/15777599-can-i-trade-during-news-events
-https://help.fundingrock.com/en/articles/15804143-what-is-the-reward-lock
-https://help.fundingrock.com/en/articles/15777583-how-does-a-static-maximum-loss-work
-https://help.fundingrock.com/en/articles/15760769-are-there-any-position-sizing-restrictions
+https://help.fundingrock.com/en/articles/15770265-what-account-sizes-are-available-at-fundingrock
