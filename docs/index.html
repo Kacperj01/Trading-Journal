@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-PjERGMtqthPRxpZZXLPbQN5Z0+3J1ItK8f2G9CpXOss=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-L7azh+nK2hhihOWgF2HtfOBcaR4toJd8R85mvD4CH2s=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-pxtESiI3FlQFqBwQ5EYrGl4UIaMY1TgGRLYi9kmuvs0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-JuzvD2G5mMuo0h6uknZ7SVf1ksGlkG7wyay8pHdhd9s=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-L7azh+nK2hhihOWgF2HtfOBcaR4toJd8R85mvD4CH2s=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-VM0UzI0G+dJjIeBJ7W3Y2uVenmcbKTdH8p+aHr5jhjw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "d575eba97a";</script>
+<script>window.ELEV8_BUILD = "d2e804cfc4";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -667,7 +667,8 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .q-msg:empty { display: none; }
 .quick-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .quick.collapsed #quickForm, .quick.collapsed #qSub { display: none; }
-.quick.collapsed .card-head { margin-bottom: 0; }
+.quick.collapsed .card-head { margin-bottom: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.quick.collapsed:hover { border-color: var(--border-strong); }
 @media (max-width: 1040px) { .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .quick-grid .q-wide { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .quick-grid .q-date, .quick-grid .q-dir { grid-column: 1 / -1; } .quick-actions .btn { flex: 1; justify-content: center; } }
 
@@ -5740,6 +5741,11 @@ F("qToggle").addEventListener("click", () => {
   ui.quickOpen = F("quickLog").classList.contains("collapsed");
   saveUi();
   setQuickOpen(ui.quickOpen);
+});
+// When folded away, tapping anywhere on the "Log a trade" bar opens it (Show still works too).
+F("quickLog").querySelector(".card-head").addEventListener("click", e => {
+  if (!F("quickLog").classList.contains("collapsed") || e.target.closest("button, a, input, select")) return;
+  ui.quickOpen = true; saveUi(); setQuickOpen(true);
 });
 
 /* ---------- Trade detail window ---------- */

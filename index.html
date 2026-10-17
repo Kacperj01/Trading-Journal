@@ -634,7 +634,8 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .q-msg:empty { display: none; }
 .quick-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .quick.collapsed #quickForm, .quick.collapsed #qSub { display: none; }
-.quick.collapsed .card-head { margin-bottom: 0; }
+.quick.collapsed .card-head { margin-bottom: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.quick.collapsed:hover { border-color: var(--border-strong); }
 @media (max-width: 1040px) { .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .quick-grid .q-wide { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .quick-grid .q-date, .quick-grid .q-dir { grid-column: 1 / -1; } .quick-actions .btn { flex: 1; justify-content: center; } }
 
@@ -5705,6 +5706,11 @@ F("qToggle").addEventListener("click", () => {
   ui.quickOpen = F("quickLog").classList.contains("collapsed");
   saveUi();
   setQuickOpen(ui.quickOpen);
+});
+// When folded away, tapping anywhere on the "Log a trade" bar opens it (Show still works too).
+F("quickLog").querySelector(".card-head").addEventListener("click", e => {
+  if (!F("quickLog").classList.contains("collapsed") || e.target.closest("button, a, input, select")) return;
+  ui.quickOpen = true; saveUi(); setQuickOpen(true);
 });
 
 /* ---------- Trade detail window ---------- */
