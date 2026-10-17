@@ -325,7 +325,7 @@ def render(w, name, preview=False):
 {section("Focus for next week", "#1f6fc4", lst(w['focus'], "Keep doing what you're doing."))}
 <tr><td style="padding:22px 24px 26px" align="center"><a href="{SITE}/?app#insights" style="display:inline-block;background:#1f6fc4;background-image:linear-gradient(120deg,#2a7fd9,#25c0c0);color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px">Open your journal</a></td></tr>
 </table>
-<p style="font-size:12px;color:#5d6d84;margin:14px 0 0;max-width:600px">{"This is a one-off preview. You won't get these again unless you turn on weekly reviews in ELEV8 › Settings › Profile." if preview else "You're getting this because weekly reviews are on in ELEV8 › Settings › Profile. Turn them off there any time."}</p>
+<p style="font-size:12px;color:#5d6d84;margin:14px 0 0;max-width:600px">{"This is a one-off preview. You won't get these again unless you turn on weekly reviews in ELEV8 › Settings › Profile." if preview else "You're getting this because weekly reviews are on in ELEV8 › Settings › Profile. Turn them off there any time."} This review is worked out from your own journal and is for education only, not financial advice. ELEV8 isn't affiliated with any prop firm or broker.</p>
 </td></tr></table></body></html>"""
 
 
