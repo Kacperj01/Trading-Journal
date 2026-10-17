@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "37773b9ca3";</script>
+<script>window.ELEV8_BUILD = "53eb51ad8e";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -533,22 +533,22 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--re
 .table-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .table-tools input, .table-tools select { width: auto; padding: 8px 12px; }
 .table-scroll { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; min-width: 1200px; font-size: 13.5px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 caption { text-align: left; padding: 0 0 10px; color: var(--muted); font-size: 12.5px; caption-side: bottom; padding-top: 10px; padding-left: 14px; }
 thead th {
   position: sticky; top: 0; background: var(--float-bg); text-align: left; font-weight: 500; color: var(--muted);
   font-size: 11.5px; text-transform: uppercase; letter-spacing: .8px; padding: 0; border-bottom: 1px solid var(--border-strong); white-space: nowrap;
 }
-thead th button { all: unset; cursor: pointer; display: flex; gap: 6px; align-items: center; padding: 12px 14px; width: 100%; box-sizing: border-box; }
+thead th button { all: unset; cursor: pointer; display: flex; gap: 6px; align-items: center; padding: 12px 10px; width: 100%; box-sizing: border-box; }
 thead th button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 thead th .arrow { opacity: .4; font-size: 10px; }
 thead th[aria-sort] .arrow { opacity: 1; color: var(--blue); }
-thead th.static { padding: 12px 14px; }
-tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+thead th.static { padding: 12px 10px; }
+tbody td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
 tbody tr:hover { background: var(--tint); }
 tbody tr:last-child td { border-bottom: 0; }
 td.num { white-space: nowrap; }
-td.notes { min-width: 240px; max-width: 360px; color: var(--text-2); white-space: pre-line; }
+td.notes { min-width: 120px; max-width: 260px; color: var(--text-2); white-space: pre-line; }
 td.nowrap { white-space: nowrap; }
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; }
 .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -559,7 +559,14 @@ td.nowrap { white-space: nowrap; }
 .dir.long { color: var(--green); }
 .dir.short { color: var(--red); }
 .chip-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 12px; white-space: nowrap; }
-.row-actions { display: flex; gap: 4px; }
+.row-actions { display: flex; gap: 2px; }
+/* In the table the row buttons are icons (labels are for screen readers and the phone cards). */
+.row-actions .btn { padding: 6px 5px; }
+.row-actions .btn .ni { width: 16px; height: 16px; margin: 0; }
+.row-actions .ra-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+td.c-setup { min-width: 90px; }
+.pair-sub { margin-top: 3px; font: 400 11.5px var(--font-sans); color: var(--muted); white-space: nowrap; }
+.pair-sub .dir { font-size: 11.5px; }
 
 /* ---------- Form ---------- */
 .form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
@@ -1394,7 +1401,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .table-tools input[type="search"] { flex: 1 1 100%; }
   thead th { position: static; }
 
-  /* Trade log becomes a list of cards. */
+}
+/* Phones and narrow tablets: the trade log becomes a list of cards (the table would side scroll). */
+@media (max-width: 1000px) {
   .table-scroll { overflow: visible; border: 0; border-radius: 0; }
   .table-scroll table { min-width: 0; display: block; }
   .table-scroll thead { display: none; }
@@ -1415,7 +1424,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .table-scroll tbody td.notes { white-space: pre-line; }
   .table-scroll tbody td.c-empty { display: none; }
   .table-scroll tbody td.c-act::before { display: none; }
-  .table-scroll tbody td.c-act .row-actions { justify-content: flex-end; border-top: 1px dashed var(--border); padding-top: 8px; }
+  .table-scroll tbody td.c-act .row-actions { justify-content: flex-end; border-top: 1px dashed var(--border); padding-top: 8px; gap: 4px; }
+  .table-scroll .row-actions .ra-l { position: static; width: auto; height: auto; clip-path: none; }
+  .table-scroll .row-actions .btn { padding: 6px 10px; gap: 6px; }
   .table-scroll tbody td[colspan] { grid-column: 1 / -1; }
   .table-scroll tbody td[colspan]::before { display: none; }
 }
@@ -2584,6 +2595,8 @@ const ICONS = {
   wallet: '<path d="M17 4.5H6A2 2 0 0 0 4 6.5v11A2 2 0 0 0 6 19.5h12.5a1.5 1.5 0 0 0 1.5-1.5V9a1.5 1.5 0 0 0-1.5-1.5H4.5"/><path d="M16 13.5h.01"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  trash: '<path d="M4.5 7h15M10 7V4.5h4V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/>',
   upload: '<path d="M12 20.5V9M7 14l5-5 5 5M4.5 3.5h15"/>',
   clip: '<path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/>',
   doc: '<path d="M14 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3.5V8h4.5M9 13h6M9 16.5h4"/>',
@@ -4378,15 +4391,15 @@ function renderInsights(list, st) {
    Trade table
    ====================================================================== */
 const COLS = [
-  { key: "idx", label: "#" }, { key: "date", label: "Date" }, { key: "pair", label: "Pair" },
-  { key: "session", label: "Session" }, { key: "direction", label: "Direction" }, { key: "setup", label: "Setup" },
-  { key: "r", label: "R multiple" }, { key: "pnl", label: "P&L" }, { key: "result", label: "Result" },
+  // Side and session sit under the pair so the whole row fits without side scrolling.
+  { key: "date", label: "Date" }, { key: "pair", label: "Pair" }, { key: "setup", label: "Setup" },
+  { key: "r", label: "R" }, { key: "pnl", label: "P&L" }, { key: "result", label: "Result" },
   { key: "emotionBefore", label: "Emotion" }, { key: "notes", label: "Notes", static: true }, { key: "actions", label: "Actions", static: true }
 ];
 
 let resultFilter = "";
 function renderTable(list) {
-  const indexed = list.map((t, i) => ({ t, idx: i + 1 }));
+  const indexed = list.map((t, i) => ({ t, idx: i + 1 })), thisYear = String(new Date().getFullYear());
   const q = $("#tSearch").value.trim().toLowerCase();
   const res = resultFilter;
   const counts = { "": list.length, Win: 0, Loss: 0, BE: 0, Open: 0 };
@@ -4412,21 +4425,18 @@ function renderTable(list) {
   $("#tableBody").innerHTML = rows.length ? rows.map(({ t, idx }) => {
     const r = rOf(t), result = resultOf(t);
     return `<tr>
-      <td class="num muted c-idx" data-label="#">${idx}</td>
-      <td class="num nowrap" data-label="Date">${fmtDate(t.date)}${t.time ? `<div class="muted" style="font-size:11.5px">${esc(t.time)}</div>` : ""}</td>
-      <td class="num" data-label="Pair"><strong>${esc(t.pair)}</strong></td>
-      <td data-label="Session"><span class="chip-tag">${esc(t.session)}</span></td>
-      <td data-label="Direction"><span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></td>
-      <td class="nowrap" data-label="Setup">${esc(t.setup)}</td>
+      <td class="num nowrap" data-label="Date" title="${esc(fmtDate(t.date))}">${fmtDate(t.date, t.date.slice(0, 4) === thisYear ? { day: "numeric", month: "short" } : undefined)}${t.time ? `<div class="muted" style="font-size:11.5px">${esc(t.time)}</div>` : ""}</td>
+      <td class="num nowrap" data-label="Pair"><strong>${esc(t.pair)}</strong><div class="pair-sub"><span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span>${t.session ? ` · ${esc(t.session)}` : ""}</div></td>
+      <td class="c-setup" data-label="Setup">${esc(t.setup)}</td>
       <td class="num ${tone(r)}" data-label="R multiple">${fmtR(r)}</td>
       <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${isOpen(t) ? "Open" : money(t.pnl)}</strong></td>
       <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : result === "Open" ? "open" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
       <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span class="plan-flag" title="${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}" role="img" aria-label="Plan broken">${ico("warn")}</span>` : ""}</td>
       <td class="notes${t.notes || t.mistakes || hasCharts(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${(t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? ` <button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : ""}${t.sourceUrl ? ` <a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
-        <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">View</button>
-        ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}" aria-label="Close trade ${idx}, ${esc(t.pair)}">Close</button>` : ""}<button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}">Edit</button>
-        <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" style="color:var(--red)">Delete</button>
+        <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="View">${ico("eye")}<span class="ra-l">View</span></button>
+        ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}" aria-label="Close trade ${idx}, ${esc(t.pair)}" title="Close trade">${ico("check")}<span class="ra-l">Close</span></button>` : ""}<button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="Edit">${ico("pen")}<span class="ra-l">Edit</span></button>
+        <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="Delete" style="color:var(--red)">${ico("trash")}<span class="ra-l">Delete</span></button>
       </div></td>
     </tr>`;
   }).join("") : `<tr><td colspan="${COLS.length}" class="none" style="text-align:center;padding:30px">No trades to show.</td></tr>`;
