@@ -76,3 +76,23 @@ create policy "Anyone can send a bug report" on public.bug_reports
   for insert to anon, authenticated with check (user_id is null or user_id = auth.uid());
 grant usage on schema public to anon, authenticated;
 grant insert (title, body) on public.bug_reports to anon, authenticated;
+
+-- Delete my account (Settings › Account › Delete account). Deletes the signed-in person's trades,
+-- settings, bug reports and login. Their screenshots and payout certificates are removed by the app
+-- through the Storage API first (Supabase doesn't allow deleting storage files from SQL).
+-- Called with really = false it only checks the function exists, so the app can stop before
+-- removing any files if this hasn't been set up yet.
+create or replace function public.delete_my_account(really boolean default false)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid();
+begin
+  if uid is null then raise exception 'Not signed in'; end if;
+  if not really then return false; end if;
+  delete from public.trades where user_id = uid;
+  delete from public.journal_settings where user_id = uid;
+  delete from public.bug_reports where user_id = uid;
+  delete from auth.users where id = uid;
+  return true;
+end $$;
+revoke all on function public.delete_my_account(boolean) from public, anon;
+grant execute on function public.delete_my_account(boolean) to authenticated;

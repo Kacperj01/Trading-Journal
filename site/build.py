@@ -4,11 +4,44 @@ index.html is written as page content for claude.ai, which supplies the document
 This wraps the same content in a full document with the web-app metadata, and adds the
 manifest, icons and an offline service worker. Run: python3 site/build.py
 """
-import hashlib, json, re, subprocess, sys
+import base64, hashlib, json, re, subprocess, sys
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 docs = root / "docs"
+
+# Security for every page:
+# - Frame guard: if another site loads a page inside a frame (to trick people into clicking), hide it
+#   and open it on its own instead. GitHub Pages can't send the usual header for this, so it's a script.
+# - Content security policy: only the scripts written into the page (matched by their fingerprint) and
+#   files from this site can run, and data can only be sent to this site and the sync service.
+FRAME_GUARD = ('<script>if (window.top !== window.self) { document.documentElement.style.display = "none"; '
+               'try { window.top.location.replace(window.location.href); } catch (e) {} }</script>')
+
+
+def secure(html, connect=(), img="'self' data:"):
+    html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + FRAME_GUARD, 1)
+    hashes = []
+    for m in re.finditer(r"<script(?![^>]*\bsrc=)([^>]*)>(.*?)</script>", html, re.S):
+        if "application/json" in m.group(1):
+            continue  # data, never run
+        hashes.append("'sha256-" + base64.b64encode(hashlib.sha256(m.group(2).encode("utf-8")).digest()).decode() + "'")
+    policy = [
+        "default-src 'self'",
+        "script-src 'self' " + " ".join(dict.fromkeys(hashes)),
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        "img-src " + img,
+        "connect-src " + " ".join(["'self'", *connect]),
+        "worker-src 'self' blob:",
+        "manifest-src 'self'",
+        "frame-src 'none'", "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+    ]
+    if any(c.startswith("https://") and ".supabase.co" in c for c in connect):
+        policy.append("upgrade-insecure-requests")
+    meta = '<meta http-equiv="Content-Security-Policy" content="' + "; ".join(policy) + '">'
+    return html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + meta, 1)
+
 src = (root / "index.html").read_text(encoding="utf-8")
 
 # Everything up to the end of the page's <style> belongs in <head>; the rest is the body.
@@ -126,6 +159,11 @@ self.addEventListener("fetch", e => {{
 """
 
 docs.mkdir(exist_ok=True)
+# The journal talks to Supabase, and to GitHub for exchange rates and the news calendar when offline from
+# its own copies. Chart previews can come from any https image link a trader pastes.
+sb_origin = re.match(r"https?://[^/]+", cfg.get("supabaseUrl", "")) if cfg.get("supabaseUrl") else None
+page = secure(page, connect=[*( [sb_origin.group(0)] if sb_origin else []), "https://raw.githubusercontent.com", "blob:"],
+              img="'self' data: blob: https:")
 (docs / "index.html").write_text(page, encoding="utf-8")
 (docs / "manifest.webmanifest").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 (docs / "sw.js").write_text(sw, encoding="utf-8")
@@ -158,7 +196,7 @@ home_page = f"""<!doctype html>
 </html>
 """
 (docs / "home").mkdir(exist_ok=True)
-(docs / "home" / "index.html").write_text(home_page, encoding="utf-8")
+(docs / "home" / "index.html").write_text(secure(home_page), encoding="utf-8")
 shutil.copytree(root / "site" / "home" / "img", docs / "home" / "img", dirs_exist_ok=True)
 # Privacy Policy and Terms at /privacy/ and /terms/: site/legal/*.html are content, wrapped here.
 LEGAL_CSS = """
@@ -207,7 +245,7 @@ for slug in ("privacy", "terms"):
 </html>
 """
     (docs / slug).mkdir(exist_ok=True)
-    (docs / slug / "index.html").write_text(page_l, encoding="utf-8")
+    (docs / slug / "index.html").write_text(secure(page_l), encoding="utf-8")
 
 # Logo the account and weekly-review emails load from the website.
 (docs / "email").mkdir(exist_ok=True)

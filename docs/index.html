@@ -2,8 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-PjERGMtqthPRxpZZXLPbQN5Z0+3J1ItK8f2G9CpXOss=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-L7azh+nK2hhihOWgF2HtfOBcaR4toJd8R85mvD4CH2s=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-pxtESiI3FlQFqBwQ5EYrGl4UIaMY1TgGRLYi9kmuvs0='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "53eb51ad8e";</script>
+<script>window.ELEV8_BUILD = "d575eba97a";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -894,6 +896,8 @@ html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.si
 .cert-dlg .dlg-actions { justify-content: space-between; }
 #certDownload .ni { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
 .btn.danger-text { color: var(--red); }
+.del-acct { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
+.del-acct p { margin: 2px 0 0; font-size: 13px; }
 /* Open trades */
 .open-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; color: var(--text-2); cursor: pointer; }
 .open-toggle input { width: auto; margin: 0; }
@@ -2100,6 +2104,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
                 <button class="btn primary" type="button" id="syncNow">Sync now</button>
                 <button class="btn danger" type="button" id="syncSignOut">Sign out</button>
               </div>
+              <div class="del-acct">
+                <div><strong>Delete account</strong><p class="muted">Permanently delete your account and everything in it. This can't be undone.</p></div>
+                <button class="btn danger-text ghost" type="button" id="delAcct">Delete account</button>
+              </div>
             </div>
           </section>
         </div>
@@ -2240,6 +2248,20 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <div class="dlg-actions">
       <button class="btn ghost" type="button" id="pwCancel">Cancel</button>
       <button class="btn primary" type="submit" id="pwSave">Save password</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="delDlg" class="bug-dlg" aria-labelledby="delTitle" aria-describedby="delIntro">
+  <form id="delForm" class="dlg-body" novalidate>
+    <h3 id="delTitle">Delete your account?</h3>
+    <p id="delIntro">This permanently deletes your login and everything in your journal: trades, trading accounts, settings, screenshots and payout certificates. It can't be undone. To keep a copy, use Settings › Export first.</p>
+    <div class="field"><label for="delPw">Your password</label><input type="password" id="delPw" autocomplete="current-password"></div>
+    <div class="field"><label for="delWord">Type DELETE to confirm</label><input type="text" id="delWord" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+    <p id="delMsg" class="q-msg" role="alert"></p>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="delCancel">Cancel</button>
+      <button class="btn danger-solid" type="submit" id="delGo">Delete my account</button>
     </div>
   </form>
 </dialog>
@@ -3199,6 +3221,69 @@ document.getElementById("pwForm").addEventListener("submit", async e => {
   } catch (err) { msg.textContent = err instanceof TypeError ? "Couldn't reach the sync service. Try again when you're online." : err.message; }
 });
 
+// Delete account: check the password, remove this person's files, then their data and login.
+document.getElementById("delAcct").addEventListener("click", () => {
+  F("delForm").reset(); F("delMsg").textContent = ""; F("delGo").disabled = false;
+  const dlg = F("delDlg");
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  F("delPw").focus();
+});
+document.getElementById("delCancel").addEventListener("click", () => F("delDlg").close());
+async function deleteMyFiles(token, uid) {
+  const headers = { apikey: SB.key, Authorization: "Bearer " + token, "Content-Type": "application/json" };
+  const files = [], folders = [uid];
+  // Files sit under a folder named after the user id, possibly in sub-folders.
+  while (folders.length) {
+    const prefix = folders.shift();
+    for (let offset = 0; ; offset += 1000) {
+      const res = await fetch(SB.url + "/storage/v1/object/list/" + CERT_BUCKET, { method: "POST", headers, body: JSON.stringify({ prefix, limit: 1000, offset }) });
+      if (!res.ok) { if (res.status === 400 || res.status === 404) return; throw new Error("Couldn't list your files"); }
+      const items = await res.json();
+      items.forEach(it => (it.id ? files : folders).push(prefix + "/" + it.name));
+      if (items.length < 1000) break;
+    }
+  }
+  for (let i = 0; i < files.length; i += 500) {
+    const res = await fetch(SB.url + "/storage/v1/object/" + CERT_BUCKET, { method: "DELETE", headers, body: JSON.stringify({ prefixes: files.slice(i, i + 500) }) });
+    if (!res.ok) throw new Error("Couldn't delete your files");
+  }
+}
+document.getElementById("delForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = F("delMsg"), pw = F("delPw").value;
+  if (!pw) { msg.textContent = "Enter your password."; F("delPw").focus(); return; }
+  if (F("delWord").value.trim().toUpperCase() !== "DELETE") { msg.textContent = "Type DELETE to confirm."; F("delWord").focus(); return; }
+  if (!sbOn()) { msg.textContent = "Sign in first."; return; }
+  F("delGo").disabled = true; msg.textContent = "Checking…";
+  try {
+    const uid = sb.session.user.id;
+    // A fresh sign-in proves it's the account owner, not someone with an unlocked phone.
+    let fresh;
+    try { fresh = await sbAuth("token?grant_type=password", { email: sb.session.user.email, password: pw }); }
+    catch (err) { if (err instanceof TypeError) throw err; throw new Error("That password isn't right."); }
+    const token = fresh.access_token;
+    const rpc = really => fetch(SB.url + "/rest/v1/rpc/delete_my_account", { method: "POST", headers: { apikey: SB.key, Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify({ really }) });
+    // Stop before touching any files if deleting accounts hasn't been set up in the database yet.
+    const probe = await rpc(false);
+    if (!probe.ok) throw new Error(probe.status === 404 ? "Account deletion isn't switched on yet. Please report a bug so we can delete it for you." : "Couldn't reach the sync service. Try again.");
+    msg.textContent = "Deleting your files…";
+    await deleteMyFiles(token, uid);
+    msg.textContent = "Deleting your account…";
+    const done = await rpc(true);
+    if (!done.ok) throw new Error("Your files were removed but the account couldn't be deleted. Try again.");
+    // Clear everything this device kept for the account.
+    sbSaveSession(null);
+    try { Object.keys(localStorage).filter(k => k.startsWith("tj.")).forEach(k => localStorage.removeItem(k)); } catch (err) { /* ignore */ }
+    try { sessionStorage.clear(); } catch (err) { /* ignore */ }
+    F("delDlg").close();
+    await askConfirm("Your account and everything in it have been permanently deleted.", { title: "Account deleted", ok: "OK", single: true });
+    if (document.documentElement.classList.contains("hosted")) location.replace("home/"); else location.reload();
+  } catch (err) {
+    F("delGo").disabled = false;
+    msg.textContent = err instanceof TypeError ? "Couldn't reach the sync service. Try again when you're online." : err.message;
+  }
+});
+
 async function connectCloud() {
   if (DEMO || !window.claude || typeof window.claude.use !== "function") { finishLoading("local"); if (DEMO) setSync("local", "Demo journal · nothing is saved"); return; }
   try {
@@ -3299,8 +3384,9 @@ function onDataChanged() {
   }, 60);
 }
 
-function askConfirm(message, { title = "Are you sure?", ok = "Delete" } = {}) {
+function askConfirm(message, { title = "Are you sure?", ok = "Delete", single = false } = {}) {
   const dlg = F("confirmDlg");
+  F("confirmCancel").hidden = single; // single: a notice with just one button
   F("confirmTitle").textContent = title;
   F("confirmMsg").textContent = message;
   F("confirmOk").textContent = ok;
@@ -3308,7 +3394,7 @@ function askConfirm(message, { title = "Are you sure?", ok = "Delete" } = {}) {
     const done = () => { dlg.removeEventListener("close", done); resolve(dlg.returnValue === "ok"); };
     dlg.returnValue = "";
     dlg.addEventListener("close", done);
-    if (typeof dlg.showModal === "function") { dlg.showModal(); F("confirmCancel").focus(); }
+    if (typeof dlg.showModal === "function") { dlg.showModal(); F(single ? "confirmOk" : "confirmCancel").focus(); }
     else resolve(window.confirm(message));
   });
 }
@@ -3358,11 +3444,16 @@ function chartImage(url) {
   if (m) return `https://s3.tradingview.com/snapshots/${m[1][0].toLowerCase()}/${m[1]}.png`;
   return /\.(png|jpe?g|webp|gif)(\?|#|$)/i.test(url) ? url : null;
 }
+// A chart preview that can't load is swapped for a note (a listener, since the page's security policy blocks inline handlers).
+document.addEventListener("error", e => {
+  const t = e.target;
+  if (t instanceof HTMLImageElement && t.classList.contains("chart-img")) t.replaceWith(Object.assign(document.createElement("div"), { className: "none", textContent: "Preview unavailable. Open the link below." }));
+}, true);
 function chartFigure(label, url) {
   const link = safeLink(url);
   const img = link ? chartImage(link) : null;
   const frame = !link ? `<div class="none">No ${label.toLowerCase()} chart</div>`
-    : img ? `<img src="${esc(img)}" alt="${esc(label)} chart" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'none',textContent:'Preview unavailable. Open the link below.'}))">`
+    : img ? `<img class="chart-img" src="${esc(img)}" alt="${esc(label)} chart" loading="lazy">`
     : `<div class="none">Open the link below to view this chart.</div>`;
   return `<figure class="chart-fig"><figcaption>${esc(label)}</figcaption><div class="chart-frame">${frame}</div>${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open ${esc(label.toLowerCase())} chart ↗</a>` : ""}</figure>`;
 }
@@ -7328,6 +7419,7 @@ function snapshotHtml() {
   const doc = new DOMParser().parseFromString(PRISTINE, "text/html");
   // Keep only this page's own script; drop anything a viewer injected and any older embedded data.
   doc.querySelectorAll("script").forEach(el => { if (el.id !== "app") el.remove(); });
+  doc.querySelectorAll('meta[http-equiv="Content-Security-Policy"]').forEach(el => el.remove());
   // Declare UTF-8 first thing in the file, or emojis and symbols are garbled when it's opened on its own.
   doc.querySelectorAll("meta[charset], meta[name=viewport]").forEach(el => el.remove());
   const vp = doc.createElement("meta"); vp.name = "viewport"; vp.content = "width=device-width,initial-scale=1,viewport-fit=cover";
