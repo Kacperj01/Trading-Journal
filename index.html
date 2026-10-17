@@ -1988,7 +1988,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <p class="hint" id="payCertOff" hidden>Sign in to your ELEV8 account to attach payout certificates.</p>
               <p id="payMsg" class="q-msg" role="alert"></p>
               <div><button class="btn primary" type="submit" id="paySubmit">Add payout</button></div>
-              <p class="muted" style="margin:0;font-size:12.5px">After a payout, a prop account's rules are tracked from its starting size again, the way FTMO, Funding Pips and Alpha Capital reset it.</p>
+              <p class="muted" style="margin:0;font-size:12.5px">After a payout, a prop account's rules are tracked from its starting size again, the way FTMO, Funding Pips and Alpha Capital reset it. At FundingRock the payout comes off the balance instead, and the max loss locks at the starting balance.</p>
             </div>
           </form>
           <section class="rw-listwrap reveal" style="--d:3" aria-labelledby="rwListTitle">
@@ -2254,7 +2254,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
     </div>
     <div class="acct-grid">
-      <div class="field prop-only"><label for="aFirm">Prop firm</label><div class="firm-input"><span id="aFirmLogo" aria-hidden="true"></span><input type="text" id="aFirm" list="firmList" autocomplete="off" placeholder="e.g. FTMO"></div></div>
+      <div class="field prop-only"><label for="aFirm">Prop firm</label><div class="firm-input"><span id="aFirmLogo" aria-hidden="true"></span><input type="text" id="aFirm" list="firmList" autocomplete="off" placeholder="e.g. FundingRock"></div></div>
       <div class="field prop-only" id="aProgramWrap" hidden><label for="aProgram">Account type at the firm</label><select id="aProgram"></select></div>
       <div class="field prop-only"><label for="aPhase">Stage</label>
         <select id="aPhase"><option>Challenge</option><option>Verification</option><option>Funded</option></select>
@@ -2581,8 +2581,8 @@ function demoJournal() {
   let seed = 8; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
   const z = n => String(n).padStart(2, "0"), iso = d => d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
   const live = { id: "demo-live", type: "Live", broker: "Vantage", platform: "MetaTrader 5", size: 10000, name: "Vantage Live" };
-  const challenge = { id: "demo-challenge", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "Challenge", size: 100000, broker: "", platform: "MetaTrader 5", name: "100K Challenge" };
-  const funded = { id: "demo-funded", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "Funded", size: 50000, broker: "", platform: "MetaTrader 5", name: "Funded 50K", startDate: "",
+  const challenge = { id: "demo-challenge", type: "Prop firm", firm: "FundingRock", program: "fr-2step", phase: "Phase 1", size: 100000, broker: "", platform: "cTrader", name: "100K Challenge" };
+  const funded = { id: "demo-funded", type: "Prop firm", firm: "FundingRock", program: "fr-2step", phase: "Prime", size: 50000, broker: "", platform: "cTrader", name: "Prime 50K", startDate: "",
     payouts: [] };
   const today = new Date(); today.setHours(12, 0, 0, 0);
   const start = new Date(today); start.setDate(start.getDate() - 34);
@@ -2613,6 +2613,18 @@ function demoJournal() {
         notes: win ? pick(winNotes) : pick(lossNotes), mistakes: mistake, followedPlan: win || !mistake, account: onLive ? live.id : challenge.id, chartBefore: "", chartAfter: "", screenshot: "" });
     }
   }
+  // The Prime account's history: FundingRock rewards come off the balance, so each reward follows a
+  // run of winning trades a little bigger than it (the account stays above its starting balance).
+  funded.payouts.forEach((p, i) => {
+    const d = new Date(p.date + "T12:00:00"); let k = 0;
+    [0.35, 0.2, 0.3, 0.15].forEach(share => {
+      do { d.setDate(d.getDate() - 1); } while (d.getDay() === 0 || d.getDay() === 6);
+      const pnl = Math.round(p.amount * 1.25 * share * 100) / 100;
+      out.push({ id: "demo-fund" + i + "-" + (++k), date: iso(d), time: pick(["08:40", "09:15", "14:35"]), pair: pick(pairs), session: "London", direction: rnd() < 0.5 ? "Long" : "Short",
+        setup: pick(["Asia Sweep", "PDH/PDL Sweep"]), risk: 250, pnl, emotionBefore: "Confident", emotionAfter: "Satisfied", confidence: 4, notes: pick(winNotes),
+        mistakes: "", followedPlan: true, account: funded.id, chartBefore: "", chartAfter: "", screenshot: "" });
+    });
+  });
   // One scratch closed early as invalid, and one trade still open today.
   out.push({ id: "demo-scratch", date: iso(today), time: "08:20", pair: "EURUSD", session: "London", direction: "Short", setup: "Break & Retest", risk: 200, pnl: 4.6,
     emotionBefore: "Neutral", emotionAfter: "Satisfied", confidence: 3, notes: "Closed early, the setup was invalidated when price reclaimed the level.", mistakes: "", followedPlan: true, account: challenge.id, chartBefore: "", chartAfter: "", screenshot: "" });
