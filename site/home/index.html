@@ -15,7 +15,7 @@ img{display:block;max-width:100%}h1,h2,h3,h4,p{margin:0}a{color:inherit;text-dec
 .btn:focus-visible,button:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
 /* nav */
 .nav{position:fixed;inset:0 0 auto;z-index:20;padding-top:env(safe-area-inset-top,0px);mix-blend-mode:normal}
-.nav .wrap{display:flex;align-items:center;gap:28px;height:72px}.nav .lg{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.14em}.nav .lg img{width:30px}
+.nav .wrap{display:flex;align-items:center;gap:28px;height:72px}.nav .lg{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.14em}.nav .lg img{width:38px}
 .nav nav{display:flex;gap:26px;font-size:14px;color:var(--t2)}.nav .sp{flex:1}.nav .btn{padding:10px 18px;font-size:14px}
 .nav.solid{background:rgba(6,17,31,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 /* hero: layered parallax scene with a giant wordmark */
@@ -26,7 +26,7 @@ img{display:block;max-width:100%}h1,h2,h3,h4,p{margin:0}a{color:inherit;text-dec
 .glow{background:radial-gradient(60% 45% at 70% 30%,rgba(47,208,200,.25),transparent 70%),radial-gradient(50% 40% at 20% 40%,rgba(42,127,217,.35),transparent 70%)}
 canvas.city{position:absolute;left:0;right:0;bottom:0;width:100%;height:62%}
 .lockup{position:absolute;left:0;right:0;top:max(88px,15%);display:flex;align-items:center;justify-content:center;gap:16px}
-.lockup img{width:clamp(56px,7vw,80px)}
+.lockup img{width:clamp(70px,8.8vw,100px)}
 .lk-t b{display:block;font-weight:800;letter-spacing:.16em;font-size:clamp(32px,4vw,46px);line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lk-t span{display:block;font-weight:600;letter-spacing:.44em;text-transform:uppercase;color:var(--teal);font-size:clamp(10px,1.1vw,13px);margin-top:9px}
 .hero-eb{display:none;font-weight:600;font-size:12.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--teal)}
@@ -114,7 +114,7 @@ html.touch .lap.rv{transform:translate3d(0,26px,0)!important}html.touch .lap.rv.
 }
 /* Short or very narrow phone screens (e.g. iPhone SE in Safari, 320px-wide phones): a tighter logo and headline so they clear the text and buttons below. */
 @media (max-height:620px) and (max-width:899px), (max-width:359px) {
-  .lockup{top:80px;gap:12px}.lockup img{width:44px}.lk-t b{font-size:26px}.lk-t span{font-size:9.5px;margin-top:6px}
+  .lockup{top:80px;gap:12px}.lockup img{width:56px}.lk-t b{font-size:26px}.lk-t span{font-size:9.5px;margin-top:6px}
   .hl{top:146px;font-size:32px}
 }
 @media (max-height:620px) and (max-width:359px) { .hero .types{display:none} } /* smallest phones; the account types are listed again further down */
