@@ -1,0 +1,20 @@
+name: Read prop firm pages
+
+# Prints the text of the rules pages listed in site/firm-pages.txt into this run's log, so a new
+# firm's rules can be read and checked before they're added to the journal. Changes nothing.
+on:
+  push:
+    paths:
+      - site/firm-pages.txt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read pages
+        run: python3 site/read_firm_pages.py
