@@ -79,10 +79,10 @@ canvas.city{position:absolute;left:0;right:0;bottom:0;width:100%;height:62%}
 .cols .over h2{font-size:clamp(40px,7vw,110px);font-weight:800;letter-spacing:-.04em;line-height:.95}.cols .over p{color:var(--t2);margin-top:16px;font-size:18px}
 
 /* Touch devices: static scene, sections fade up once as they appear. */
-html.touch .cols .c,html.touch .lap{will-change:auto;transform:none!important}
+html.touch .lap{will-change:auto;transform:none!important}
 html.touch .hero{height:100svh}html.touch .stage{position:relative;height:100svh}
-html.touch .cols{height:max(600px,96svh)}html.touch .cols>.wall{inset:-6% 0;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 10px}
-html.touch .cols .c,html.touch .cols .c:nth-child(3){display:grid;gap:10px}html.touch .cols .c:nth-child(4){display:none}html.touch .cols .c:nth-child(2){margin-top:-70px}
+html.touch .cols{height:max(600px,96svh)}html.touch .cols>.wall{inset:-14% 0;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 10px}
+html.touch .cols .c,html.touch .cols .c:nth-child(3){display:grid;gap:10px}html.touch .cols .c:nth-child(4){display:none}html.touch .cols .c:nth-child(2){margin-top:-40px}
 html.touch .cols .c img{border-radius:14px}
 html.touch .cols .over{background:radial-gradient(85% 55% at 50% 50%,rgba(6,17,31,.93),rgba(6,17,31,.55));padding:0 22px}
 @media(max-width:820px){html.touch .cols .over h2{font-size:clamp(42px,12vw,64px)}html.touch .cols .over p{font-size:16px;text-wrap:balance}}
@@ -239,11 +239,13 @@ draw();
 // Phones and tablets: no scroll-linked movement (Safari runs it a frame behind the finger, which reads
 // as lag). They get reveal animations instead, which run entirely on the graphics chip.
 const touch = matchMedia("(hover: none), (pointer: coarse)").matches;
-const reduce = touch || matchMedia("(prefers-reduced-motion: reduce)").matches;
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches, reduce = touch || still;
+// Phones keep the screenshot columns moving, at half the desktop speed.
+const colK = still ? 0 : touch ? .5 : 1;
 if (touch) document.documentElement.classList.add("touch");
 const layers = [...document.querySelectorAll(".hero .layer")], chev = document.getElementById("chev"), lap = document.getElementById("lap"),
       cols = [...document.querySelectorAll(".cols .c")], colsSec = document.getElementById("cols"), nav = document.getElementById("nav"), hero = document.getElementById("hero");
-const speeds = layers.map(l => +l.dataset.speed), cspeeds = cols.map(c => +c.dataset.speed);
+const speeds = layers.map(l => +l.dataset.speed), cspeeds = cols.map(c => +c.dataset.speed * colK);
 let vh = innerHeight, heroH = 0, chevY = 0, lapY = 0, colsY = 0, colsH = 0, solid = null, ticking = false;
 const posY = el => { let y = 0; for (let e = el; e; e = e.offsetParent) y += e.offsetTop; return y; };
 function measure() {
@@ -253,10 +255,10 @@ function tick() {
   ticking = false;
   const y = scrollY, s = y > vh * .6;
   if (s !== solid) { solid = s; nav.classList.toggle("solid", s); }
+  const st = colsY - y; if (colK && st < vh && st > -colsH) for (let i = 0; i < cols.length; i++) cols[i].style.transform = `translate3d(0,${(st * cspeeds[i]).toFixed(1)}px,0)`;
   if (reduce) return;
   const lt = lapY - y; if (lt > -vh && lt < vh * 1.5) { const k = Math.min(1, Math.max(0, 1 - lt / vh));
     lap.style.transform = `perspective(1400px) rotateX(${((1 - k) * 22).toFixed(2)}deg) translate3d(0,${((1 - k) * 80).toFixed(1)}px,0) scale(${(.9 + k * .1).toFixed(3)})`; }
-  const st = colsY - y; if (st < vh && st > -colsH) for (let i = 0; i < cols.length; i++) cols[i].style.transform = `translate3d(0,${(st * cspeeds[i]).toFixed(1)}px,0)`;
 }
 const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(tick); } };
 addEventListener("scroll", req, { passive: true });
@@ -272,7 +274,7 @@ const open = i => { items.forEach((w, k) => { w.classList.toggle("on", k === i);
 items.forEach((w, i) => { w.querySelector("button").addEventListener("click", () => open(w.classList.contains("on") && !matchMedia("(hover: hover)").matches ? -1 : i)); w.addEventListener("mouseenter", () => { if (matchMedia("(hover: hover)").matches) open(i); }); });
 
 // Phones show three columns: give each one of the fourth column's pictures so the wall fills the section.
-if (touch) { const cs = [...document.querySelectorAll(".cols .c")], extra = [...cs[3].children]; cs.slice(0, 3).forEach((c, i) => extra[i] && c.appendChild(extra[i])); }
+if (touch) { const cs = [...document.querySelectorAll(".cols .c")], extra = [...cs[3].children]; cs.slice(0, 3).forEach((c, i) => { extra[i] && c.appendChild(extra[i]); c.appendChild(c.children[1].cloneNode()); }); }
 
 // Desktop tabs under the laptop.
 document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
