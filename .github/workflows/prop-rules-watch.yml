@@ -1,6 +1,6 @@
 name: Watch prop firm rules
 
-# Once a day, checks the FTMO, Funding Pips and Alpha Capital rules pages the journal's
+# Once a day, checks the FTMO, Funding Pips, Alpha Capital and FundingRock rules pages the journal's
 # prop rules come from. When one changes, it opens (or comments on) a "prop-rules" issue
 # so the numbers can be reviewed. It never changes the rules by itself.
 on:

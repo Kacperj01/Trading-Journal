@@ -1,2 +1,2 @@
 # Prop firm rules pages to read in the "Read prop firm pages" Action (one URL per line).
-https://help.fundingrock.com/en/articles/15770265-what-account-sizes-are-available-at-fundingrock
+# Add a firm's rules pages here when adding it; the Action prints their text into its log.
