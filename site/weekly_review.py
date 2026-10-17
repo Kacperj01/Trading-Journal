@@ -198,7 +198,16 @@ def build_week(trades, start, cur, settings=None):
     # Size results against risk and the account, so a few dollars isn't called a good or bad week.
     risks = [num(t.get("risk")) for t in week if num(t.get("risk")) > 0]
     unit = sum(risks) / len(risks) if risks else CTX["risk"]
-    bal = max([CTX["sizes"].get(t.get("account"), 0.0) for t in week] + [0.0])
+    # Same as the app: the balance just before the week, for the accounts traded this week
+    # (their sizes plus everything they closed earlier). Every % in the review is of this.
+    ids = {t.get("account") for t in week}
+    close_key = lambda t: (t.get("closedDate") or t.get("date") or "") + " " + ((t.get("closedTime") if t.get("closedDate") else t.get("time")) or "")
+    first = min((close_key(t) for t in week), default="")
+    week_ids = {id(t) for t in week}
+    bal = sum(CTX["sizes"].get(a, 0.0) for a in ids) + sum(
+        num(t.get("pnl")) for t in trades
+        if t.get("account") in ids and id(t) not in week_ids and t.get("status") != "open"
+        and close_key(t) < first)
     min_move = max(unit * 0.25, bal * 0.0005, 0.01)
     big = lambda v: abs(v) >= min_move
     def size_txt(v):
@@ -265,7 +274,14 @@ def build_week(trades, start, cur, settings=None):
     if losing and len(focus) < 3: focus.append(f"Refine {html.escape(losing[0]['name'])} entries and wait for confirmation before committing.")
 
     delta = st["total"] - pv["total"]
-    size = size_txt(st["total"]) if week else ""
+    # The week in R, as the app and share card show it: each trade's own R added up when every
+    # closed trade has its risk set, otherwise P&L over the average risk.
+    def r_of(t):
+        if isinstance(t.get("r"), (int, float)): return float(t["r"])
+        return num(t.get("pnl")) / num(t.get("risk")) if num(t.get("risk")) > 0 else None
+    rs = [r_of(t) for t in week if t.get("status") != "open"]
+    week_r = sum(rs) if rs and all(r is not None for r in rs) else st["total"] / unit if unit and week else None
+    size = (("+" if week_r >= 0 else "−") + f"{abs(week_r):.1f}R") if week_r is not None else size_txt(st["total"]) if week else ""
     sized = f" ({size})" if size else ""
     strong = st["total"] >= unit * 2 if unit else st["total"] >= bal * 0.01
     rough = st["total"] <= -unit * 2 if unit else st["total"] <= -bal * 0.01

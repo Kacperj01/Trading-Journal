@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "ba27ff47d7";</script>
+<script>window.ELEV8_BUILD = "37773b9ca3";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -3565,11 +3565,18 @@ function startingBalance(accountId) {
   const sizes = allAccounts().map(a => Number(a.size)).filter(n => n > 0);
   return sizes.length ? sum(sizes) : Number(settings.balance);
 }
-// Balance just before the first trade in view: the starting balance plus earlier P&L in the same account(s).
+// Balance just before the first trade in the list, for the accounts those trades were taken on:
+// their starting sizes plus everything they closed earlier. Every % of balance in the app
+// (Overview, weekly review, share cards) is worked out from this, so the numbers always agree.
 function balanceBefore(list) {
-  const first = list[0];
-  const prior = sum(trades.filter(t => inAccount(t) && (t.date + (t.time || "")) < (first.date + (first.time || ""))).map(t => t.pnl));
-  return startingBalance(ui.account) + (ui.range === "all" && !ui.session && !ui.setup ? 0 : prior);
+  if (!list.length) return startingBalance(ui.account);
+  const ids = [...new Set(list.map(t => t.account))];
+  // Trades not linked to an account can't be sized on their own: fall back to the view's balance.
+  if (ids.some(id => !acctById(id))) ids.length = 0;
+  const own = t => ids.length ? ids.includes(t.account) : inAccount(t);
+  const start = ids.length ? sum(ids.map(startingBalance)) : startingBalance(ui.account);
+  const at = sortByClose(list)[0], first = closeKey(at), inList = new Set(list.map(t => t.id));
+  return start + sum(trades.filter(t => own(t) && !isOpen(t) && !inList.has(t.id) && closeKey(t) < first).map(t => Number(t.pnl) || 0));
 }
 
 function group(list, key) {
@@ -4123,7 +4130,11 @@ function buildWeek(start) {
 
   const delta = st.total - prev.total;
   const live = start === weekStartOf(isoDate(new Date())), so = live ? " so far" : "";
-  const size = sizeTxt(st.total), sized = size ? ` (${size})` : "";
+  // The week in R: each trade's own R added up when every closed trade has its risk set,
+  // otherwise P&L over the average risk. The share card shows this same number.
+  const rs = list.filter(t => !isOpen(t)).map(rOf);
+  const weekR = rs.length && rs.every(r => r != null) ? sum(rs) : unit && list.length ? st.total / unit : null;
+  const size = weekR != null ? `${weekR >= 0 ? "+" : "−"}${Math.abs(weekR).toFixed(1)}R` : sizeTxt(st.total), sized = size ? ` (${size})` : "";
   const strong = unit ? st.total >= unit * 2 : st.total >= bal * 0.01;
   const rough = unit ? st.total <= -unit * 2 : st.total <= -bal * 0.01;
   let verdict;
@@ -4135,7 +4146,7 @@ function buildWeek(start) {
   else verdict = { emoji: ico("down"), text: `Small red week${so}: ${N(money(st.total))}${sized} from ${plural(st.n, "trade")}. A contained drawdown, recoverable with a single good trade.` };
 
   const days = Array.from({ length: 7 }, (_, i) => { const d = addDays(start, i); const ts = list.filter(t => t.date === d); return { d, n: ts.length, pnl: sum(ts.map(t => t.pnl)) }; });
-  return { start, end: addDays(start, 6), list, prevList, st, prev, followed, verdict, worked, cost, focus: focus.slice(0, 3), days };
+  return { start, end: addDays(start, 6), list, prevList, st, prev, weekR, followed, verdict, worked, cost, focus: focus.slice(0, 3), days };
 }
 
 let wkStart = null;
@@ -5727,7 +5738,7 @@ async function drawTradeCard(t, opts) {
   const ctx = c.getContext("2d"), { pad, w } = CARD; cardBase(ctx);
   await cardHeader(ctx, "Trade recap");
   const r = rOf(t), res = resultOf(t), tone = res === "Win" ? CARD.green : res === "Loss" ? CARD.red : CARD.text2;
-  const bal = startingBalance(t.account), pct = bal ? (Number(t.pnl) || 0) / bal * 100 : null;
+  const bal = balanceBefore([t]), pct = bal ? (Number(t.pnl) || 0) / bal * 100 : null;
   ctx.textBaseline = "alphabetic"; ctx.fillStyle = CARD.teal; ctx.font = "700 23px Outfit, sans-serif";
   spaced(ctx, [fmtDate(t.date, { day: "numeric", month: "short", year: "numeric" }), t.session, t.setup].filter(Boolean).join("  ·  ").toUpperCase(), pad, 236, 3.5);
   const big = r != null ? fmtSignedR(r) : pct != null ? fmtSignedPct(pct) : res;
@@ -5782,7 +5793,7 @@ async function drawWeekCard(w, opts) {
   const c = document.createElement("canvas"); c.width = CARD.w; c.height = CARD.h;
   const ctx = c.getContext("2d"), { pad } = CARD, W = CARD.w; cardBase(ctx);
   await cardHeader(ctx, "Weekly review");
-  const st = w.st, totalR = sum(w.list.map(rOf).filter(r => r != null)), bal = startingBalance(ui.account), pct = bal ? st.total / bal * 100 : null;
+  const st = w.st, totalR = w.weekR, bal = balanceBefore(w.list), pct = bal ? st.total / bal * 100 : null;
   const tone = st.total > 0 ? CARD.green : st.total < 0 ? CARD.red : CARD.text2;
   ctx.textBaseline = "alphabetic"; ctx.fillStyle = CARD.teal; ctx.font = "700 23px Outfit, sans-serif";
   spaced(ctx, ("Week of " + fmtDate(w.start, { day: "numeric", month: "short" }) + " – " + fmtDate(w.end, { day: "numeric", month: "short", year: "numeric" })).toUpperCase(), pad, 236, 3.5);
@@ -5792,10 +5803,10 @@ async function drawWeekCard(w, opts) {
   panel(ctx, pad, 384, W - pad * 2, 250, 28);
   ctx.fillStyle = CARD.muted; ctx.font = "600 21px Outfit, sans-serif"; spaced(ctx, "RESULT", pad + 40, 444, 3);
   ctx.fillStyle = tone; ctx.font = "700 104px 'JetBrains Mono', monospace";
-  const main = totalR ? fmtSignedR(totalR) : pct != null ? fmtSignedPct(pct) : money(st.total);
+  const main = totalR != null ? fmtSignedR(totalR) : pct != null ? fmtSignedPct(pct) : money(st.total);
   ctx.fillText(main, pad + 36, 560);
   ctx.textAlign = "right"; ctx.font = "600 30px 'JetBrains Mono', monospace"; ctx.fillStyle = CARD.text2;
-  const side = [pct != null && totalR ? fmtSignedPct(pct) : "", opts.money ? money(st.total) : ""].filter(Boolean);
+  const side = [pct != null && totalR != null ? fmtSignedPct(pct) : "", opts.money ? money(st.total) : ""].filter(Boolean);
   side.forEach((v, i) => ctx.fillText(v, W - pad - 40, 520 + i * 44 - (side.length - 1) * 22));
   ctx.textAlign = "left";
   // Day bars
