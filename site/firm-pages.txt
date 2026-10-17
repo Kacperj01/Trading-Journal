@@ -1,6 +1,4 @@
 # Prop firm rules pages to read in the "Read prop firm pages" Action (one URL per line).
-https://help.fundingrock.com/en/
-https://help.fundingrock.com/en/articles/15787621-2-step-guide
-https://help.fundingrock.com/en/articles/15924417-instant-guide
-https://help.fundingrock.com/en/articles/15787595-which-program-is-right-for-me
-https://help.fundingrock.com/en/articles/15749219-how-does-fundingrock-work
+https://help.fundingrock.com/en/collections/19622421-trading-rules-explained
+https://help.fundingrock.com/en/collections/19622400-trading-rules-and-restrictions
+https://help.fundingrock.com/en/articles/15777579-how-does-a-trailing-maximum-loss-work
