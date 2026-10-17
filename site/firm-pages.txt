@@ -1,6 +1,6 @@
 # Prop firm rules pages to read in the "Read prop firm pages" Action (one URL per line).
 https://help.fundingrock.com/en/
-https://help.fundingrock.com/en/articles/15787609-1-step-guide
-https://help.fundingrock.com/en/articles/15787602-pay-after-you-pass-guide
-https://www.fundingrock.com/
-https://www.fundingrock.com/how-it-works/
+https://help.fundingrock.com/en/articles/15787621-2-step-guide
+https://help.fundingrock.com/en/articles/15924417-instant-guide
+https://help.fundingrock.com/en/articles/15787595-which-program-is-right-for-me
+https://help.fundingrock.com/en/articles/15749219-how-does-fundingrock-work

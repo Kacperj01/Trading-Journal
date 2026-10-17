@@ -2,7 +2,7 @@
 checked when they're added (some firm sites can't be reached from where the journal is edited).
 
 Reads the page list from site/firm-pages.txt (one URL per line, # for comments). For each page it
-prints the readable text and any help-centre article links found on it. Changes nothing.
+prints the readable text and any help-centre article and section links found on it. Changes nothing.
 """
 import html, re, sys, urllib.request
 from pathlib import Path
@@ -33,10 +33,10 @@ def main():
         except Exception as exc:  # keep going: one bad page shouldn't hide the others
             print("FAILED", exc)
             continue
-        links = sorted(set(re.findall(r'href="(https?://[^"]*/articles/[^"]+|/[^"]*/articles/[^"]+)"', page)))
+        links = sorted(set(re.findall(r'href="(https?://[^"]*/(?:articles|collections)/[^"]+|/[^"]*/(?:articles|collections)/[^"]+)"', page)))
         print(text_of(page)[:30000])
         if links:
-            print("\nARTICLE LINKS\n" + "\n".join(links))
+            print("\nHELP-CENTRE LINKS\n" + "\n".join(links))
     return 0
 
 
