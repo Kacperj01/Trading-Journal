@@ -226,7 +226,7 @@ footer{margin-top:140px;background:#030a13;padding:80px 0 0;overflow:hidden}
 
 <footer><div class="wrap">
  <div class="fcta"><h2>Your next trade is<br><span class="ser g">your next lesson.</span></h2><div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn p" href="../?signup">Start now →</a><a class="btn" href="../?demo">Try the demo</a></div></div>
- <div class="fcols"><span>Set up takes two minutes.</span><div class="links"><a href="#how">Features</a><a href="#start">How it works</a><a href="#faq">FAQ</a><a href="../?login">Log in</a><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a><span>Instagram</span><span>Discord</span></div></div>
+ <div class="fcols"><span>Set up takes two minutes.</span><div class="links"><a href="#how">Features</a><a href="#start">How it works</a><a href="#faq">FAQ</a><a href="../?login">Log in</a><a href="../privacy/">Privacy</a><a href="../terms/">Terms</a><a href="https://www.instagram.com/elev8trading_/" target="_blank" rel="noopener">Instagram</a><a href="https://discord.gg/wYvXZ4xwF" target="_blank" rel="noopener">Discord</a></div></div>
  <p class="disc">© 2026 ELEV8. Trading involves significant risk of loss. ELEV8 is a journaling and education tool. Everything on this site and in the app is for education only and is not financial advice; ELEV8 does not provide signals or brokerage services. ELEV8 is not affiliated with, endorsed by or sponsored by FundingRock, FTMO, Funding Pips, Alpha Capital or any other prop firm or broker. Their names and logos belong to their owners and are shown only to identify which firm an account is with.</p>
 </div><div class="giant" aria-hidden="true">ELEV8</div></footer>
 
@@ -280,10 +280,10 @@ addEventListener("resize", () => { if (innerWidth !== lastW) { lastW = innerWidt
 addEventListener("load", () => { measure(); req(); });
 measure(); tick();
 
-// Big words: hover (desktop) or tap opens one and swaps the picture.
+// Big words: hover (desktop) or tap opens one and swaps the picture. Tapping an open one closes it.
 const items = [...document.querySelectorAll(".w")], pics = [...document.querySelectorAll("#wimgs img")];
-const open = i => { items.forEach((w, k) => { w.classList.toggle("on", k === i); w.querySelector("button").setAttribute("aria-expanded", k === i); }); pics.forEach((p, k) => p.classList.toggle("on", k === i)); };
-items.forEach((w, i) => { w.querySelector("button").addEventListener("click", () => open(i)); w.addEventListener("mouseenter", () => { if (matchMedia("(hover: hover)").matches) open(i); }); });
+const open = i => { items.forEach((w, k) => { w.classList.toggle("on", k === i); w.querySelector("button").setAttribute("aria-expanded", k === i); }); if (i >= 0) pics.forEach((p, k) => p.classList.toggle("on", k === i)); };
+items.forEach((w, i) => { w.querySelector("button").addEventListener("click", () => open(w.classList.contains("on") && !matchMedia("(hover: hover)").matches ? -1 : i)); w.addEventListener("mouseenter", () => { if (matchMedia("(hover: hover)").matches) open(i); }); });
 
 // Desktop tabs under the laptop.
 document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
