@@ -91,7 +91,7 @@ page = f"""<!doctype html>
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>window.ELEV8_BUILD = "{version}";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
