@@ -1,7 +1,7 @@
 {
  "https://ftmo.com/en/1-step-challenge/": "8091415a03a24e261b6052adb407b7ea31e20b33ececb105f0f101bedb43c91e",
  "https://ftmo.com/en/2-step-challenge/": "52aef0ed4c06b70fb76e7bf1b6914887a8165bf928a7058f1fd1485d4b709347",
- "https://ftmo.com/en/blog/introducing-the-1-step-ftmo-challenge/": "2f2a9298ef3984441dcbaaf28a086d90ad98c0ddfa0b9e420795148c98482309",
+ "https://ftmo.com/en/blog/introducing-the-1-step-ftmo-challenge/": "fc234fb0173aad926f2577f245a2163c7fe4b8219efb65a4dae7b2af7d3b12d2",
  "https://ftmo.com/en/comparison-table/": "e1ea979d705020175b40b6611b5ee488d4bebfedd51ad187a53b62c8fc409632",
  "https://ftmo.com/en/faq/can-i-trade-news/": "cf844a05776be28aac74fac3884b785291e42a7b9fc7c7ad0b640fe215378aec",
  "https://ftmo.com/en/faq/do-i-have-to-close-my-positions-overnight-or-before-the-weekend/": "dfbfbd51938fcbe76e35a0457f0ce21c20a003d7dfd793e478731bd8882e161a",
@@ -16,5 +16,16 @@
  "https://help.alphacapitalgroup.uk/en/articles/6934247-can-i-hold-trades-over-the-weekend": "23010f6d577c1f749932af6b9cb7c78c6477f786587b136eeb8fec0857a4b31e",
  "https://help.alphacapitalgroup.uk/en/articles/8420429-alpha-pro-8-10": "970e6aa97496bc86a18f6f6a12cf08eecb47a3fdbf7f2592444cf0b47857eb5c",
  "https://help.alphacapitalgroup.uk/en/articles/9293522-can-i-trade-news": "7b7756bbb86adb59b319c121e1d09b1e9bf3179456da2bfca443e6d6e551900a",
- "https://help.alphacapitalgroup.uk/en/articles/9789907-alpha-swing": "2680a7a8fd9d30509bebfe17bc38772245294b26c621758b1d9550b69c3a14f4"
+ "https://help.alphacapitalgroup.uk/en/articles/9789907-alpha-swing": "2680a7a8fd9d30509bebfe17bc38772245294b26c621758b1d9550b69c3a14f4",
+ "https://help.fundingrock.com/en/articles/15777569-what-is-the-daily-loss-limit-and-how-is-it-calculated": "74c820824a80a9167d02e0df7de5805cbcecf22efd273d7fc0368133556809e4",
+ "https://help.fundingrock.com/en/articles/15777579-how-does-a-trailing-maximum-loss-work": "9b48fd1f04a36c8af8b06cc706c984d0f985ef34abd84bb197d1195a5b71a38b",
+ "https://help.fundingrock.com/en/articles/15777583-how-does-a-static-maximum-loss-work": "c731aeb0d7df36785086bebb7511821097631fd8cbbbc57ec5ce2ab6a301a8d6",
+ "https://help.fundingrock.com/en/articles/15777588-can-i-hold-trades-overnight": "20cedb8735f490c849a38106dfe7881fdc011a6563f11c901d7d8ba36ab689aa",
+ "https://help.fundingrock.com/en/articles/15777599-can-i-trade-during-news-events": "c4bdce79931370200ab94896c3735f5aec2b4d1e21c9967316ae124145892f06",
+ "https://help.fundingrock.com/en/articles/15777603-what-is-the-consistency-rule": "556f9022aa7d06c01d1f39861014da7f804245a7b092ebf181ae0e335f5919a5",
+ "https://help.fundingrock.com/en/articles/15787602-pay-after-you-pass-guide": "018a7c05c69d33e92ff4676acbd650718b36ff431a54526b407675039514ddd9",
+ "https://help.fundingrock.com/en/articles/15787609-1-step-guide": "c449e0e3e6b44fddc1483004d9efd872dace9917b82d7d3654b0082e96fc52ef",
+ "https://help.fundingrock.com/en/articles/15787621-2-step-guide": "237b7d7a078069648aea90cbb29885d72a3d5156368e242fe35c11d01ebd87b8",
+ "https://help.fundingrock.com/en/articles/15804143-what-is-the-reward-lock": "748f11d0b9a60f1433ed4cc99b6d6c4c1ec0d5909fab414eeb848519fceff1fd",
+ "https://help.fundingrock.com/en/articles/15924417-instant-guide": "42d0e4f8d3636906dd965792dc41eeabaaf80a57afeb0c4e76d4a1dbaf0a825b"
 }
