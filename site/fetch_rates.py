@@ -16,7 +16,7 @@ OUT = Path(__file__).resolve().parent.parent / "docs" / "rates.json"
 
 
 def fetch():
-    req = urllib.request.Request(FEED, headers={"User-Agent": "ELEV8-Trading-Journal/1.0 (+https://github.com/Kacperj01/Trading-Journal)"})
+    req = urllib.request.Request(FEED, headers={"User-Agent": "ELEV8-Trading-Journal/1.0 (+https://elev8tradingjournal.com)"})
     with urllib.request.urlopen(req, timeout=30) as res:
         root = ET.fromstring(res.read())
     day, eur = None, {"EUR": 1.0}

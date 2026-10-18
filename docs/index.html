@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-yklhDPTzuBEI3cWv1ivnaGtsGUrltLiu8D1p/jm3GuQ=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-MrpkD6HgHdCMDVPllzD6P2OlhThAOCCyky8xp+KTGBw=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-ZN40pxcUdaWWLomSQC59iGn3/qcFrPh8ScKxJrMmUPw=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-awVgge8rXJ1mij5+B9w5agc1Yi5N6QZprfbr5p6yKE0=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "6632921fc0";</script>
+<script>window.ELEV8_BUILD = "61a55fc740";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -6528,7 +6528,7 @@ document.addEventListener("click", e => { const b = e.target.closest("button[dat
    Position size calculator
    ====================================================================== */
 const KEY_RATES = "tj.rates.v1";
-const RATE_URLS = ["rates.json", "https://raw.githubusercontent.com/Kacperj01/Trading-Journal/HEAD/docs/rates.json"];
+const RATE_URLS = ["rates.json", "https://elev8tradingjournal.com/rates.json"];
 // Units per 1 US dollar, used only until the ECB's daily rates (docs/rates.json) have loaded.
 const FX_FALLBACK = { USD: 1, EUR: .86, GBP: .75, JPY: 150, AUD: 1.53, NZD: 1.72, CAD: 1.38, CHF: .8, HKD: 7.8, SGD: 1.29, SEK: 9.5, NOK: 10.1, DKK: 6.4, PLN: 3.65, MXN: 18.5, ZAR: 17.5, TRY: 41, CNY: 7.1, HUF: 335, CZK: 21 };
 let fx = store.get(KEY_RATES, null), fxLoading = null;
@@ -6536,7 +6536,7 @@ async function loadRates() {
   if (fxLoading) return fxLoading;
   if (fx && Date.now() - (fx.fetchedAt || 0) < 6 * 3600e3) return;
   fxLoading = (async () => {
-    const urls = /^https?:$/.test(location.protocol) && !inViewer() ? RATE_URLS : RATE_URLS.slice(1);
+    const urls = /^https?:$/.test(location.protocol) && !inViewer() ? RATE_URLS.slice(0, 1) : RATE_URLS.slice(1);
     for (const u of urls) {
       try {
         const r = await fetch(u + "?t=" + Math.floor(Date.now() / 3600e3), { cache: "no-store" });
@@ -7152,7 +7152,7 @@ function propWarn(t) {
    every few hours by a GitHub Action; see site/fetch_calendar.py)
    ====================================================================== */
 const KEY_NEWS = "tj.news.v1";
-const NEWS_URLS = ["calendar.json", "https://raw.githubusercontent.com/Kacperj01/Trading-Journal/HEAD/docs/calendar.json"];
+const NEWS_URLS = ["calendar.json", "https://elev8tradingjournal.com/calendar.json"];
 let news = store.get(KEY_NEWS, null);
 let newsLoading = null, newsFailed = false;
 const newsEvents = () => (news && Array.isArray(news.events) ? news.events : []);
@@ -7161,8 +7161,8 @@ async function loadNews(force) {
   if (newsLoading) return newsLoading;
   if (!force && news && Date.now() - (news.fetchedAt || 0) < 15 * 60 * 1000) return;
   newsLoading = (async () => {
-    // The app's own copy only exists on the GitHub site; elsewhere (claude.ai, a saved file) use GitHub directly.
-    const urls = /^https?:$/.test(location.protocol) && !inViewer() ? NEWS_URLS : NEWS_URLS.slice(1);
+    // On the website use its own copy; elsewhere (claude.ai, a saved file) fetch it from the website.
+    const urls = /^https?:$/.test(location.protocol) && !inViewer() ? NEWS_URLS.slice(0, 1) : NEWS_URLS.slice(1);
     const got = await Promise.allSettled(urls.map(u => fetch(u + "?t=" + Math.floor(Date.now() / 60000), { cache: "no-store" })
       .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status)))));
     const ok = got.filter(g => g.status === "fulfilled" && g.value && Array.isArray(g.value.events)).map(g => g.value);

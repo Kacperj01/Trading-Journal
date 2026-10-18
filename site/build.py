@@ -178,17 +178,33 @@ self.addEventListener("fetch", e => {{
 """
 
 docs.mkdir(exist_ok=True)
-# The journal talks to Supabase, and to GitHub for exchange rates and the news calendar when offline from
-# its own copies. Chart previews can come from any https image link a trader pastes.
+# The journal talks to Supabase (exchange rates and the news calendar come from this site).
+# Chart previews can come from any https image link a trader pastes.
 sb_origin = re.match(r"https?://[^/]+", cfg.get("supabaseUrl", "")) if cfg.get("supabaseUrl") else None
 page = analytics(local_fonts(page, ""))
-page = secure(page, turnstile=bool(cfg.get("turnstileSiteKey")), connect=[*( [sb_origin.group(0)] if sb_origin else []), "https://raw.githubusercontent.com", "blob:"],
+page = secure(page, turnstile=bool(cfg.get("turnstileSiteKey")), connect=[*( [sb_origin.group(0)] if sb_origin else []), "blob:"],
               img="'self' data: blob: https:")
 (docs / "index.html").write_text(page, encoding="utf-8")
 (docs / "manifest.webmanifest").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 (docs / "sw.js").write_text(sw, encoding="utf-8")
 (docs / ".nojekyll").write_text("", encoding="utf-8")
-# Custom domain for GitHub Pages (DNS is set up at Cloudflare).
+# Response headers for Cloudflare Pages (GitHub Pages ignores this file). These do what a page can't do
+# for itself: forbid framing outright, force HTTPS, stop file-type guessing and limit what's shared.
+(docs / "_headers").write_text("""/*
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+/sw.js
+  Cache-Control: no-cache
+/rates.json
+  Access-Control-Allow-Origin: *
+/calendar.json
+  Access-Control-Allow-Origin: *
+""", encoding="utf-8")
+# Custom domain for GitHub Pages (kept while moving to Cloudflare Pages, which ignores it).
 (docs / "CNAME").write_text("elev8tradingjournal.com\n", encoding="utf-8")
 # Homepage at /home/: site/home/index.html is page content (like index.html), wrapped here.
 import shutil
