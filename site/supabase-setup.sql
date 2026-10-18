@@ -60,8 +60,8 @@ drop policy if exists "Own payout certificates: delete" on storage.objects;
 create policy "Own payout certificates: delete" on storage.objects for delete to authenticated
   using (bucket_id = 'payout-certificates' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- Bug reports (sidebar › Report a bug). Anyone using the journal can send one, signed in or not;
--- nobody can read them through the app. Read them in Table Editor › bug_reports.
+-- Bug reports (sidebar › Report a bug). Only signed-in accounts can send one (so nobody can flood them),
+-- and nobody can read them through the app. Read them in Table Editor › bug_reports.
 create table if not exists public.bug_reports (
   id bigint generated always as identity primary key,
   created_at timestamptz not null default now(),
@@ -72,10 +72,12 @@ create table if not exists public.bug_reports (
 );
 alter table public.bug_reports enable row level security;
 drop policy if exists "Anyone can send a bug report" on public.bug_reports;
-create policy "Anyone can send a bug report" on public.bug_reports
-  for insert to anon, authenticated with check (user_id is null or user_id = auth.uid());
-grant usage on schema public to anon, authenticated;
-grant insert (title, body) on public.bug_reports to anon, authenticated;
+drop policy if exists "Signed-in users can send a bug report" on public.bug_reports;
+create policy "Signed-in users can send a bug report" on public.bug_reports
+  for insert to authenticated with check (user_id = auth.uid());
+revoke insert on public.bug_reports from anon;
+grant usage on schema public to authenticated;
+grant insert (title, body) on public.bug_reports to authenticated;
 
 -- Delete my account (Settings › Account › Delete account). Deletes the signed-in person's trades,
 -- settings, bug reports and login. Their screenshots and payout certificates are removed by the app

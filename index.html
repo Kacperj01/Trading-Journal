@@ -2273,7 +2273,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <div class="dlg-actions">
       <button class="btn ghost" type="button" id="bugCancel">Cancel</button>
       <button class="btn" type="button" id="bugCopy">Copy report</button>
-      <button class="btn primary" type="submit">Send report</button>
+      <button class="btn primary" type="submit" id="bugSend">Send report</button>
     </div>
   </form>
 </dialog>
@@ -7387,9 +7387,8 @@ loadNews();
 // Read them in Supabase: Table Editor › bug_reports.
 const BUG_DB = window.ELEV8_SUPABASE && window.ELEV8_SUPABASE.url && window.ELEV8_SUPABASE.key ? window.ELEV8_SUPABASE : null;
 async function sendBugReport(r) {
-  if (!BUG_DB) throw new Error("No database in this copy of the journal");
-  let auth = BUG_DB.key;
-  if (sbOn() && sb.session.expires_at - 60 > Date.now() / 1000) auth = sb.session.access_token; // signed in: tag the report with the account
+  if (!canSendBug()) throw new Error("Sign in to send a report");
+  const auth = await sbToken(); // reports are tied to the signed-in account
   const res = await fetch(BUG_DB.url + "/rest/v1/bug_reports", { method: "POST",
     headers: { apikey: BUG_DB.key, Authorization: "Bearer " + auth, "Content-Type": "application/json", Prefer: "return=minimal" },
     body: JSON.stringify({ title: r.title.slice(0, 200), body: r.body.slice(0, 8000) }) });
@@ -7417,9 +7416,12 @@ function bugReport() {
   const title = "Bug: " + (what.split("\n")[0].slice(0, 70) || "(no description)");
   return { title, body };
 }
+// Only signed-in accounts can send reports (so nobody can flood them); anyone can still copy one.
+const canSendBug = () => !!(BUG_DB && sbOn());
 function openBugReport() {
   setMenu(false);
-  F("bugMsg").textContent = "";
+  F("bugMsg").textContent = canSendBug() ? "" : "Sign in to send a report. You can still tap Copy report and send it to us another way.";
+  F("bugSend").hidden = !canSendBug();
   const dlg = F("bugDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   F("bugText").focus();

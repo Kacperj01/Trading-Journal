@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-QF1HiWio9Ssl1waqYrd0fTbtgtaWj/LNKE3MNn4JvFY=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-hgznnYC6nZ0VddUDxYypui3BnpHg8BhQ37Z+W5voD0I=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-cquB+lho5OT9d65z+HhU2ZNr+4qxsRkQ4uYNso82UWs=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-ElDzS2xzb2lKKdEQYpx47KlUHvWZtnLXsoC8K1dS4T4=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "411cf16fa9";</script>
+<script>window.ELEV8_BUILD = "fff7a36755";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -2313,7 +2313,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <div class="dlg-actions">
       <button class="btn ghost" type="button" id="bugCancel">Cancel</button>
       <button class="btn" type="button" id="bugCopy">Copy report</button>
-      <button class="btn primary" type="submit">Send report</button>
+      <button class="btn primary" type="submit" id="bugSend">Send report</button>
     </div>
   </form>
 </dialog>
@@ -7427,9 +7427,8 @@ loadNews();
 // Read them in Supabase: Table Editor › bug_reports.
 const BUG_DB = window.ELEV8_SUPABASE && window.ELEV8_SUPABASE.url && window.ELEV8_SUPABASE.key ? window.ELEV8_SUPABASE : null;
 async function sendBugReport(r) {
-  if (!BUG_DB) throw new Error("No database in this copy of the journal");
-  let auth = BUG_DB.key;
-  if (sbOn() && sb.session.expires_at - 60 > Date.now() / 1000) auth = sb.session.access_token; // signed in: tag the report with the account
+  if (!canSendBug()) throw new Error("Sign in to send a report");
+  const auth = await sbToken(); // reports are tied to the signed-in account
   const res = await fetch(BUG_DB.url + "/rest/v1/bug_reports", { method: "POST",
     headers: { apikey: BUG_DB.key, Authorization: "Bearer " + auth, "Content-Type": "application/json", Prefer: "return=minimal" },
     body: JSON.stringify({ title: r.title.slice(0, 200), body: r.body.slice(0, 8000) }) });
@@ -7457,9 +7456,12 @@ function bugReport() {
   const title = "Bug: " + (what.split("\n")[0].slice(0, 70) || "(no description)");
   return { title, body };
 }
+// Only signed-in accounts can send reports (so nobody can flood them); anyone can still copy one.
+const canSendBug = () => !!(BUG_DB && sbOn());
 function openBugReport() {
   setMenu(false);
-  F("bugMsg").textContent = "";
+  F("bugMsg").textContent = canSendBug() ? "" : "Sign in to send a report. You can still tap Copy report and send it to us another way.";
+  F("bugSend").hidden = !canSendBug();
   const dlg = F("bugDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   F("bugText").focus();

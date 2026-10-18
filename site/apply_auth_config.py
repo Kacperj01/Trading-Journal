@@ -21,7 +21,9 @@ REDIRECTS = [f"{SITE}/**", "https://www.elev8tradingjournal.com/**"]
 cfg = json.loads((root / "site" / "config.json").read_text())
 ref = re.match(r"https://([a-z0-9]+)\.supabase\.co", cfg["supabaseUrl"]).group(1)
 
-body = {"site_url": SITE, "mailer_otp_exp": 86400,  # buttons and codes last 24 hours, as the emails say
+# Buttons and codes last 2 hours, as the emails say. Supabase has one setting for every email link, so
+# this covers password resets, sign-up confirmations and sign-in links alike.
+body = {"site_url": SITE, "mailer_otp_exp": 7200,
         "password_min_length": 8}
 for kind, (subject, html) in make_templates.build().items():
     body[f"mailer_subjects_{kind}"] = subject
