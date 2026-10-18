@@ -6,5 +6,5 @@
 - Keep the ELEV8 colours and the Outfit font.
 
 ## Repo
-- App source: `index.html`. Homepage: `site/home/`. Legal: `site/legal/`. `python3 site/build.py` builds into `docs/`, which Cloudflare Pages serves (output folder `docs`, no build command; `docs/_headers` sets response headers).
+- App source: `index.html`. Homepage: `site/home/`. Legal: `site/legal/`. `python3 site/build.py` builds into `docs/`, which GitHub Pages serves. (Ready for Cloudflare Pages if hosting ever moves: output folder `docs`, no build command; `docs/_headers` sets response headers there.)
 - Never put API keys or the Supabase service key in the app or the repo.
