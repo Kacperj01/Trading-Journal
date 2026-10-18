@@ -7391,6 +7391,13 @@ function snapshotHtml() {
   // Keep only this page's own script; drop anything a viewer injected and any older embedded data.
   doc.querySelectorAll("script").forEach(el => { if (el.id !== "app") el.remove(); });
   doc.querySelectorAll('meta[http-equiv="Content-Security-Policy"]').forEach(el => el.remove());
+  // The website serves its own font files; a saved file opened from Downloads can't reach them, so use Google's copy there.
+  doc.querySelectorAll('link[href$="fonts/fonts.css"], link[rel="preload"][as="font"]').forEach(el => el.remove());
+  if (!doc.querySelector('link[href*="fonts.googleapis.com"]')) {
+    const fl = doc.createElement("link"); fl.rel = "stylesheet";
+    fl.href = "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap";
+    doc.head.appendChild(fl);
+  }
   // Declare UTF-8 first thing in the file, or emojis and symbols are garbled when it's opened on its own.
   doc.querySelectorAll("meta[charset], meta[name=viewport]").forEach(el => el.remove());
   const vp = doc.createElement("meta"); vp.name = "viewport"; vp.content = "width=device-width,initial-scale=1,viewport-fit=cover";

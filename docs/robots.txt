@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://elev8tradingjournal.com/sitemap.xml

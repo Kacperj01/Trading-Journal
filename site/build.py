@@ -19,6 +19,14 @@ FRAME_GUARD = ('<script>if (window.top !== window.self) { document.documentEleme
                'try { window.top.location.replace(window.location.href); } catch (e) {} }</script>')
 
 
+def local_fonts(html, prefix):
+    """Load Outfit and JetBrains Mono from this site (prefix is the path to the site root), not Google."""
+    html = re.sub(r'<link[^>]*href="https://fonts\.(googleapis|gstatic)\.com[^"]*"[^>]*>\s*', "", html)
+    tags = (f'<link rel="preload" href="{prefix}fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>\n'
+            f'<link rel="stylesheet" href="{prefix}fonts/fonts.css">\n')
+    return html.replace("</head>", tags + "</head>", 1)
+
+
 def secure(html, connect=(), img="'self' data:"):
     html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + FRAME_GUARD, 1)
     hashes = []
@@ -29,8 +37,8 @@ def secure(html, connect=(), img="'self' data:"):
     policy = [
         "default-src 'self'",
         "script-src 'self' " + " ".join(dict.fromkeys(hashes)),
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "font-src 'self' data: https://fonts.gstatic.com",
+        "style-src 'self' 'unsafe-inline'",
+        "font-src 'self' data:",
         "img-src " + img,
         "connect-src " + " ".join(["'self'", *connect]),
         "worker-src 'self' blob:",
@@ -118,14 +126,14 @@ manifest = {
 
 sw = f"""// Offline support for the Trading Journal app. The version changes whenever the page does.
 const CACHE = "journal-{version}";
-const FONTS = "journal-fonts";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png"];
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png",
+  "./fonts/fonts.css", "./fonts/outfit-latin.woff2", "./fonts/outfit-latin-ext.woff2", "./fonts/jetbrains-mono-latin.woff2", "./fonts/jetbrains-mono-latin-ext.woff2"];
 
 self.addEventListener("install", e => {{
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 }});
 self.addEventListener("activate", e => {{
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== FONTS).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 }});
 self.addEventListener("fetch", e => {{
   const req = e.request;
@@ -143,15 +151,6 @@ self.addEventListener("fetch", e => {{
       .catch(() => caches.match("./index.html")));
     return;
   }}
-  // Google Fonts: serve the saved copy, refresh it in the background.
-  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {{
-    e.respondWith(caches.open(FONTS).then(async c => {{
-      const hit = await c.match(req);
-      const net = fetch(req).then(res => {{ c.put(req, res.clone()); return res; }}).catch(() => hit);
-      return hit || net;
-    }}));
-    return;
-  }}
   if (url.origin === location.origin) {{
     e.respondWith(caches.match(req, {{ ignoreSearch: true }}).then(hit => hit || fetch(req)));
   }}
@@ -162,6 +161,7 @@ docs.mkdir(exist_ok=True)
 # The journal talks to Supabase, and to GitHub for exchange rates and the news calendar when offline from
 # its own copies. Chart previews can come from any https image link a trader pastes.
 sb_origin = re.match(r"https?://[^/]+", cfg.get("supabaseUrl", "")) if cfg.get("supabaseUrl") else None
+page = local_fonts(page, "")
 page = secure(page, connect=[*( [sb_origin.group(0)] if sb_origin else []), "https://raw.githubusercontent.com", "blob:"],
               img="'self' data: blob: https:")
 (docs / "index.html").write_text(page, encoding="utf-8")
@@ -196,7 +196,7 @@ home_page = f"""<!doctype html>
 </html>
 """
 (docs / "home").mkdir(exist_ok=True)
-(docs / "home" / "index.html").write_text(secure(home_page), encoding="utf-8")
+(docs / "home" / "index.html").write_text(secure(local_fonts(home_page, "../")), encoding="utf-8")
 shutil.copytree(root / "site" / "home" / "img", docs / "home" / "img", dirs_exist_ok=True)
 # Privacy Policy and Terms at /privacy/ and /terms/: site/legal/*.html are content, wrapped here.
 LEGAL_CSS = """
@@ -216,10 +216,14 @@ h2 { color: #e6eef8; font-size: 21px; margin: 34px 0 8px; }
 p, ul { margin: 0 0 14px; } ul { padding-left: 22px; } li { margin-bottom: 6px; }
 b { color: #e6eef8; font-weight: 600; }
 a { color: #2fd0c8; }
-footer { border-top: 1px solid rgba(150,195,245,.14); color: #5d7190; font-size: 13px; }
+footer { border-top: 1px solid rgba(150,195,245,.14); color: #8394ad; font-size: 13px; }
 footer div { max-width: 760px; margin: 0 auto; padding: 22px max(20px, env(safe-area-inset-left, 0px)) 40px; display: flex; gap: 18px; flex-wrap: wrap; }
-footer a { color: #8394ad; }
+footer a { color: #b0bfd3; }
 """
+LEGAL_DESC = {
+    "privacy": "How ELEV8 Trading Journal collects, uses and protects your data, how long it is kept, and your rights under GDPR.",
+    "terms": "The terms for using ELEV8 Trading Journal: a journal for education only, not financial advice, and not affiliated with any prop firm or broker.",
+}
 for slug in ("privacy", "terms"):
     src_l = (root / "site" / "legal" / f"{slug}.html").read_text(encoding="utf-8")
     title_l = re.search(r"<title>(.*?)</title>", src_l).group(1)
@@ -232,7 +236,11 @@ for slug in ("privacy", "terms"):
 <title>{title_l}</title>
 <meta name="theme-color" content="#06111f">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap">
+<meta name="description" content="{LEGAL_DESC[slug]}">
+<meta property="og:title" content="{title_l}">
+<meta property="og:description" content="{LEGAL_DESC[slug]}">
+<meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
+<link rel="canonical" href="https://elev8tradingjournal.com/{slug}/">
 <style>{LEGAL_CSS}</style>
 </head>
 <body>
@@ -245,7 +253,50 @@ for slug in ("privacy", "terms"):
 </html>
 """
     (docs / slug).mkdir(exist_ok=True)
-    (docs / slug / "index.html").write_text(secure(page_l), encoding="utf-8")
+    (docs / slug / "index.html").write_text(secure(local_fonts(page_l, "../")), encoding="utf-8")
+
+# Fonts served from this site (see site/fetch_fonts.py).
+shutil.copytree(root / "site" / "fonts", docs / "fonts", dirs_exist_ok=True)
+
+# Page shown for any address that doesn't exist (GitHub Pages serves 404.html). Paths are from the
+# site root because it can appear at any address.
+page_404 = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Page not found · ELEV8 Trading Journal</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#06111f">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<style>{LEGAL_CSS}
+.nf {{ min-height: calc(100vh - 200px); display: grid; place-content: center; text-align: center; padding: 40px 0; }}
+.nf .code {{ font: 800 clamp(90px, 22vw, 180px)/1 Outfit, sans-serif; letter-spacing: -.04em; background: linear-gradient(120deg, #2a7fd9, #1f9fcf 55%, #2fd0c8); -webkit-background-clip: text; background-clip: text; color: transparent; }}
+.nf h1 {{ margin: 6px 0 10px; }}
+.nf .btns {{ display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }}
+.nf .btns a {{ display: inline-block; padding: 13px 24px; border-radius: 999px; font-weight: 600; text-decoration: none; border: 1px solid rgba(150,195,245,.25); color: #e6eef8; }}
+.nf .btns a.p {{ background: linear-gradient(120deg, #2a7fd9, #2fd0c8); color: #04101d; border: 0; }}
+</style>
+</head>
+<body>
+<header class="top"><div><a class="logo" href="/home/"><img src="/home/img/mark.svg" alt="">ELEV8</a><a class="back" href="/home/">Back to home</a></div></header>
+<main class="nf">
+<div class="code">404</div>
+<h1>Page not found</h1>
+<p>This page doesn't exist or has moved.</p>
+<div class="btns"><a class="p" href="/home/">Go to the homepage</a><a href="/?app">Open your journal</a></div>
+</main>
+<footer><div><span>ELEV8 Trading Journal</span><a href="/privacy/">Privacy Policy</a><a href="/terms/">Terms of Use</a><a href="/home/">Home</a></div></footer>
+</body>
+</html>
+"""
+(docs / "404.html").write_text(secure(local_fonts(page_404, "/")), encoding="utf-8")
+
+# For search engines: everything may be crawled; the sitemap lists the public pages.
+SITE = "https://elev8tradingjournal.com"
+(docs / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n", encoding="utf-8")
+(docs / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + "".join(f"  <url><loc>{SITE}/{p}</loc></url>\n" for p in ("home/", "privacy/", "terms/")) + "</urlset>\n", encoding="utf-8")
 
 # Logo the account and weekly-review emails load from the website.
 (docs / "email").mkdir(exist_ok=True)

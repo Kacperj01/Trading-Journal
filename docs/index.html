@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-L2WEBevrMRLShdVUzITWLPQDaWth/DBATCXzp73I9HE=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-L7azh+nK2hhihOWgF2HtfOBcaR4toJd8R85mvD4CH2s=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-3i4u559yE/ubbVPNYfx9yC7rTGsOGRWS3xSNHKeKO9I='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-cyc4KH1EQicumFRWxZVl8BVgbC/56IvrCsvEoA1y+Ts=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-L7azh+nK2hhihOWgF2HtfOBcaR4toJd8R85mvD4CH2s=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-M5fhchsMnfhenL75qgS6Dovy8RAG15GBE4tEyXgodY8='; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "53e7176b37";</script>
+<script>window.ELEV8_BUILD = "0f15014115";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -35,9 +35,6 @@
 </style>
 <script>try { if (localStorage.getItem("tj.theme.v1") === "light") document.documentElement.classList.add("light-mode"); if ((JSON.parse(localStorage.getItem("tj.ui.v1") || "{}") || {}).sideCollapsed) document.documentElement.classList.add("side-collapsed"); } catch (e) { /* storage blocked: defaults */ }</script>
 <meta name="description" content="ELEV8 trading journal and performance dashboard: log trades, track emotions and sessions, and see analytics.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   /* ELEV8 palette: royal blue to teal from the logo, on the logo's deep navy.
@@ -1450,6 +1447,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .reveal { opacity: 1; transform: none; }
 }
 </style>
+<link rel="preload" href="fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="fonts/fonts.css">
 </head>
 <body>
 
@@ -7426,6 +7425,13 @@ function snapshotHtml() {
   // Keep only this page's own script; drop anything a viewer injected and any older embedded data.
   doc.querySelectorAll("script").forEach(el => { if (el.id !== "app") el.remove(); });
   doc.querySelectorAll('meta[http-equiv="Content-Security-Policy"]').forEach(el => el.remove());
+  // The website serves its own font files; a saved file opened from Downloads can't reach them, so use Google's copy there.
+  doc.querySelectorAll('link[href$="fonts/fonts.css"], link[rel="preload"][as="font"]').forEach(el => el.remove());
+  if (!doc.querySelector('link[href*="fonts.googleapis.com"]')) {
+    const fl = doc.createElement("link"); fl.rel = "stylesheet";
+    fl.href = "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap";
+    doc.head.appendChild(fl);
+  }
   // Declare UTF-8 first thing in the file, or emojis and symbols are garbled when it's opened on its own.
   doc.querySelectorAll("meta[charset], meta[name=viewport]").forEach(el => el.remove());
   const vp = doc.createElement("meta"); vp.name = "viewport"; vp.content = "width=device-width,initial-scale=1,viewport-fit=cover";
