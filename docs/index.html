@@ -2,17 +2,23 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-QF1HiWio9Ssl1waqYrd0fTbtgtaWj/LNKE3MNn4JvFY=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-hgznnYC6nZ0VddUDxYypui3BnpHg8BhQ37Z+W5voD0I=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-QF1HiWio9Ssl1waqYrd0fTbtgtaWj/LNKE3MNn4JvFY=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-hgznnYC6nZ0VddUDxYypui3BnpHg8BhQ37Z+W5voD0I=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>window.ELEV8_BUILD = "411cf16fa9";</script>
 <script>
-  // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
-  // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
+  // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
+  // journal opens straight away) and someone keeping a journal on this device without an account. The installed
+  // app, email buttons (?verify), confirmation links and ?login / ?signup / ?demo / ?app open the journal directly.
   (function () { try {
     if (/[?&](app|login|signup|demo|verify)(=|&|$)/.test(location.search) || /access_token|error_code|type=/.test(location.hash)) return;
     if ((window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone) return;
-    if (localStorage.getItem("tj.sb.session.v1") || localStorage.getItem("tj.sb.email.v1") || localStorage.getItem("tj.trades.v1")) return;
+    var get = function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+    // "Remember me" was off and the browser has been closed since: no longer signed in.
+    var gone = get("tj.sb.forget.v1") && !/(?:^|;\s*)tj_alive=1/.test(document.cookie);
+    var session = get("tj.sb.session.v1"), trades = get("tj.trades.v1");
+    if (session && session.refresh_token && !gone) return;
+    if (!get("tj.sb.email.v1") && trades && trades.length) return;
     location.replace("home/");
   } catch (e) {} })();
 </script>

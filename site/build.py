@@ -94,12 +94,18 @@ page = f"""<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>window.ELEV8_BUILD = "{version}";</script>
 <script>
-  // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
-  // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
+  // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
+  // journal opens straight away) and someone keeping a journal on this device without an account. The installed
+  // app, email buttons (?verify), confirmation links and ?login / ?signup / ?demo / ?app open the journal directly.
   (function () {{ try {{
     if (/[?&](app|login|signup|demo|verify)(=|&|$)/.test(location.search) || /access_token|error_code|type=/.test(location.hash)) return;
     if ((window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone) return;
-    if (localStorage.getItem("tj.sb.session.v1") || localStorage.getItem("tj.sb.email.v1") || localStorage.getItem("tj.trades.v1")) return;
+    var get = function (k) {{ try {{ return JSON.parse(localStorage.getItem(k) || "null"); }} catch (e) {{ return null; }} }};
+    // "Remember me" was off and the browser has been closed since: no longer signed in.
+    var gone = get("tj.sb.forget.v1") && !/(?:^|;\\s*)tj_alive=1/.test(document.cookie);
+    var session = get("tj.sb.session.v1"), trades = get("tj.trades.v1");
+    if (session && session.refresh_token && !gone) return;
+    if (!get("tj.sb.email.v1") && trades && trades.length) return;
     location.replace("home/");
   }} catch (e) {{}} }})();
 </script>
