@@ -2921,7 +2921,14 @@ async function sbSync() {
         // Keep the account's own settings (e.g. trading accounts registered on another device),
         // adding this device's pairs and setups, rather than replacing them with this device's copy.
         const remote = await sbRest("GET", "journal_settings?select=data");
-        if (remote && remote[0]) { settings = Object.assign({}, DEFAULT_SETTINGS, remote[0].data); learnLists(realTrades); store.set(KEY_SETTINGS, settings); }
+        if (remote && remote[0]) {
+          const localAccts = (settings.accounts || []).filter(a => a && realTrades.some(t => t.account === a.id));
+          settings = Object.assign({}, DEFAULT_SETTINGS, remote[0].data);
+          // Trading accounts made on this device before signing in come along, so their trades stay linked.
+          const have = new Set((settings.accounts || []).map(a => a.id)), extra = localAccts.filter(a => !have.has(a.id));
+          if (extra.length) settings.accounts = (settings.accounts || []).concat(extra);
+          learnLists(realTrades); store.set(KEY_SETTINGS, settings);
+        }
         const box = store.get(KEY_SB_OUTBOX, []);
         realTrades.forEach(t => { if (!box.some(e => e.id === t.id)) box.push({ op: "put", id: t.id, seq: outboxSeq() }); });
         box.push({ op: "settings", seq: outboxSeq() });
@@ -4329,9 +4336,11 @@ function buildWeek(start) {
   return { start, end: addDays(start, 6), list, prevList, st, prev, weekR, followed, verdict, worked, cost, focus: focus.slice(0, 3), days };
 }
 
-let wkStart = null;
+// Follows the latest week with trades (e.g. once a new device finishes downloading the journal) until
+// the person steps to another week with the arrows.
+let wkStart = null, wkPicked = false;
 function renderWeekly() {
-  if (!wkStart) wkStart = latestWeek();
+  if (!wkPicked || !wkStart) wkStart = latestWeek();
   const w = buildWeek(wkStart);
   const fmt = iso => fmtDate(iso, { day: "numeric", month: "short" });
   F("wkRange").textContent = `${fmt(w.start)} – ${fmtDate(w.end, { day: "numeric", month: "short", year: "numeric" })}${w.start === weekStartOf(isoDate(new Date())) ? " · this week" : ""}`;
@@ -4852,7 +4861,7 @@ function updatePreview() {
   const t = readForm();
   const r = t.r != null ? t.r : (t.pnl != null && t.risk ? t.pnl / t.risk : null);
   const planned = t.entry != null && t.stop != null && t.target != null && t.entry !== t.stop ? Math.abs(t.target - t.entry) / Math.abs(t.entry - t.stop) : null;
-  const res = t.pnl == null ? null : t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "BE";
+  const res = t.pnl == null || isOpen(t) ? null : resultOf(t); // same rule as saved trades (tiny results are breakeven)
   F("pvBadge").innerHTML = res ? `<span class="badge ${res === "Win" ? "win" : res === "Loss" ? "loss" : "be"}">${res === "BE" ? "Breakeven" : res}</span>` : "";
   F("tR").placeholder = r != null && t.r == null ? "Auto: " + r.toFixed(2) : "";
   const rows = [
@@ -6858,7 +6867,7 @@ function loadShots(root) {
   $$("[data-shot-load]", root).forEach(el => {
     const path = el.dataset.shotLoad, label = el.dataset.shotLabel || "Chart";
     el.removeAttribute("data-shot-load");
-    certUrl({ path }).then(u => { if (el.isConnected) el.innerHTML = `<button type="button" class="shot-open" data-shot-view="${esc(path)}" data-shot-label="${esc(label)}" aria-label="View ${esc(label.toLowerCase())} screenshot full size"><img src="${u}" alt="${esc(label)} screenshot"></button>`; })
+    certUrl({ path }).then(u => { if (el.isConnected) el.innerHTML = `<button type="button" class="shot-open" data-shot-view="${esc(path)}" data-shot-label="${esc(label)}" aria-label="View ${esc(label.toLowerCase())} screenshot full size"><img src="${esc(u)}" alt="${esc(label)} screenshot"></button>`; })
       .catch(err => { if (el.isConnected) el.innerHTML = `<div class="none">Couldn't load the screenshot: ${esc(err.message)}</div>`; });
   });
 }
@@ -6917,7 +6926,7 @@ document.addEventListener("click", async e => {
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   try {
     const u = await certUrl({ path: v.dataset.shotView });
-    F("shotView").innerHTML = `<img src="${u}" alt="${esc(label)} screenshot">`;
+    F("shotView").innerHTML = `<img src="${esc(u)}" alt="${esc(label)} screenshot">`;
     F("shotDownload").href = u; F("shotDownload").download = label.toLowerCase() + "-screenshot";
   } catch (err) { F("shotView").innerHTML = `<p class="q-msg" style="margin:0">Couldn't open it: ${esc(err.message)}</p>`; }
 });
@@ -7087,7 +7096,7 @@ function rwCard({ a, p }) {
 }
 const payoutBy = el => { const a = acctById(el.dataset.acct); return { a, p: a && payoutsOf(a).find(x => x.id === el.dataset.pay) }; };
 // PDFs show as a picture of their first page (drawn with pdf.js), since phones can't reliably show a PDF in a frame.
-const certMarkup = (url, cert, alt) => isPdf(cert) ? `<span class="pdf-page" data-pdf-src="${esc(url)}" data-pdf-alt="${esc(alt)}">Loading PDF…</span>` : `<img src="${url}" alt="${esc(alt)}">`;
+const certMarkup = (url, cert, alt) => isPdf(cert) ? `<span class="pdf-page" data-pdf-src="${esc(url)}" data-pdf-alt="${esc(alt)}">Loading PDF…</span>` : `<img src="${esc(url)}" alt="${esc(alt)}">`;
 let pdfjsLoad = null;
 function loadPdfJs() {
   if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
@@ -7122,7 +7131,7 @@ function hydratePdfs(root) {
   $$(".pdf-page[data-pdf-src]", root).forEach(el => {
     const src = el.dataset.pdfSrc, alt = el.dataset.pdfAlt || "PDF certificate";
     el.removeAttribute("data-pdf-src");
-    pdfFirstPage(src).then(img => { if (el.isConnected) el.outerHTML = `<img src="${img}" alt="${esc(alt)}">`; })
+    pdfFirstPage(src).then(img => { if (el.isConnected) el.outerHTML = `<img src="${esc(img)}" alt="${esc(alt)}">`; })
       .catch(() => { if (el.isConnected) el.outerHTML = `<iframe src="${src}#toolbar=0&navpanes=0&view=FitH" title="${esc(alt)}" tabindex="-1"></iframe>`; });
   });
 }
@@ -7465,8 +7474,8 @@ F("navScrim").addEventListener("click", () => setMenu(false));
 F("mainNav").addEventListener("click", e => { if (e.target.closest(".tab") && F("mainNav").classList.contains("open")) setMenu(false); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && F("mainNav").classList.contains("open")) setMenu(false); });
 window.matchMedia("(min-width: 1041px)").addEventListener("change", e => { if (e.matches) setMenu(false); });
-F("wkPrev").addEventListener("click", () => { wkStart = addDays(wkStart, -7); renderWeekly(); });
-F("wkNext").addEventListener("click", () => { wkStart = addDays(wkStart, 7); renderWeekly(); });
+F("wkPrev").addEventListener("click", () => { wkPicked = true; wkStart = addDays(wkStart, -7); renderWeekly(); });
+F("wkNext").addEventListener("click", () => { wkPicked = true; wkStart = addDays(wkStart, 7); renderWeekly(); });
 F("wkBody").addEventListener("click", e => {
   const b = e.target.closest("[data-view-trade]");
   if (b) { const t = trades.find(x => x.id === b.dataset.viewTrade); if (t) openTrade(t); }

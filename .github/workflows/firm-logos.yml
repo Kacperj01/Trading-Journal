@@ -11,7 +11,7 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Fetch logos
         run: python3 site/fetch_firm_logos.py
       - name: Commit

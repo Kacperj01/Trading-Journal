@@ -15,6 +15,6 @@ jobs:
   read:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Read pages
         run: python3 site/read_firm_pages.py
