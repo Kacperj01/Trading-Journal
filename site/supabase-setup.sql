@@ -116,3 +116,72 @@ end $$;
 drop trigger if exists bug_report_limit on public.bug_reports;
 create trigger bug_report_limit before insert on public.bug_reports
   for each row execute function public.bug_report_limit();
+
+-- Notifications (Settings › Profile › Notifications). Each device that turns them on is stored in
+-- push_subscriptions. Nobody can read or change these tables through the app: the app goes through
+-- the three functions below, and the notification jobs (GitHub Actions) use the secret service key.
+create table if not exists public.push_subscriptions (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+-- The key pair notifications are signed with. The first notification job makes it; the private half
+-- stays here and in the jobs, never in the app or the repo.
+create table if not exists public.push_keys (
+  id int primary key default 1 check (id = 1),
+  public_key text not null,
+  private_key text not null,
+  created_at timestamptz not null default now()
+);
+-- News alerts already sent, so each one goes out once.
+create table if not exists public.push_log (
+  key text primary key,
+  sent_at timestamptz not null default now()
+);
+alter table public.push_subscriptions enable row level security;
+alter table public.push_keys enable row level security;
+alter table public.push_log enable row level security;
+revoke all on public.push_subscriptions, public.push_keys, public.push_log from anon, authenticated;
+grant select, delete on public.push_subscriptions to service_role;
+grant select, insert on public.push_keys to service_role;
+grant select, insert, delete on public.push_log to service_role;
+
+-- The public half of the key, which the app needs to turn notifications on.
+create or replace function public.push_public_key() returns text
+language sql stable security definer set search_path = '' as $$
+  select public_key from public.push_keys where id = 1
+$$;
+-- Turn notifications on for this device. A device belongs to whoever signed in on it last, and each
+-- account keeps its 10 most recent devices.
+create or replace function public.push_subscribe(p_endpoint text, p_p256dh text, p_auth text)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare uid uuid := auth.uid();
+begin
+  if uid is null then raise exception 'Not signed in'; end if;
+  if p_endpoint !~ '^https://' or length(p_endpoint) > 1000 or length(p_p256dh) not between 20 and 200
+     or length(p_auth) not between 8 and 100 then
+    raise exception 'This device gave an address notifications can''t be sent to.';
+  end if;
+  delete from public.push_subscriptions where endpoint = p_endpoint;
+  delete from public.push_subscriptions where id in (
+    select id from public.push_subscriptions where user_id = uid order by created_at desc offset 9);
+  insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values (uid, p_endpoint, p_p256dh, p_auth);
+  return true;
+end $$;
+-- Turn them off for this device (also done when signing out).
+create or replace function public.push_unsubscribe(p_endpoint text)
+returns boolean language plpgsql security definer set search_path = '' as $$
+begin
+  if auth.uid() is null then raise exception 'Not signed in'; end if;
+  delete from public.push_subscriptions where endpoint = p_endpoint and user_id = auth.uid();
+  return true;
+end $$;
+revoke all on function public.push_public_key() from public, anon;
+revoke all on function public.push_subscribe(text, text, text) from public, anon;
+revoke all on function public.push_unsubscribe(text) from public, anon;
+grant execute on function public.push_public_key() to authenticated;
+grant execute on function public.push_subscribe(text, text, text) to authenticated;
+grant execute on function public.push_unsubscribe(text) to authenticated;

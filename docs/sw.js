@@ -1,5 +1,5 @@
 // Offline support for the Trading Journal app. The version changes whenever the page does.
-const CACHE = "journal-f53ea12f29";
+const CACHE = "journal-bcb30915e6";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png",
   "./fonts/fonts.css", "./fonts/outfit-latin.woff2", "./fonts/outfit-latin-ext.woff2", "./fonts/jetbrains-mono-latin.woff2", "./fonts/jetbrains-mono-latin-ext.woff2"];
 
@@ -28,4 +28,24 @@ self.addEventListener("fetch", e => {
   if (url.origin === location.origin) {
     e.respondWith(caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req)));
   }
+});
+
+// Notifications (weekly review ready, high-impact news), sent by the weekly-review and news-alerts Actions.
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.title || "ELEV8", {
+    body: d.body || "", icon: "./icons/icon-192.png", badge: "./icons/badge-96.png",
+    tag: d.tag || undefined, renotify: !!d.tag, data: { url: d.url || "./?app" }
+  }));
+});
+// Tapping one opens the journal on that page, reusing an open journal window if there is one.
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || "./?app", self.registration.scope);
+  e.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    const open = list.find(c => { const p = new URL(c.url); return p.origin === url.origin && !/\/(home|privacy|terms)\//.test(p.pathname); });
+    if (open) { open.postMessage({ open: url.searchParams.get("open") }); return open.focus(); }
+    return clients.openWindow(url.href);
+  }));
 });

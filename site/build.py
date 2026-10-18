@@ -181,6 +181,26 @@ self.addEventListener("fetch", e => {{
     e.respondWith(caches.match(req, {{ ignoreSearch: true }}).then(hit => hit || fetch(req)));
   }}
 }});
+
+// Notifications (weekly review ready, high-impact news), sent by the weekly-review and news-alerts Actions.
+self.addEventListener("push", e => {{
+  let d = {{}};
+  try {{ d = e.data ? e.data.json() : {{}}; }} catch (err) {{ d = {{ body: e.data ? e.data.text() : "" }}; }}
+  e.waitUntil(self.registration.showNotification(d.title || "ELEV8", {{
+    body: d.body || "", icon: "./icons/icon-192.png", badge: "./icons/badge-96.png",
+    tag: d.tag || undefined, renotify: !!d.tag, data: {{ url: d.url || "./?app" }}
+  }}));
+}});
+// Tapping one opens the journal on that page, reusing an open journal window if there is one.
+self.addEventListener("notificationclick", e => {{
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || "./?app", self.registration.scope);
+  e.waitUntil(clients.matchAll({{ type: "window", includeUncontrolled: true }}).then(list => {{
+    const open = list.find(c => {{ const p = new URL(c.url); return p.origin === url.origin && !/\\/(home|privacy|terms)\\//.test(p.pathname); }});
+    if (open) {{ open.postMessage({{ open: url.searchParams.get("open") }}); return open.focus(); }}
+    return clients.openWindow(url.href);
+  }}));
+}});
 """
 
 docs.mkdir(exist_ok=True)

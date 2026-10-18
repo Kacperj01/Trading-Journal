@@ -1,7 +1,8 @@
 name: Weekly review emails
 
 # Every Sunday at 10am Irish time, emails each user who turned on
-# "Email me my weekly review" their week, from reviews@elev8tradingjournal.com via Resend.
+# "Email me my weekly review" their week, from reviews@elev8tradingjournal.com via Resend, and sends a
+# "Your weekly review is ready" notification to everyone who turned that on (Settings › Profile › Notifications).
 # Run it by hand with an email address to send a one-off test to just that account.
 on:
   # GitHub schedules run on UTC, and Ireland is UTC+1 in summer and UTC+0 in winter. It fires at
@@ -47,6 +48,13 @@ jobs:
           fi
       - uses: actions/checkout@v5
         if: steps.when.outputs.send == 'yes'
+      - uses: actions/setup-python@v5
+        if: steps.when.outputs.send == 'yes'
+        with:
+          python-version: "3.12"
+      - name: Install the notification sender
+        if: steps.when.outputs.send == 'yes'
+        run: pip install pywebpush==2.0.3
       - name: Send weekly reviews
         if: steps.when.outputs.send == 'yes'
         env:

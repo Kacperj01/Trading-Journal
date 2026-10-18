@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-AlsnGSRDYhMrkzbB+QP/1Y3pmGd6Pmeg/bVmx4Ug09M=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-NU8jKmTbPD6xSoPiYBwFFVLNmVTSqdMlrP0AiFEUcwM=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-KrsDFv3t4mWVVlN53n0YsykO8BQKXGk8ETT8icV/i2Q=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-wyqxytZ7AjgNR0hnwzgocb82xSRQgrXmFUsQYhSoev8=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "f53ea12f29";</script>
+<script>window.ELEV8_BUILD = "bcb30915e6";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -2093,6 +2093,20 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <label class="toggle" style="margin-top:14px"><input type="checkbox" id="weeklyEmail"> <span><b>Email me my weekly review</b><br><span class="muted" style="font-size:12.5px">Every Sunday at 10am (Irish time), from reviews@elev8tradingjournal.com</span></span></label>
           </section>
 
+          <section class="card accent-teal" aria-labelledby="pushTitle" id="pushCard" hidden>
+            <div class="card-head"><div><h3 id="pushTitle">Notifications</h3><div class="sub">Alerts on your phone or computer, even when ELEV8 is closed</div></div></div>
+            <p class="muted" id="pushStatus" role="status" style="margin:0 0 12px;font-size:13.5px"></p>
+            <div class="stack" style="gap:10px">
+              <label class="toggle"><input type="checkbox" id="pushWeekly"> <span><b>Weekly review is ready</b><br><span class="muted" style="font-size:12.5px">Sundays at 10am (Irish time), with your week in one line</span></span></label>
+              <label class="toggle"><input type="checkbox" id="pushNews"> <span><b>High-impact news</b><br><span class="muted" style="font-size:12.5px">15 minutes before, for the currencies in your pairs</span></span></label>
+            </div>
+            <div class="btn-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+              <button class="btn primary" type="button" id="pushHereOn" hidden>Turn on for this device</button>
+              <button class="btn ghost" type="button" id="pushTest" hidden>Show a test notification</button>
+              <button class="btn ghost" type="button" id="pushHereOff" hidden>Turn off for this device</button>
+            </div>
+          </section>
+
           <section class="card accent-teal" aria-labelledby="syncTitle" id="syncCard" hidden>
             <div class="card-head"><div><h3 id="syncTitle">Sync &amp; sign-in</h3><div class="sub">Keep your trades the same on all your devices</div></div></div>
           <div id="syncSignedOut" class="stack">
@@ -2654,7 +2668,9 @@ const DEFAULT_SETTINGS = {
   mistakes: ["Entered early", "Closed too early", "Held through news", "Outside influence", "Moved stop loss", "Oversized position", "No confirmation"],
   accounts: [],     // trading accounts: { id, type: Live | Demo | Prop firm | Backtest, size, broker, firm, phase, platform, name }
   lastAccount: "",  // the active account, chosen in Preferences: new trades start on it
-  weeklyEmail: false // email me my weekly review (sent Sundays by the weekly-review GitHub Action)
+  weeklyEmail: false, // email me my weekly review (sent Sundays by the weekly-review GitHub Action)
+  pushWeekly: false,  // notify when the weekly review is ready (same Action)
+  pushNews: false     // notify 15 min before high-impact news (news-alerts GitHub Action)
 };
 
 // A believable journal for the demo: five weeks of trades on a $100K challenge, dated up to today.
@@ -2734,6 +2750,8 @@ if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie()) {
     } catch (e) { /* offline: the device copy is cleared anyway */ }
   })();
   ["tj.sb.session.v1", "tj.sb.outbox.v1", "tj.sb.user.v1", "tj.sb.email.v1", KEY_TRADES, KEY_CACHE, KEY_SETTINGS, KEY_DRAFT, KEY_FORGET].forEach(k => store.del(k));
+  // This device stops getting the account's notifications (the server forgets it on the next send).
+  try { navigator.serviceWorker.getRegistration().then(r => r && r.pushManager.getSubscription()).then(p => p && p.unsubscribe()).catch(() => {}); } catch (e) { /* not supported */ }
 }
 ["dlgRemember", "syncRemember"].forEach(id => { const el = document.getElementById(id); if (el) el.checked = store.get(KEY_REMEMBER, true) !== false; });
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
@@ -3040,6 +3058,8 @@ function sbRender() {
   F("setNavProfile").hidden = false;
   const on = !!sb.session;
   F("profileCard").hidden = !on;
+  F("pushCard").hidden = !on;
+  if (on) setTimeout(() => { renderPush(); pushResync(); }); // after start-up has defined them
   F("syncSignedOut").hidden = on;
   F("syncSignedIn").hidden = !on;
   // Signing in (e.g. from a confirmation email) greets the person on Overview straight away.
@@ -5491,7 +5511,7 @@ async function importFile(file) {
     // Settings in the file (trading accounts, lists, preferences) are only used if the person agrees, and
     // never switch the weekly email on or off.
     const st = data.settings && typeof data.settings === "object" && !Array.isArray(data.settings) ? data.settings : null;
-    const keys = st ? SETTINGS_KEYS.filter(k => k !== "weeklyEmail" && k in st) : [];
+    const keys = st ? SETTINGS_KEYS.filter(k => !["weeklyEmail", "pushWeekly", "pushNews"].includes(k) && k in st) : [];
     if (keys.length && await askConfirm("This file also contains journal settings, such as trading accounts, pairs, setups and preferences. Use them too? Where the file has its own, they replace yours.", { title: "Import the settings too?", ok: "Use settings" })) {
       keys.forEach(k => { settings[k] = st[k]; }); saveSettings();
     }
@@ -7549,6 +7569,110 @@ F("weeklyEmail").addEventListener("change", e => {
   saveSettings();
   toast(e.target.checked ? `Weekly review will be emailed to ${(sb.session && sb.session.user.email) || "you"} every Sunday at 10am` : "Weekly review emails turned off");
 });
+
+/* ---------- Notifications (Settings › Profile › Notifications) ----------
+   Sent by GitHub Actions: weekly-review (Sundays, "your review is ready") and news-alerts (15 minutes
+   before high-impact news). What someone wants to hear about is an account setting, synced like the
+   rest; whether a device gets them is up to that device, which registers with Supabase's
+   push_subscribe(). On iPhone and iPad they only work in the Home Screen app (Apple's rule). */
+const PUSH_OK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window && !!document.querySelector('link[rel="manifest"]');
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const STANDALONE = (() => { try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; } })();
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const b64bytes = s => Uint8Array.from(atob((s + "===".slice((s.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+let pushHere = false; // this device gets notifications
+async function pushSub() {
+  if (!PUSH_OK) return null;
+  try { const reg = await navigator.serviceWorker.getRegistration(); return reg ? await reg.pushManager.getSubscription() : null; } catch (e) { return null; }
+}
+async function pushSave(sub) {
+  const j = sub.toJSON();
+  await sbRest("POST", "rpc/push_subscribe", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+}
+async function pushEnable() {
+  // Asked first, while the tap still counts as the person's (iPhone insists).
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") throw new Error(perm === "denied" ? "Notifications are blocked for this site. Allow them in your browser's site settings, then try again." : "Notifications weren't allowed, so they're still off.");
+  const reg = await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 8000))]);
+  if (!reg) throw new Error("Notifications couldn't start on this device. Reload the page and try again.");
+  let key;
+  try { key = await sbRest("POST", "rpc/push_public_key", {}); }
+  catch (e) { throw new Error(/push_public_key|function|404/i.test(e.message) ? "Notifications aren't switched on for ELEV8 yet. Try again later." : e.message); }
+  if (!key) throw new Error("Notifications aren't quite ready yet. Try again in a few minutes.");
+  let sub = await reg.pushManager.getSubscription();
+  const old = sub && sub.options && sub.options.applicationServerKey;
+  if (sub && old && b64url(old) !== key) { await sub.unsubscribe(); sub = null; }
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64bytes(key) });
+  await pushSave(sub);
+  pushHere = true;
+}
+async function pushDisable() {
+  const sub = await pushSub();
+  pushHere = false;
+  if (!sub) return;
+  try { if (sbOn()) await sbRest("POST", "rpc/push_unsubscribe", { p_endpoint: sub.endpoint }); } catch (e) { /* offline: the server forgets it on the next send */ }
+  try { await sub.unsubscribe(); } catch (e) { /* already gone */ }
+}
+// Once per visit, tell the server this device's current address (browsers renew them now and then,
+// and a shared device belongs to whoever signed in last).
+let pushSynced = false;
+async function pushResync() {
+  if (pushSynced || !PUSH_OK || Notification.permission !== "granted") return;
+  pushSynced = true;
+  const sub = await pushSub();
+  if (sub) pushSave(sub).catch(() => { pushSynced = false; });
+}
+async function renderPush() {
+  if (!SB || !sb.session) return;
+  F("pushWeekly").checked = !!settings.pushWeekly;
+  F("pushNews").checked = !!settings.pushNews;
+  const want = settings.pushWeekly || settings.pushNews;
+  let msg, can = PUSH_OK && !(IOS && !STANDALONE) && Notification.permission !== "denied";
+  if (IOS && !STANDALONE) msg = "On iPhone and iPad, add ELEV8 to your Home Screen first: tap Share, then Add to Home Screen. Open it from there to turn these on.";
+  else if (!PUSH_OK) msg = "This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.";
+  else if (Notification.permission === "denied") msg = "Notifications are blocked for this site. Allow them in your browser's site settings to use these.";
+  else {
+    pushHere = Notification.permission === "granted" && !!(await pushSub());
+    msg = pushHere ? (want ? "On for this device." : "This device is ready. Pick what you'd like to hear about.")
+      : want ? "On for your other devices, not this one yet." : "Pick what you'd like to hear about. Your browser will ask to allow notifications.";
+  }
+  if (want && !can) msg += " Your choices below apply to your other devices.";
+  F("pushStatus").textContent = msg;
+  F("pushWeekly").disabled = F("pushNews").disabled = !can;
+  F("pushHereOn").hidden = !(can && want && !pushHere);
+  F("pushHereOff").hidden = F("pushTest").hidden = !(can && pushHere);
+}
+["pushWeekly", "pushNews"].forEach(id => F(id).addEventListener("change", async e => {
+  const box = e.target, on = box.checked;
+  if (on && !pushHere) {
+    box.disabled = true;
+    try { await pushEnable(); }
+    catch (err) { box.checked = false; box.disabled = false; toast(err.message || "Notifications couldn't be turned on"); renderPush(); return; }
+    box.disabled = false;
+  }
+  settings[id] = on;
+  saveSettings();
+  if (!settings.pushWeekly && !settings.pushNews) await pushDisable();
+  toast(!on ? (id === "pushNews" ? "News alerts turned off" : "Weekly review notifications turned off")
+    : id === "pushNews" ? "You'll be told 15 minutes before high-impact news for your pairs" : "You'll get a notification when your weekly review is ready, Sundays at 10am");
+  renderPush();
+}));
+F("pushHereOn").addEventListener("click", async () => {
+  try { await pushEnable(); toast("Notifications are on for this device"); } catch (err) { toast(err.message || "Notifications couldn't be turned on"); }
+  renderPush();
+});
+F("pushHereOff").addEventListener("click", async () => { await pushDisable(); toast("Notifications turned off for this device"); renderPush(); });
+F("pushTest").addEventListener("click", async () => {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification("ELEV8 notifications are on", { body: "This is how your alerts will look on this device.", icon: "icons/icon-192.png", badge: "icons/badge-96.png", tag: "elev8-test" });
+  } catch (e) { toast("The test couldn't be shown. Check notifications are allowed for this site."); }
+});
+// Tapping a notification while the journal is open: the service worker asks it to show that page.
+if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => {
+  const t = e.data && e.data.open;
+  if (TABS.includes(t)) showTab(t);
+});
 F("setNav").addEventListener("click", e => {
   const b = e.target.closest("button[data-pane]");
   if (b) showSetPane(b.dataset.pane);
@@ -8063,6 +8187,13 @@ restoring = true;
 showTab("overview", { push: false }); // leave the address alone: email links carry sign-in details after "#"
 if (TABS.includes(location.hash.slice(1))) { try { history.replaceState(null, "", "#overview"); } catch (e) { /* sandboxed */ } }
 restoring = false;
+{
+  const open = urlHas("open") ? new URLSearchParams(location.search).get("open") : "";
+  if (open) {
+    try { history.replaceState(null, "", location.pathname + location.search.replace(/([?&])open=[^&]*&?/, "$1").replace(/[?&]$/, "") + "#overview"); } catch (e) { /* sandboxed */ }
+    if (TABS.includes(open)) showTab(open);
+  }
+}
 requestAnimationFrame(() => window.scrollTo(0, 0));
 if (first) setTimeout(() => document.documentElement.classList.add("calm"), 2500);
 let scrollTimer;
@@ -8089,6 +8220,7 @@ async function signOutFlow() {
       : "Your trades stay safe in your account and load again when you sign in.",
       { title: unsent ? "Sign out and lose unsynced changes?" : "Sign out?", ok: "Sign out" });
     if (!ok) return;
+    await pushDisable();
     // End the session on the server too, so a copied token stops working.
     try { await fetch(SB.url + "/auth/v1/logout", { method: "POST", headers: { apikey: SB.key, Authorization: "Bearer " + await sbToken() } }); } catch (e) { /* offline: the session still ends on this device */ }
     sbSaveSession(null);

@@ -23,3 +23,14 @@ for name, img, size in [("apple-touch-icon.png", base, 180), ("icon-192.png", ba
                         ("icon-maskable-512.png", maskable, 512), ("favicon-32.png", base, 32)]:
     img.resize((size, size), Image.LANCZOS).save(out / name, optimize=True)
 print("icons written to", out)
+
+# Notification badge (Android's status bar): the mark as a white silhouette on transparent; the system
+# colours it in.
+badge = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+w = int(S * 0.86)
+m = mark.resize((w, round(mark.height * w / mark.width)), Image.LANCZOS)
+white = Image.new("RGBA", m.size, (255, 255, 255, 255))
+white.putalpha(m.getchannel("A").point(lambda a: 255 if a > 110 else 0))
+badge.alpha_composite(white, ((S - m.width) // 2, (S - m.height) // 2))
+badge.resize((96, 96), Image.LANCZOS).save(out / "badge-96.png", optimize=True)
+print("badge written")

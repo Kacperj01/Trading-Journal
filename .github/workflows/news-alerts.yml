@@ -1,0 +1,39 @@
+name: News alerts
+
+# Notifies everyone with "High-impact news" on (Settings › Profile › Notifications) 15 minutes before
+# high-impact news for the currencies they trade. Runs every 30 minutes; most runs find nothing due and
+# finish in seconds, the rest wait for the alert time. See site/news_alerts.py.
+# Run it by hand with an email address to send that account a test alert for the next high-impact news.
+on:
+  schedule:
+    - cron: "4,34 * * * *"
+  workflow_dispatch:
+    inputs:
+      only_email:
+        description: "Send a test alert for the next high-impact news to just this account (leave blank for a normal run)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: news-alerts
+  cancel-in-progress: false
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the notification sender
+        run: pip install pywebpush==2.0.3
+      - name: Send news alerts
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ONLY_EMAIL: ${{ github.event.inputs.only_email }}
+        run: python3 site/news_alerts.py

@@ -429,15 +429,30 @@ def main():
         if t is None or t.get("status") == "open":
             continue  # still open: no result yet, so it isn't part of the week's review
         trades.setdefault(r["user_id"], []).append(t)
-    sent = skipped = 0
+    # Notifications ("Your weekly review is ready") for people who turned them on. If they aren't set up
+    # yet (the SQL hasn't been run, or pywebpush isn't installed), the emails still go out.
+    devs, signer = {}, None
+    if not PREVIEW_ALL:
+        try:
+            import push
+            devs = push.devices()
+            if devs:
+                _, signer = push.keys()
+        except Exception as exc:
+            print("notifications skipped:", type(exc).__name__, str(exc)[:200], file=sys.stderr)
+            devs = {}
+    sent = skipped = pushed = 0
     for u in all_users():
         email = (u.get("email") or "").lower()
         s = settings.get(u["id"], {})
         if ONLY:
-            if email != ONLY: continue
+            want_mail = email == ONLY
         elif PREVIEW_ALL:
-            if not u.get("email_confirmed_at"): continue
-        elif not s.get("weeklyEmail") or not u.get("email_confirmed_at"):
+            want_mail = bool(u.get("email_confirmed_at"))
+        else:
+            want_mail = bool(s.get("weeklyEmail") and u.get("email_confirmed_at"))
+        want_push = u["id"] in devs and (email == ONLY if ONLY else bool(s.get("pushWeekly")))
+        if not want_mail and not want_push:
             continue
         # Same rule as the app: the symbol goes into HTML, so only up to 4 plain characters.
         cur = re.sub(r"[<>&\"'`\\]", "", str(s.get("currency") or "$")).strip()[:4] or "$"
@@ -447,16 +462,23 @@ def main():
             if not w["st"]["n"] and not ONLY and not PREVIEW_ALL:
                 skipped += 1  # nothing logged this week: no email
                 continue
-            name = str((u.get("user_metadata") or {}).get("full_name") or "")
-            # A test to one address with preview on always shows the preview version.
-            preview = PREVIEW_ALL and (bool(ONLY) or not s.get("weeklyEmail"))
-            subject = ("Preview: " if preview else "") + f"Your ELEV8 week: {w['money'](w['st']['total'])} · {w['st']['n']} trades · {w['st']['win_rate']:.0%} win rate"
-            send(u["email"], subject, render(w, name, preview))
-            sent += 1
+            st = w["st"]
+            summary = f"{w['money'](st['total'])} · {st['n']} trades · {st['win_rate']:.0%} win rate"
+            if want_mail:
+                name = str((u.get("user_metadata") or {}).get("full_name") or "")
+                # A test to one address with preview on always shows the preview version.
+                preview = PREVIEW_ALL and (bool(ONLY) or not s.get("weeklyEmail"))
+                subject = ("Preview: " if preview else "") + f"Your ELEV8 week: {summary}"
+                send(u["email"], subject, render(w, name, preview))
+                sent += 1
+            if want_push and not DRY:
+                body = (summary + ". See what worked and what to focus on next week.") if st["n"] else "No trades logged this week. Open your journal to plan the next one."
+                for d in devs[u["id"]]:
+                    pushed += push.send(signer, d, "Your weekly review is ready", body, "./?app&open=insights", "weekly-review", 6 * 3600)
         except Exception as exc:  # bad data or a bad address for one person shouldn't stop the rest
             print("  could not send to", email, "-", type(exc).__name__, exc, file=sys.stderr)
-    print(f"week of {start}: sent {sent}, skipped {skipped} (no trades)")
-    if ONLY and not sent:
+    print(f"week of {start}: sent {sent} emails and {pushed} notifications, skipped {skipped} (no trades)")
+    if ONLY and not sent and not pushed:
         sys.exit(f"No account found for {ONLY}")
 
 
