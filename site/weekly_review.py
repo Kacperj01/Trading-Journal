@@ -86,12 +86,50 @@ def num(v):
 
 # Same rules as the app: a result under a tenth of the trade's risk (or the default risk; with neither,
 # under 0.02% of the account) is a scratch, counted as breakeven rather than a win or a loss.
-CTX = {"risk": 0.0, "sizes": {}}
+CTX = {"risk": 0.0, "sizes": {}, "balance": 10000.0}
+
+
+def acct_base(account_id):
+    """The app's startingBalance: the account's size, or the default balance setting when it has none;
+    with no (known) account, all account sizes added together, or the default balance."""
+    if account_id in CTX["sizes"]:
+        return CTX["sizes"][account_id] if CTX["sizes"][account_id] > 0 else CTX["balance"]
+    return sum(v for v in CTX["sizes"].values() if v > 0) or CTX["balance"]
 
 
 def scratch_size(t):
     risk = num(t.get("risk")) if num(t.get("risk")) > 0 else CTX["risk"]
-    return risk * 0.1 if risk > 0 else CTX["sizes"].get(t.get("account"), 0.0) * 0.0002
+    return risk * 0.1 if risk > 0 else acct_base(t.get("account")) * 0.0002
+
+
+# Which prop programmes deduct payouts from the balance (FundingRock) rather than resetting the account,
+# read from the prop rules built into the app so the email counts payouts the same way.
+def _deduct_programs():
+    try:
+        page = (Path(__file__).resolve().parent.parent / "index.html").read_text(encoding="utf-8")
+        raw = re.search(r'<script type="application/json" id="propRules">(.*?)</script>', page, re.S).group(1)
+        return {p["id"] for f in json.loads(raw)["firms"] for p in f.get("programs", []) if p.get("payout") == "deduct"}
+    except Exception:
+        return set()
+
+
+DEDUCT = _deduct_programs()
+
+# Fields shown as text: anything else stored there (a number, a list) is turned into text, so one odd
+# trade can't break the review.
+TEXT_FIELDS = ("date", "time", "closedDate", "closedTime", "pair", "setup", "session", "direction",
+               "emotionBefore", "emotionAfter", "mistakes", "notes", "status", "account")
+
+
+def clean_trade(t):
+    if not isinstance(t, dict):
+        return None
+    t = dict(t)
+    for k in TEXT_FIELDS:
+        v = t.get(k)
+        if v is not None and not isinstance(v, str):
+            t[k] = ", ".join(map(str, v)) if isinstance(v, (list, tuple)) else str(v)
+    return t
 
 
 def result(t):
@@ -184,7 +222,9 @@ def group(ts, key):
 def build_week(trades, start, cur, settings=None):
     settings = settings or {}
     CTX["risk"] = num(settings.get("defaultRisk"))
-    CTX["sizes"] = {a.get("id"): num(a.get("size")) for a in settings.get("accounts") or []}
+    accounts = [a for a in (settings.get("accounts") or []) if isinstance(a, dict)]
+    CTX["sizes"] = {a.get("id"): num(a.get("size")) for a in accounts}
+    CTX["balance"] = num(settings.get("balance")) or 10000.0
     end = start + dt.timedelta(days=6)
     iso = lambda d: d.isoformat()
     in_week = lambda s, e: sorted([t for t in trades if iso(s) <= str(t.get("date", "")) <= iso(e)], key=lambda t: (t.get("date", ""), t.get("time") or ""))
@@ -204,10 +244,27 @@ def build_week(trades, start, cur, settings=None):
     close_key = lambda t: (t.get("closedDate") or t.get("date") or "") + " " + ((t.get("closedTime") if t.get("closedDate") else t.get("time")) or "")
     first = min((close_key(t) for t in week), default="")
     week_ids = {id(t) for t in week}
-    bal = sum(CTX["sizes"].get(a, 0.0) for a in ids) + sum(
-        num(t.get("pnl")) for t in trades
-        if t.get("account") in ids and id(t) not in week_ids and t.get("status") != "open"
-        and close_key(t) < first)
+    earlier = lambda t: id(t) not in week_ids and t.get("status") != "open" and close_key(t) < first
+    if ids and all(a in CTX["sizes"] for a in ids):
+        # Per account; payouts before the week count like the app and the prop tracker: most firms reset
+        # the account to its size after a payout, FundingRock-style programmes deduct the payout instead.
+        by_id = {a.get("id"): a for a in accounts}
+        bal = 0.0
+        for a in ids:
+            prior = [t for t in trades if t.get("account") == a and earlier(t)]
+            acc = by_id.get(a) or {}
+            pays = sorted((p for p in (acc.get("payouts") or []) if isinstance(p, dict) and str(p.get("date") or "") and str(p.get("date")) < first[:10]),
+                          key=lambda p: str(p.get("date")))
+            base = acct_base(a)
+            if pays and acc.get("type") == "Prop firm":
+                if acc.get("program") in DEDUCT:
+                    base -= sum(num(p.get("amount")) for p in pays)
+                else:
+                    last = str(pays[-1].get("date"))
+                    prior = [t for t in prior if (t.get("closedDate") or t.get("date") or "") > last]
+            bal += base + sum(num(t.get("pnl")) for t in prior)
+    else:
+        bal = acct_base(None) + sum(num(t.get("pnl")) for t in trades if earlier(t))
     min_move = max(unit * 0.25, bal * 0.0005, 0.01)
     big = lambda v: abs(v) >= min_move
     def size_txt(v):
@@ -365,11 +422,11 @@ def main():
         sys.exit("Missing GitHub secrets: " + ", ".join(missing) + ". Add them in Settings > Secrets and variables > Actions.")
     today = dt.datetime.now(dt.timezone.utc).date()
     start = today - dt.timedelta(days=today.weekday())  # Monday of this week (the job runs on Sunday)
-    settings = {r["user_id"]: r.get("data") or {} for r in all_rows("journal_settings")}
+    settings = {r["user_id"]: (r.get("data") if isinstance(r.get("data"), dict) else {}) for r in all_rows("journal_settings")}
     trades = {}
     for r in all_rows("trades"):
-        t = r.get("data") or {}
-        if t.get("status") == "open":
+        t = clean_trade(r.get("data"))
+        if t is None or t.get("status") == "open":
             continue  # still open: no result yet, so it isn't part of the week's review
         trades.setdefault(r["user_id"], []).append(t)
     sent = skipped = 0
@@ -384,19 +441,20 @@ def main():
             continue
         # Same rule as the app: the symbol goes into HTML, so only up to 4 plain characters.
         cur = re.sub(r"[<>&\"'`\\]", "", str(s.get("currency") or "$")).strip()[:4] or "$"
-        w = build_week(trades.get(u["id"], []), start, cur, s)
-        if not w["st"]["n"] and not ONLY and not PREVIEW_ALL:
-            skipped += 1  # nothing logged this week: no email
-            continue
-        name = (u.get("user_metadata") or {}).get("full_name", "")
-        # A test to one address with preview on always shows the preview version.
-        preview = PREVIEW_ALL and (bool(ONLY) or not s.get("weeklyEmail"))
-        subject = ("Preview: " if preview else "") + f"Your ELEV8 week: {w['money'](w['st']['total'])} · {w['st']['n']} trades · {w['st']['win_rate']:.0%} win rate"
+        # Each person's email is built and sent on its own: a problem with one never stops the rest.
         try:
+            w = build_week(trades.get(u["id"], []), start, cur, s)
+            if not w["st"]["n"] and not ONLY and not PREVIEW_ALL:
+                skipped += 1  # nothing logged this week: no email
+                continue
+            name = str((u.get("user_metadata") or {}).get("full_name") or "")
+            # A test to one address with preview on always shows the preview version.
+            preview = PREVIEW_ALL and (bool(ONLY) or not s.get("weeklyEmail"))
+            subject = ("Preview: " if preview else "") + f"Your ELEV8 week: {w['money'](w['st']['total'])} · {w['st']['n']} trades · {w['st']['win_rate']:.0%} win rate"
             send(u["email"], subject, render(w, name, preview))
             sent += 1
-        except Exception as exc:  # one bad address shouldn't stop the rest
-            print("  could not send to", email, "-", exc, file=sys.stderr)
+        except Exception as exc:  # bad data or a bad address for one person shouldn't stop the rest
+            print("  could not send to", email, "-", type(exc).__name__, exc, file=sys.stderr)
     print(f"week of {start}: sent {sent}, skipped {skipped} (no trades)")
     if ONLY and not sent:
         sys.exit(f"No account found for {ONLY}")

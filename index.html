@@ -2680,8 +2680,21 @@ function demoJournal() {
 const KEY_REMEMBER = "tj.sb.remember.v1", KEY_FORGET = "tj.sb.forget.v1";
 const aliveCookie = () => { try { return /(?:^|;\s*)tj_alive=1/.test(document.cookie); } catch (e) { return true; } };
 function markAlive() { try { document.cookie = "tj_alive=1; path=/; SameSite=Strict" + (location.protocol === "https:" ? "; Secure" : ""); } catch (e) { /* cookies blocked */ } }
-if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie())
+if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie()) {
+  // End the sign-in on the server too (best effort), so its refresh token stops working.
+  const old = store.get("tj.sb.session.v1", null), cfg = window.ELEV8_SUPABASE;
+  if (old && old.refresh_token && cfg && cfg.url && cfg.key) (async () => {
+    try {
+      let token = old.access_token;
+      if (!(old.expires_at - 60 > Date.now() / 1000)) {
+        const r = await fetch(cfg.url + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: cfg.key, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: old.refresh_token }) });
+        token = r.ok ? (await r.json()).access_token : null;
+      }
+      if (token) await fetch(cfg.url + "/auth/v1/logout", { method: "POST", headers: { apikey: cfg.key, Authorization: "Bearer " + token } });
+    } catch (e) { /* offline: the device copy is cleared anyway */ }
+  })();
   ["tj.sb.session.v1", "tj.sb.outbox.v1", "tj.sb.user.v1", "tj.sb.email.v1", KEY_TRADES, KEY_CACHE, KEY_SETTINGS, KEY_DRAFT, KEY_FORGET].forEach(k => store.del(k));
+}
 ["dlgRemember", "syncRemember"].forEach(id => { const el = document.getElementById(id); if (el) el.checked = store.get(KEY_REMEMBER, true) !== false; });
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
@@ -2779,10 +2792,13 @@ const KEY_SB_USER = "tj.sb.user.v1"; // which account this device's trades were 
 const sb = { session: SB ? store.get(KEY_SB_SESSION, null) : null, busy: false, again: false, lastSync: 0, offline: false, lastEmail: store.get("tj.sb.email.v1", "") };
 const sbOn = () => !!(SB && sb.session && !inViewer());
 
+// Each queued change gets its own number, so finishing an upload removes exactly that entry and not a
+// newer edit of the same trade (or a newer settings change) queued while it was on its way.
+const outboxSeq = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 function sbQueue(entry) {
   if (!sbOn()) return;
   const box = store.get(KEY_SB_OUTBOX, []).filter(e => !(e.op === entry.op && e.id === entry.id) && !(entry.op !== "settings" && e.id === entry.id));
-  box.push(entry);
+  box.push(Object.assign({ seq: outboxSeq() }, entry));
   store.set(KEY_SB_OUTBOX, box);
   sbSync();
 }
@@ -2907,8 +2923,8 @@ async function sbSync() {
         const remote = await sbRest("GET", "journal_settings?select=data");
         if (remote && remote[0]) { settings = Object.assign({}, DEFAULT_SETTINGS, remote[0].data); learnLists(realTrades); store.set(KEY_SETTINGS, settings); }
         const box = store.get(KEY_SB_OUTBOX, []);
-        realTrades.forEach(t => { if (!box.some(e => e.id === t.id)) box.push({ op: "put", id: t.id }); });
-        box.push({ op: "settings" });
+        realTrades.forEach(t => { if (!box.some(e => e.id === t.id)) box.push({ op: "put", id: t.id, seq: outboxSeq() }); });
+        box.push({ op: "settings", seq: outboxSeq() });
         store.set(KEY_SB_OUTBOX, box);
       }
       store.set(KEY_SB_USER, uid);
@@ -2925,7 +2941,7 @@ async function sbSync() {
       } else if (e.op === "settings") {
         await sbRest("POST", "journal_settings?on_conflict=user_id", [{ user_id: uid, data: settingsBody(), updated_at: new Date().toISOString() }], "resolution=merge-duplicates,return=minimal");
       }
-      box = store.get(KEY_SB_OUTBOX, []).filter(x => !(x.op === e.op && x.id === e.id));
+      box = store.get(KEY_SB_OUTBOX, []).filter(x => e.seq ? x.seq !== e.seq : (x.seq || !(x.op === e.op && x.id === e.id)));
       store.set(KEY_SB_OUTBOX, box);
     }
     // 2. Fetch the account's copy and merge.
@@ -2944,7 +2960,8 @@ async function sbSync() {
     if (changed) { realTrades = merged; saveLocal(); }
     const st = await sbRest("GET", "journal_settings?select=data");
     let settingsChanged = false;
-    if (st && st[0] && !pending.some(e => e.op === "settings")) {
+    // Re-read the queue: a settings change made while this download was running must win.
+    if (st && st[0] && !store.get(KEY_SB_OUTBOX, []).some(e => e.op === "settings")) {
       const next = Object.assign({}, DEFAULT_SETTINGS, st[0].data);
       if (JSON.stringify(next) !== JSON.stringify(settings)) { settings = next; store.set(KEY_SETTINGS, settings); settingsChanged = true; }
     }
@@ -2993,11 +3010,16 @@ function sbRender() {
 }
 // A sign-in link could have been sent by someone else. Ask before switching this device to a different
 // account, or before trades saved only on this device are added to the account in the link.
+// Emails this device asked a link for (sign-up, resend, password reset). A link for one of them is expected;
+// a link for any other account (e.g. one someone else sent) asks first, even on a fresh device.
+const KEY_ASKED = "tj.sb.asked.v1";
+function rememberAsked(email) { const e = String(email || "").trim().toLowerCase(); if (e) store.set(KEY_ASKED, [e, ...store.get(KEY_ASKED, []).filter(x => x !== e)].slice(0, 5)); }
 async function okToSwitch(user) {
   const cur = sb.session && sb.session.user;
   if (cur && cur.id === user.id) return true;
-  if (!cur && !realTrades.length) return true;
-  return askConfirm(`This link signs you in as ${user.email || "another account"}. ${cur ? `You're signed in as ${cur.email} on this device.` : "The trades saved on this device will be added to that account."} Only continue if it's your account.`,
+  const expected = store.get(KEY_ASKED, []).includes(String(user.email || "").toLowerCase());
+  if (!cur && !realTrades.length && expected) return true;
+  return askConfirm(`This link signs you in as ${user.email || "another account"}. ${cur ? `You're signed in as ${cur.email} on this device.` : realTrades.length ? "The trades saved on this device will be added to that account." : "It wasn't requested from this device."} Only continue if it's your account.`,
     { title: "Sign in with this link?", ok: "Sign in" });
 }
 // Arriving from a confirmation email: Supabase puts the new session (or an error) after "#".
@@ -3145,6 +3167,7 @@ async function sbSignIn(signUp, from = "card") {
   const email = F(ids[0]).value.trim(), password = F(ids[1]).value;
   const msg = F(ids[2]);
   store.set(KEY_REMEMBER, F(from === "dialog" ? "dlgRemember" : "syncRemember").checked);
+  if (signUp) rememberAsked(email);
   let profile = null;
   if (signUp && from === "dialog") {
     const name = F("dlgName").value.trim().replace(/\s+/g, " "), dob = F("dlgDob").value;
@@ -3187,6 +3210,7 @@ async function sbSignIn(signUp, from = "card") {
 // Confirmation and password emails send people back to this page.
 const backUrl = () => encodeURIComponent(location.origin + location.pathname);
 async function resendConfirmation(email, msg) {
+  rememberAsked(email);
   msg.textContent = "Sending…";
   try {
     await sbAuth("resend?redirect_to=" + backUrl(), { type: "signup", email });
@@ -3194,6 +3218,7 @@ async function resendConfirmation(email, msg) {
   } catch (e) { msg.textContent = e instanceof TypeError ? "Couldn't reach the sync service. Try again." : e.message; }
 }
 async function sendPasswordReset(email, msg) {
+  rememberAsked(email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "Enter your email above, then tap Forgot password."; F("dlgEmail").focus(); return; }
   msg.textContent = "Sending…";
   try {
@@ -3705,10 +3730,21 @@ function balanceBefore(list) {
   const ids = [...new Set(list.map(t => t.account))];
   // Trades not linked to an account can't be sized on their own: fall back to the view's balance.
   if (ids.some(id => !acctById(id))) ids.length = 0;
-  const own = t => ids.length ? ids.includes(t.account) : inAccount(t);
-  const start = ids.length ? sum(ids.map(startingBalance)) : startingBalance(ui.account);
   const at = sortByClose(list)[0], first = closeKey(at), inList = new Set(list.map(t => t.id));
-  return start + sum(trades.filter(t => own(t) && !isOpen(t) && !inList.has(t.id) && closeKey(t) < first).map(t => Number(t.pnl) || 0));
+  const earlier = t => !isOpen(t) && !inList.has(t.id) && closeKey(t) < first;
+  if (!ids.length) return startingBalance(ui.account) + sum(trades.filter(t => inAccount(t) && earlier(t)).map(t => Number(t.pnl) || 0));
+  // Per account. Payouts before these trades count the way the prop tracker counts them: at most firms
+  // the account resets to its starting size after a payout, so only P&L since the last one counts; where
+  // the programme deducts payouts (FundingRock), they come off the balance instead.
+  const firstDay = first.slice(0, 10);
+  return sum(ids.map(id => {
+    const a = acctById(id), prior = trades.filter(t => t.account === id && earlier(t));
+    const pays = payoutsOf(a).filter(p => p.date < firstDay), prog = programOf(a);
+    let base = startingBalance(id), counted = prior;
+    if (pays.length && prog && prog.payout === "deduct") base -= sum(pays.map(p => Number(p.amount) || 0));
+    else if (pays.length && prog) { const last = pays[pays.length - 1].date; counted = prior.filter(t => closeDateOf(t) > last); }
+    return base + sum(counted.map(t => Number(t.pnl) || 0));
+  }));
 }
 
 function group(list, key) {
@@ -5047,10 +5083,18 @@ function toXlsx(list) {
 }
 
 function toCsv(list) {
-  const q = v => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const q = v => { const s = v == null ? "" : String(v); return /[",;\t\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   return sheetRows(list).map(r => r.map(q).join(",")).join("\n");
 }
+// The separator is whichever of , ; or tab appears most in the first line (outside quotes), so European
+// files ("Date;Pair;P&L" with "12,50") and notes containing ";" both import correctly.
+function csvDelimiter(text) {
+  const n = { ",": 0, ";": 0, "\t": 0 }; let inQ = false;
+  for (const c of text) { if (c === '"') inQ = !inQ; else if (!inQ && (c === "\n" || c === "\r")) break; else if (!inQ && c in n) n[c]++; }
+  return Object.keys(n).sort((a, b) => n[b] - n[a])[0];
+}
 function parseCsv(text) {
+  const sep = csvDelimiter(text);
   const rows = []; let row = [], cell = "", inQ = false;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
@@ -5058,7 +5102,7 @@ function parseCsv(text) {
       if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else inQ = false; }
       else cell += c;
     } else if (c === '"') inQ = true;
-    else if (c === "," || c === ";" || c === "\t") { row.push(cell); cell = ""; }
+    else if (c === sep) { row.push(cell); cell = ""; }
     else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
     else cell += c;
   }
@@ -5153,6 +5197,8 @@ const ALIASES = {
   confidence: ["confidence", "conviction", "rating"],
   followedPlan: ["followedplan", "plan", "followedrules", "rulesfollowed", "disciplined"],
   mistakes: ["mistakes", "mistake", "errors"],
+  account: ["account", "accountname", "acct", "tradingaccount"],
+  status: ["status", "state", "openclosed"],
   notes: ["notes", "note", "comment", "comments", "journal", "remarks", "description", "lessons"],
   chartBefore: ["beforechart", "chartbefore", "before", "entrychart", "setupchart"],
   chartAfter: ["afterchart", "chartafter", "after", "exitchart", "resultchart", "chart", "screenshot", "image", "link", "url"]
@@ -5189,12 +5235,23 @@ function parseMoney(v) {
   if (typeof v === "number") return v;
   let s = String(v).trim();
   if (!s) return null;
-  const neg = /^\(.*\)$/.test(s) || /^-|−/.test(s);
+  const neg = /^\(.*\)$/.test(s) || /^[^\d]*[-−]/.test(s);
   s = s.replace(/[^0-9.,]/g, "");
-  if (/,\d{1,2}$/.test(s) && !/\./.test(s)) s = s.replace(/\./g, "").replace(",", "."); else s = s.replace(/,/g, "");
+  // "1.234,56" or "12,50" (comma decimals) vs "1,234.56": the last separator decides.
+  if (/,\d{1,2}$/.test(s) && s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", "."); else s = s.replace(/,/g, "");
   const n = parseFloat(s);
   return Number.isFinite(n) ? (neg ? -Math.abs(n) : n) : null;
 }
+// The Account column from an export ("Vantage Live", "FundingRock 100K Challenge"…) back to the account it names.
+function accountByLabel(v) {
+  const want = String(v || "").trim().toLowerCase();
+  if (!want) return "";
+  const a = allAccounts().find(x => acctLabel(x).toLowerCase() === want || String(x.name || "").toLowerCase() === want);
+  return a ? a.id : "";
+}
+// The same trade already in the journal (date, time, pair, direction and P&L match): importing a file twice
+// doesn't double it.
+const tradeKey = t => [t.date, t.time || "", String(t.pair || "").toUpperCase(), t.direction, t.pnl == null ? "open" : Math.round(Number(t.pnl) * 100)].join("|");
 function rowsToTrades(rows) {
   let hi = rows.findIndex(r => r.some(c => ALIASES.pair.includes(normKey(c))) || r.some(c => ALIASES.pnl.includes(normKey(c))));
   if (hi < 0) hi = 0;
@@ -5215,7 +5272,8 @@ function rowsToTrades(rows) {
     const risk = parseMoney(g("risk"));
     if (pnl == null && rr != null && risk) pnl = rr * risk;
     if (pnl == null && rr != null) pnl = rr * (Number(settings.defaultRisk) || 100);
-    if (pnl == null) {
+    const open = /^open/i.test(String(g("status")).trim()) || (pnl == null && /^open/i.test(String(g("result")).trim()));
+    if (pnl == null && !open) {
       const res = String(g("result")).toLowerCase();
       if (!res) continue;
       pnl = res.startsWith("w") ? 0.01 : res.startsWith("l") ? -0.01 : 0;
@@ -5232,8 +5290,9 @@ function rowsToTrades(rows) {
       direction: /^(s|short|sell)/.test(dirRaw) ? "Short" : "Long",
       setup: String(g("setup")).trim() || "Unspecified",
       entry: parseMoney(g("entry")), stop: parseMoney(g("stop")), target: parseMoney(g("target")), exit: parseMoney(g("exit")),
-      size: parseMoney(g("size")), risk, pnl: Math.round(pnl * 100) / 100, r: rr, fees: parseMoney(g("fees")),
-      gross: parseMoney(g("fees")) ? Math.round((pnl + Math.abs(parseMoney(g("fees")))) * 100) / 100 : null, // spreadsheet P&L is taken as already net
+      size: parseMoney(g("size")), risk, pnl: open ? null : Math.round(pnl * 100) / 100, r: open ? null : rr, fees: parseMoney(g("fees")),
+      gross: !open && parseMoney(g("fees")) ? Math.round((pnl + Math.abs(parseMoney(g("fees")))) * 100) / 100 : null, // spreadsheet P&L is taken as already net
+      ...(open ? { status: "open" } : {}), account: accountByLabel(g("account")),
       emotionBefore: String(g("emotionBefore")).trim(), emotionAfter: String(g("emotionAfter")).trim(),
       confidence: parseMoney(g("confidence")) || null,
       followedPlan: plan ? !/^(n|no|false|0|x)$/.test(plan) : true,
@@ -5330,8 +5389,10 @@ function mtTrades(rows, accountId, zone, platform) {
     out.push({
       id: "mt-" + (ticket || uid()) + (accountId ? "-" + accountId.slice(0, 20) : ""), date: when.date, time: when.time, pair, account: accountId || "",
       session: guessSession(when.time, when.date) || "Unspecified", direction: type === "buy" ? "Long" : "Short", setup: "Unspecified",
-      entry, stop, target, exit, size, risk: risk || null, pnl: Math.round((profit + costs) * 100) / 100, gross: Math.round(profit * 100) / 100, r: risk ? Math.round((profit + costs) / risk * 100) / 100 : null,
-      fees: costs ? Math.round(-costs * 100) / 100 : null, emotionBefore: "", emotionAfter: "", confidence: null, followedPlan: true, mistakes: "",
+      entry, stop, target, exit, size, risk: risk || null, pnl: Math.round((profit + costs) * 100) / 100, gross: Math.round((profit + Math.max(0, costs)) * 100) / 100, r: risk ? Math.round((profit + costs) / risk * 100) / 100 : null,
+      // Fees are what the trade cost; a net swap credit (costs > 0) is part of the result instead, so
+      // editing the trade later (gross − fees) gives back the same P&L.
+      fees: costs < 0 ? Math.round(-costs * 100) / 100 : null, emotionBefore: "", emotionAfter: "", confidence: null, followedPlan: true, mistakes: "",
       notes: `Imported from ${platform}${ticket ? " #" + ticket : ""}`, chartBefore: "", chartAfter: "", screenshot: ""
     });
   }
@@ -5372,13 +5433,19 @@ async function importFile(file) {
     const el = doc.getElementById("embedded-data");
     if (!el) return importMt(file, defaultAccount(), "broker");
     const data = JSON.parse(el.textContent);
-    imported = (data.trades || []).map(t => Object.assign({}, t, { id: safeId(t.id), pnl: Number(t.pnl) || 0 }));
+    imported = (data.trades || []).map(t => Object.assign({}, t, { id: safeId(t.id), pnl: t.status === "open" ? null : Number(t.pnl) || 0 }));
   } else if (name.endsWith(".json")) {
     const data = JSON.parse(await file.text());
     const arr = Array.isArray(data) ? data : data.trades;
     if (!Array.isArray(arr)) throw new Error("JSON must be an array of trades");
-    imported = arr.map(t => Object.assign({}, t, { id: safeId(t.id), pnl: Number(t.pnl) || 0, demo: undefined }));
-    if (data.settings && typeof data.settings === "object") { settings = Object.assign({}, settings, data.settings); saveSettings(); }
+    imported = arr.map(t => Object.assign({}, t, { id: safeId(t.id), pnl: t.status === "open" ? null : Number(t.pnl) || 0, demo: undefined }));
+    // Settings in the file (trading accounts, lists, preferences) are only used if the person agrees, and
+    // never switch the weekly email on or off.
+    const st = data.settings && typeof data.settings === "object" && !Array.isArray(data.settings) ? data.settings : null;
+    const keys = st ? SETTINGS_KEYS.filter(k => k !== "weeklyEmail" && k in st) : [];
+    if (keys.length && await askConfirm("This file also contains journal settings, such as trading accounts, pairs, setups and preferences. Use them too? Where the file has its own, they replace yours.", { title: "Import the settings too?", ok: "Use settings" })) {
+      keys.forEach(k => { settings[k] = st[k]; }); saveSettings();
+    }
   } else if (name.endsWith(".xlsx")) {
     const rows = await readXlsx(await file.arrayBuffer());
     if (mtHeaderIndex(rows) >= 0) return importMt(file, defaultAccount(), "broker");
@@ -5387,6 +5454,15 @@ async function importFile(file) {
     imported = rowsToTrades(parseCsv(await file.text()));
   }
   if (!imported.length) throw new Error("No trades found in that file");
+  // Screenshots belong to the account that uploaded them; drop any that point anywhere else.
+  imported.forEach(t => ["shotBefore", "shotAfter"].forEach(k => { if (t[k] && !(t[k].path && safeStoragePath(t[k].path))) delete t[k]; }));
+  // Skip trades that are already in the journal (unless replacing everything).
+  const replacing = F("importReplace").checked && realTrades.length;
+  if (!replacing) {
+    const have = new Set(realTrades.map(tradeKey)), ids = new Set(realTrades.map(t => t.id)), before = imported.length;
+    imported = imported.filter(t => ids.has(t.id) || !have.has(tradeKey(t)));
+    if (!imported.length) { toast(`All ${plural(before, "trade")} in that file are already in your journal`); return; }
+  }
   learnLists(imported);
   if (F("importReplace").checked && realTrades.length) {
     const ok = await askConfirm(`Replace your ${plural(realTrades.length, "saved trade")} with the ${imported.length} in this file? Your current trades will be deleted.`, { title: "Replace all trades?", ok: "Replace" });
@@ -6312,8 +6388,9 @@ function propStatus(a) {
   const r = rulesFor(a), size = Number(a.size);
   if (!r || !(size > 0)) return null;
   const list = sortChrono(realTrades.filter(t => t.account === a.id && !isOpen(t) && (!a.startDate || t.date >= a.startDate)));
+  // Profit and loss count on the day the trade closed (a trade held overnight hits the day it's closed).
   const byDay = new Map();
-  list.forEach(t => byDay.set(t.date, (byDay.get(t.date) || 0) + (Number(t.pnl) || 0)));
+  list.forEach(t => { const d = closeDateOf(t); byDay.set(d, (byDay.get(d) || 0) + (Number(t.pnl) || 0)); });
   const allDays = Array.from(byDay.keys()).sort();
   // At most firms a payout resets the account to its starting size (FTMO, Funding Pips, Alpha Capital),
   // so the profit target, trading days and consistency count again from the day after it. Where the
@@ -6685,7 +6762,15 @@ document.addEventListener("click", e => {
 /* ---------- Payout certificates: files in a private Supabase Storage bucket, one folder per user ---------- */
 const CERT_BUCKET = "payout-certificates", CERT_MAX = 10 * 1024 * 1024;
 const certUrls = new Map(); // storage path → object URL, so each file downloads once
+// Files only ever live in the signed-in person's own folder. A path from anywhere else (e.g. an imported
+// file) that leaves that folder or contains "." / ".." parts is refused, so it can't be steered at other
+// addresses on the server.
+function safeStoragePath(path) {
+  const uid = sb.session && sb.session.user && sb.session.user.id, parts = String(path || "").split("/");
+  return !!uid && parts.length >= 2 && parts[0] === uid && parts.slice(1).every(p => /^[A-Za-z0-9_-][A-Za-z0-9_.-]*$/.test(p));
+}
 async function sbStorage(method, path, body, type) {
+  if (!safeStoragePath(path)) throw new Error("That file isn't in your account");
   const headers = { apikey: SB.key, Authorization: "Bearer " + await sbToken() };
   if (body) { headers["Content-Type"] = type; headers["x-upsert"] = "true"; }
   const where = (method === "GET" ? "authenticated/" : "") + CERT_BUCKET + "/" + path.split("/").map(encodeURIComponent).join("/");
