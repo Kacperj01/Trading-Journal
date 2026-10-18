@@ -27,7 +27,9 @@ def local_fonts(html, prefix):
     return html.replace("</head>", tags + "</head>", 1)
 
 
-# Cloudflare Web Analytics: cookie-free visit counts. The token is public; set it in site/config.json.
+# Cloudflare Web Analytics: cookie-free visit counts. With automatic setup Cloudflare adds its script to
+# each page itself, so the policy always allows it. cfAnalyticsToken in site/config.json is only needed
+# for the manual (snippet) setup, which adds the script here instead.
 CF_BEACON = "https://static.cloudflareinsights.com/beacon.min.js"
 
 
@@ -50,12 +52,12 @@ def secure(html, connect=(), img="'self' data:", turnstile=False):
     policy = [
         "default-src 'self'",
         "script-src 'self' " + " ".join(dict.fromkeys(hashes))
-        + (" https://static.cloudflareinsights.com" if cfg.get("cfAnalyticsToken") else "")
+        + " https://static.cloudflareinsights.com"
         + (" https://challenges.cloudflare.com" if turnstile else ""),
         "style-src 'self' 'unsafe-inline'",
         "font-src 'self' data:",
         "img-src " + img,
-        "connect-src " + " ".join(["'self'", *connect, *(["https://cloudflareinsights.com"] if cfg.get("cfAnalyticsToken") else [])]),
+        "connect-src " + " ".join(["'self'", *connect, "https://cloudflareinsights.com"]),
         "worker-src 'self' blob:",
         "manifest-src 'self'",
         "frame-src " + ("https://challenges.cloudflare.com" if turnstile else "'none'"), "object-src 'none'", "base-uri 'self'", "form-action 'self'",
