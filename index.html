@@ -712,7 +712,7 @@ dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(4px); }
 .pc-facts span { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: var(--tint); border: 1px solid var(--border); color: var(--text-2); }
 .pc-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
 .pc-foot > span:first-child { flex: 1 1 200px; }
-.pc-btns { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.pc-btns { display: flex; gap: 6px; flex: 0 1 auto; min-width: 0; max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
 .pc-passed { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--green-soft); border: 1px solid rgba(52, 210, 123, 0.4); font-size: 13px; color: var(--text-2); }
 .pc-passed .ni { width: 18px; height: 18px; opacity: 1; color: var(--green); flex-shrink: 0; margin-top: 1px; }
 .pc-passed b { color: var(--text); }
