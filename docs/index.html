@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-93aVTRxI0fHfViqEG1hD/rsLqVwKX7AzH+D587bIfOY=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-RS9NxBRCCm0MNktqHb6M2N1JXFjL/4rWWPTrpnEKnmM=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-uA7LABfbut2Q+SFNCFKisitro9knZQtg2vwf5aPiY+E=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-luoU9ZW9fEFP4k7jetDbI0+06d/MW12vCADhmMs55HE=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "553b97b28b";</script>
+<script>window.ELEV8_BUILD = "69a092a2aa";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -894,6 +894,8 @@ html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.si
 .cert-dlg .dlg-actions { justify-content: space-between; }
 #certDownload .ni { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
 .btn.danger-text { color: var(--red); }
+.remember { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: var(--text-2); cursor: pointer; min-height: 32px; -webkit-user-select: none; user-select: none; }
+.remember input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); flex-shrink: 0; }
 .ts-box:empty { display: none; }
 .ts-box { margin-top: 12px; display: flex; justify-content: center; }
 .ts-box.floating { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 200; margin: 0; }
@@ -2092,6 +2094,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <form id="syncForm" class="stack" novalidate>
               <div class="field"><label for="syncEmail">Email</label><input type="email" id="syncEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
               <div class="field"><label for="syncPassword">Password</label><input type="password" id="syncPassword" autocomplete="current-password" required></div>
+              <label class="remember"><input type="checkbox" id="syncRemember" checked> Remember me</label>
               <p id="syncMsg" class="muted" role="status" aria-live="polite" style="margin:0;font-size:13px"></p>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn primary" type="submit" id="syncSignIn">Sign in</button>
@@ -2227,6 +2230,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="field signup-only" hidden><label for="dlgDob">Date of birth</label><input type="date" id="dlgDob" autocomplete="bday"></div>
       <div class="field"><label for="dlgEmail">Email</label><input type="email" id="dlgEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
       <div class="field"><div class="pw-label"><label for="dlgPassword">Password</label><button type="button" class="link-btn signin-only" id="dlgForgot">Forgot password?</button></div><input type="password" id="dlgPassword" autocomplete="current-password" required></div>
+      <label class="remember"><input type="checkbox" id="dlgRemember" checked> Remember me</label>
       <p id="dlgMsg" role="status" aria-live="polite"></p>
       <p class="signup-only home-legal" hidden>By creating an account you agree to the <a href="terms/" target="_blank" rel="noopener">Terms of Use</a> and <a href="privacy/" target="_blank" rel="noopener">Privacy Policy</a>. ELEV8 is a journal for education only, not financial advice, and isn't affiliated with any prop firm or broker.</p>
       <button class="btn primary" type="submit" id="dlgSubmit">Sign in</button>
@@ -2704,6 +2708,15 @@ function demoJournal() {
   const s = Object.assign({}, DEFAULT_SETTINGS, { balance: 100000, defaultRisk: 200, accounts: [live, challenge, funded], lastAccount: live.id, emotionsSplit: true });
   return { settings: s, trades: out };
 }
+// "Remember me" off: the sign-in lasts until the browser is closed. A session cookie (deleted by the browser
+// when it closes, shared by all tabs) marks the browser session. If it's gone at start-up, this device
+// forgets the account and its journal, as if the person had signed out.
+const KEY_REMEMBER = "tj.sb.remember.v1", KEY_FORGET = "tj.sb.forget.v1";
+const aliveCookie = () => { try { return /(?:^|;\s*)tj_alive=1/.test(document.cookie); } catch (e) { return true; } };
+function markAlive() { try { document.cookie = "tj_alive=1; path=/; SameSite=Strict" + (location.protocol === "https:" ? "; Secure" : ""); } catch (e) { /* cookies blocked */ } }
+if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie())
+  ["tj.sb.session.v1", "tj.sb.outbox.v1", "tj.sb.user.v1", "tj.sb.email.v1", KEY_TRADES, KEY_CACHE, KEY_SETTINGS, KEY_DRAFT, KEY_FORGET].forEach(k => store.del(k));
+["dlgRemember", "syncRemember"].forEach(id => { const el = document.getElementById(id); if (el) el.checked = store.get(KEY_REMEMBER, true) !== false; });
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
 let realTrades = (store.get(KEY_TRADES, []) || []).filter(t => t && !t.demo);
 if (DEMO) { const d = demoJournal(); settings = d.settings; realTrades = d.trades; store.set(KEY_SETTINGS, settings); store.set(KEY_TRADES, realTrades); }
@@ -2861,7 +2874,8 @@ function sbSaveSession(s) {
       user: { id: s.user.id, email: s.user.email, name: meta.full_name || "", dob: meta.dob || "", age: meta.age || null, created: s.user.created_at || "" } };
     sb.lastEmail = s.user.email;
     store.set("tj.sb.email.v1", s.user.email);
-  } else { sb.session = null; sb.synced = false; }
+    if (store.get(KEY_REMEMBER, true) === false) { store.set(KEY_FORGET, true); markAlive(); } else store.del(KEY_FORGET);
+  } else { sb.session = null; sb.synced = false; sb.failed = false; store.del(KEY_FORGET); }
   store.set(KEY_SB_SESSION, sb.session);
 }
 let homeMode = "signin";
@@ -3164,6 +3178,7 @@ async function sbSignIn(signUp, from = "card") {
   const ids = from === "dialog" ? ["dlgEmail", "dlgPassword", "dlgMsg"] : ["syncEmail", "syncPassword", "syncMsg"];
   const email = F(ids[0]).value.trim(), password = F(ids[1]).value;
   const msg = F(ids[2]);
+  store.set(KEY_REMEMBER, F(from === "dialog" ? "dlgRemember" : "syncRemember").checked);
   let profile = null;
   if (signUp && from === "dialog") {
     const name = F("dlgName").value.trim().replace(/\s+/g, " "), dob = F("dlgDob").value;
