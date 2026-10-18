@@ -27,7 +27,20 @@ def local_fonts(html, prefix):
     return html.replace("</head>", tags + "</head>", 1)
 
 
-def secure(html, connect=(), img="'self' data:"):
+# Cloudflare Web Analytics: cookie-free visit counts. The token is public; set it in site/config.json.
+CF_BEACON = "https://static.cloudflareinsights.com/beacon.min.js"
+
+
+def analytics(html):
+    token = cfg.get("cfAnalyticsToken")
+    if not token:
+        return html
+    beacon = json.dumps({"token": token})
+    tag = f"<script defer src=\"{CF_BEACON}\" data-cf-beacon='{beacon}'></script>\n"
+    return html.replace("</head>", tag + "</head>", 1)
+
+
+def secure(html, connect=(), img="'self' data:", turnstile=False):
     html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + FRAME_GUARD, 1)
     hashes = []
     for m in re.finditer(r"<script(?![^>]*\bsrc=)([^>]*)>(.*?)</script>", html, re.S):
@@ -36,14 +49,16 @@ def secure(html, connect=(), img="'self' data:"):
         hashes.append("'sha256-" + base64.b64encode(hashlib.sha256(m.group(2).encode("utf-8")).digest()).decode() + "'")
     policy = [
         "default-src 'self'",
-        "script-src 'self' " + " ".join(dict.fromkeys(hashes)),
+        "script-src 'self' " + " ".join(dict.fromkeys(hashes))
+        + (" https://static.cloudflareinsights.com" if cfg.get("cfAnalyticsToken") else "")
+        + (" https://challenges.cloudflare.com" if turnstile else ""),
         "style-src 'self' 'unsafe-inline'",
         "font-src 'self' data:",
         "img-src " + img,
-        "connect-src " + " ".join(["'self'", *connect]),
+        "connect-src " + " ".join(["'self'", *connect, *(["https://cloudflareinsights.com"] if cfg.get("cfAnalyticsToken") else [])]),
         "worker-src 'self' blob:",
         "manifest-src 'self'",
-        "frame-src 'none'", "object-src 'none'", "base-uri 'self'", "form-action 'self'",
+        "frame-src " + ("https://challenges.cloudflare.com" if turnstile else "'none'"), "object-src 'none'", "base-uri 'self'", "form-action 'self'",
     ]
     if any(c.startswith("https://") and ".supabase.co" in c for c in connect):
         policy.append("upgrade-insecure-requests")
@@ -64,7 +79,10 @@ cfg_path = root / "site" / "config.json"
 cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
 sync_script = ""
 if cfg.get("supabaseUrl") and cfg.get("supabaseAnonKey"):
-    sync_script = "<script>window.ELEV8_SUPABASE = " + json.dumps({"url": cfg["supabaseUrl"].rstrip("/"), "key": cfg["supabaseAnonKey"]}) + ";</script>"
+    sb_cfg = {"url": cfg["supabaseUrl"].rstrip("/"), "key": cfg["supabaseAnonKey"]}
+    if cfg.get("turnstileSiteKey"):
+        sb_cfg["turnstile"] = cfg["turnstileSiteKey"]  # public site key for the spam check on sign-in
+    sync_script = "<script>window.ELEV8_SUPABASE = " + json.dumps(sb_cfg) + ";</script>"
 
 version = hashlib.sha256((src + sync_script).encode()).hexdigest()[:10]
 page = f"""<!doctype html>
@@ -161,8 +179,8 @@ docs.mkdir(exist_ok=True)
 # The journal talks to Supabase, and to GitHub for exchange rates and the news calendar when offline from
 # its own copies. Chart previews can come from any https image link a trader pastes.
 sb_origin = re.match(r"https?://[^/]+", cfg.get("supabaseUrl", "")) if cfg.get("supabaseUrl") else None
-page = local_fonts(page, "")
-page = secure(page, connect=[*( [sb_origin.group(0)] if sb_origin else []), "https://raw.githubusercontent.com", "blob:"],
+page = analytics(local_fonts(page, ""))
+page = secure(page, turnstile=bool(cfg.get("turnstileSiteKey")), connect=[*( [sb_origin.group(0)] if sb_origin else []), "https://raw.githubusercontent.com", "blob:"],
               img="'self' data: blob: https:")
 (docs / "index.html").write_text(page, encoding="utf-8")
 (docs / "manifest.webmanifest").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
@@ -196,7 +214,7 @@ home_page = f"""<!doctype html>
 </html>
 """
 (docs / "home").mkdir(exist_ok=True)
-(docs / "home" / "index.html").write_text(secure(local_fonts(home_page, "../")), encoding="utf-8")
+(docs / "home" / "index.html").write_text(secure(analytics(local_fonts(home_page, "../"))), encoding="utf-8")
 shutil.copytree(root / "site" / "home" / "img", docs / "home" / "img", dirs_exist_ok=True)
 # Privacy Policy and Terms at /privacy/ and /terms/: site/legal/*.html are content, wrapped here.
 LEGAL_CSS = """
@@ -253,7 +271,7 @@ for slug in ("privacy", "terms"):
 </html>
 """
     (docs / slug).mkdir(exist_ok=True)
-    (docs / slug / "index.html").write_text(secure(local_fonts(page_l, "../")), encoding="utf-8")
+    (docs / slug / "index.html").write_text(secure(analytics(local_fonts(page_l, "../"))), encoding="utf-8")
 
 # Fonts served from this site (see site/fetch_fonts.py).
 shutil.copytree(root / "site" / "fonts", docs / "fonts", dirs_exist_ok=True)
@@ -290,7 +308,7 @@ page_404 = f"""<!doctype html>
 </body>
 </html>
 """
-(docs / "404.html").write_text(secure(local_fonts(page_404, "/")), encoding="utf-8")
+(docs / "404.html").write_text(secure(analytics(local_fonts(page_404, "/"))), encoding="utf-8")
 
 # For search engines: everything may be crawled; the sitemap lists the public pages.
 SITE = "https://elev8tradingjournal.com"

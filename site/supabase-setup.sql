@@ -96,3 +96,21 @@ begin
 end $$;
 revoke all on function public.delete_my_account(boolean) from public, anon;
 grant execute on function public.delete_my_account(boolean) to authenticated;
+
+-- Spam protection for bug reports: at most 20 reports from everyone in any 10 minutes, and 5 an
+-- hour from any one signed-in account. The message is shown to the person in the app.
+create or replace function public.bug_report_limit() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if (select count(*) from public.bug_reports where created_at > now() - interval '10 minutes') >= 20 then
+    raise exception 'Too many bug reports are arriving right now. Please try again in a few minutes.';
+  end if;
+  if new.user_id is not null and (select count(*) from public.bug_reports
+      where user_id = new.user_id and created_at > now() - interval '1 hour') >= 5 then
+    raise exception 'You''ve sent several reports in the last hour. Please try again later.';
+  end if;
+  return new;
+end $$;
+drop trigger if exists bug_report_limit on public.bug_reports;
+create trigger bug_report_limit before insert on public.bug_reports
+  for each row execute function public.bug_report_limit();

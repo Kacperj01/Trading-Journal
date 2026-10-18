@@ -864,6 +864,9 @@ html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.si
 .cert-dlg .dlg-actions { justify-content: space-between; }
 #certDownload .ni { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
 .btn.danger-text { color: var(--red); }
+.ts-box:empty { display: none; }
+.ts-box { margin-top: 12px; display: flex; justify-content: center; }
+.ts-box.floating { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 200; margin: 0; }
 .del-acct { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
 .del-acct p { margin: 2px 0 0; font-size: 13px; }
 /* Open trades */
@@ -2770,10 +2773,50 @@ function sbQueue(entry) {
   store.set(KEY_SB_OUTBOX, box);
   sbSync();
 }
+/* ---------- Spam protection: a Cloudflare Turnstile check on sign-up, sign-in, resets and resends ----------
+   Supabase verifies the token when CAPTCHA protection is switched on (Authentication › Attack Protection).
+   If the check can't load (no site key, offline, a content blocker), the request goes without one and
+   Supabase decides; while CAPTCHA protection is off it is simply ignored. */
+const TS_KEY = SB && SB.turnstile || "";
+const CAPTCHA_PATHS = /^(signup|token\?grant_type=password|recover|resend|otp)/;
+let tsLoad = null;
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (!tsLoad) tsLoad = new Promise((ok, bad) => {
+    const el = document.createElement("script");
+    el.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    el.async = true; el.onload = () => window.turnstile ? ok(window.turnstile) : bad(new Error("no turnstile")); el.onerror = bad;
+    document.head.appendChild(el);
+  }).catch(e => { tsLoad = null; throw e; });
+  return tsLoad;
+}
+async function captchaToken() {
+  if (!TS_KEY) return null;
+  let ts; try { ts = await loadTurnstile(); } catch (e) { return null; }
+  // Shown only if Cloudflare needs the person to tick a box; inside an open dialog so it can be clicked.
+  const host = document.querySelector("dialog[open] .dlg-body, dialog[open]") || document.body;
+  const box = document.createElement("div"); box.className = "ts-box" + (host === document.body ? " floating" : "");
+  host.appendChild(box);
+  let id = null;
+  try {
+    return await new Promise(resolve => {
+      const done = t => resolve(t || null);
+      id = ts.render(box, { sitekey: TS_KEY, appearance: "interaction-only", theme: "dark", callback: done,
+        "error-callback": () => done(null), "timeout-callback": () => done(null), "unsupported-callback": () => done(null) });
+      setTimeout(() => done(null), 60000);
+    });
+  } catch (e) { return null; }
+  finally { try { if (id != null) ts.remove(id); } catch (e) { /* already gone */ } box.remove(); }
+}
 async function sbAuth(path, body) {
+  if (CAPTCHA_PATHS.test(path)) { const t = await captchaToken(); if (t) body = Object.assign({}, body, { gotrue_meta_security: { captcha_token: t } }); }
   const res = await fetch(SB.url + "/auth/v1/" + path, { method: "POST", headers: { apikey: SB.key, "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) { const err = new Error(json.msg || json.error_description || json.message || json.error || "Sign-in failed"); err.code = json.error_code || json.error || ""; throw err; }
+  if (!res.ok) {
+    const raw = json.msg || json.error_description || json.message || json.error || "Sign-in failed";
+    const err = new Error(/captcha/i.test(raw) ? "The security check didn't go through. Turn off any content blocker for this site, or try another network, then try again." : raw);
+    err.code = json.error_code || json.error || ""; throw err;
+  }
   return json;
 }
 function sbSaveSession(s) {
@@ -7234,7 +7277,11 @@ async function sendBugReport(r) {
   const res = await fetch(BUG_DB.url + "/rest/v1/bug_reports", { method: "POST",
     headers: { apikey: BUG_DB.key, Authorization: "Bearer " + auth, "Content-Type": "application/json", Prefer: "return=minimal" },
     body: JSON.stringify({ title: r.title.slice(0, 200), body: r.body.slice(0, 8000) }) });
-  if (!res.ok) throw new Error("Report not sent (" + res.status + ")");
+  if (!res.ok) {
+    // The database limits how many reports can arrive at once (spam protection) and says why.
+    const j = await res.json().catch(() => ({}));
+    throw new Error(/too many|several reports/i.test(j.message || "") ? j.message : "Report not sent (" + res.status + ")");
+  }
 }
 function bugReport() {
   const what = F("bugText").value.trim(), steps = F("bugSteps").value.trim();
@@ -7274,7 +7321,7 @@ F("bugForm").addEventListener("submit", async e => {
     F("bugText").value = ""; F("bugSteps").value = ""; F("bugMsg").textContent = "";
     toast("Thanks, your report was sent");
   } catch (err) {
-    F("bugMsg").textContent = "Couldn't send the report right now. Tap Copy report and send it to us another way, or try again later.";
+    F("bugMsg").textContent = /too many|several reports/i.test(err.message) ? err.message : "Couldn't send the report right now. Tap Copy report and send it to us another way, or try again later.";
   } finally { btn.disabled = false; }
 });
 F("bugCopy").addEventListener("click", async () => {
