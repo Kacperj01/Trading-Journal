@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-JuzvD2G5mMuo0h6uknZ7SVf1ksGlkG7wyay8pHdhd9s=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-L7azh+nK2hhihOWgF2HtfOBcaR4toJd8R85mvD4CH2s=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-VM0UzI0G+dJjIeBJ7W3Y2uVenmcbKTdH8p+aHr5jhjw='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-+Hqa9wYWv5pLPUvU7+QPVml9B9NAmAcDxs0kglrJ0b8=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-L7azh+nK2hhihOWgF2HtfOBcaR4toJd8R85mvD4CH2s=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-3i4u559yE/ubbVPNYfx9yC7rTGsOGRWS3xSNHKeKO9I='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co https://raw.githubusercontent.com blob:; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "d2e804cfc4";</script>
+<script>window.ELEV8_BUILD = "723449d60c";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -2080,7 +2080,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <div class="field"><label for="profEmail">Email</label><input type="email" id="profEmail" autocomplete="email" inputmode="email" autocapitalize="off" aria-describedby="profEmailHint"><span class="hint" id="profEmailHint">Changing it sends a confirmation link to the new address</span></div>
               <div><button class="btn primary" type="submit">Save details</button></div>
             </form>
-            <label class="toggle" style="margin-top:14px"><input type="checkbox" id="weeklyEmail"> <span><b>Email me my weekly review</b><br><span class="muted" style="font-size:12.5px">Every Sunday evening, from reviews@elev8tradingjournal.com</span></span></label>
+            <label class="toggle" style="margin-top:14px"><input type="checkbox" id="weeklyEmail"> <span><b>Email me my weekly review</b><br><span class="muted" style="font-size:12.5px">Every Sunday at 10am (Irish time), from reviews@elev8tradingjournal.com</span></span></label>
           </section>
 
           <section class="card accent-teal" aria-labelledby="syncTitle" id="syncCard" hidden>
@@ -7368,7 +7368,7 @@ F("sideTheme").addEventListener("click", () => applyTheme(document.documentEleme
 F("weeklyEmail").addEventListener("change", e => {
   settings.weeklyEmail = e.target.checked;
   saveSettings();
-  toast(e.target.checked ? `Weekly review will be emailed to ${(sb.session && sb.session.user.email) || "you"} on Sundays` : "Weekly review emails turned off");
+  toast(e.target.checked ? `Weekly review will be emailed to ${(sb.session && sb.session.user.email) || "you"} every Sunday at 10am` : "Weekly review emails turned off");
 });
 F("setNav").addEventListener("click", e => {
   const b = e.target.closest("button[data-pane]");

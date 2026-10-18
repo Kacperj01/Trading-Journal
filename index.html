@@ -2045,7 +2045,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <div class="field"><label for="profEmail">Email</label><input type="email" id="profEmail" autocomplete="email" inputmode="email" autocapitalize="off" aria-describedby="profEmailHint"><span class="hint" id="profEmailHint">Changing it sends a confirmation link to the new address</span></div>
               <div><button class="btn primary" type="submit">Save details</button></div>
             </form>
-            <label class="toggle" style="margin-top:14px"><input type="checkbox" id="weeklyEmail"> <span><b>Email me my weekly review</b><br><span class="muted" style="font-size:12.5px">Every Sunday evening, from reviews@elev8tradingjournal.com</span></span></label>
+            <label class="toggle" style="margin-top:14px"><input type="checkbox" id="weeklyEmail"> <span><b>Email me my weekly review</b><br><span class="muted" style="font-size:12.5px">Every Sunday at 10am (Irish time), from reviews@elev8tradingjournal.com</span></span></label>
           </section>
 
           <section class="card accent-teal" aria-labelledby="syncTitle" id="syncCard" hidden>
@@ -7333,7 +7333,7 @@ F("sideTheme").addEventListener("click", () => applyTheme(document.documentEleme
 F("weeklyEmail").addEventListener("change", e => {
   settings.weeklyEmail = e.target.checked;
   saveSettings();
-  toast(e.target.checked ? `Weekly review will be emailed to ${(sb.session && sb.session.user.email) || "you"} on Sundays` : "Weekly review emails turned off");
+  toast(e.target.checked ? `Weekly review will be emailed to ${(sb.session && sb.session.user.email) || "you"} every Sunday at 10am` : "Weekly review emails turned off");
 });
 F("setNav").addEventListener("click", e => {
   const b = e.target.closest("button[data-pane]");

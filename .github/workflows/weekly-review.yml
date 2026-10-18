@@ -1,10 +1,16 @@
 name: Weekly review emails
 
-# Every Sunday at 17:00 UTC (6pm UK in summer, 5pm in winter), emails each user who turned on
+# Every Sunday at 10am Irish time, emails each user who turned on
 # "Email me my weekly review" their week, from reviews@elev8tradingjournal.com via Resend.
 # Run it by hand with an email address to send a one-off test to just that account.
 on:
+  # GitHub schedules run on UTC, and Ireland is UTC+1 in summer and UTC+0 in winter. It fires at
+  # 09:00 and 10:00 UTC; the first step lets through only the one that is 10am in Dublin that day.
   schedule:
+    - cron: "0 9 * * 0"
+    - cron: "0 10 * * 0"
+    # One-off: 18 Oct 2026 was changed to 10am after 10am had passed, so that day still sends at the
+    # old time (17:00 UTC). On every other Sunday this slot does nothing; it can be deleted afterwards.
     - cron: "0 17 * * 0"
   workflow_dispatch:
     inputs:
@@ -29,8 +35,23 @@ jobs:
   send:
     runs-on: ubuntu-latest
     steps:
+      - name: Only at 10am Irish time
+        id: when
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          # Runs started by hand always send. Scheduled ones send only from the slot that is 10am in Dublin
+          # (decided by the slot, not the clock, so a late start by GitHub doesn't skip the week).
+          offset=$(TZ=Europe/Dublin date +%z)
+          if [ -z "$SCHEDULE" ] || { [ "$SCHEDULE" = "0 17 * * 0" ] && [ "$(date -u +%F)" = "2026-10-18" ]; } || { [ "$SCHEDULE" = "0 9 * * 0" ] && [ "$offset" = "+0100" ]; } || { [ "$SCHEDULE" = "0 10 * * 0" ] && [ "$offset" = "+0000" ]; }; then
+            echo "send=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not 10am in Dublin for this slot ($SCHEDULE, Dublin is UTC$offset); the other slot sends."
+          fi
       - uses: actions/checkout@v4
+        if: steps.when.outputs.send == 'yes'
       - name: Send weekly reviews
+        if: steps.when.outputs.send == 'yes'
         env:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

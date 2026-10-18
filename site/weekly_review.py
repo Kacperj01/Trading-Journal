@@ -329,7 +329,7 @@ def render(w, name, preview=False):
     <td style="padding-left:12px"><div style="font-weight:800;font-size:20px;letter-spacing:2px;color:#4a9af0">ELEV8</div><div style="font-size:10px;letter-spacing:3px;color:#25c0c0">WEEKLY REVIEW</div></td>
   </tr></table>
 </td></tr>
-{('<tr><td style="padding:16px 24px 0"><div style="background:#e6f6f5;border:1px solid #bfe8e5;border-radius:10px;padding:12px 14px;font-size:13.5px;color:#0d4f4c;line-height:1.5"><b>New: weekly reviews by email.</b> This is a preview of your week. To get one every Sunday evening, turn on <b>Email me my weekly review</b> in ELEV8 › Settings › Profile.</div></td></tr>') if preview else ""}
+{('<tr><td style="padding:16px 24px 0"><div style="background:#e6f6f5;border:1px solid #bfe8e5;border-radius:10px;padding:12px 14px;font-size:13.5px;color:#0d4f4c;line-height:1.5"><b>New: weekly reviews by email.</b> This is a preview of your week. To get one every Sunday at 10am, turn on <b>Email me my weekly review</b> in ELEV8 › Settings › Profile.</div></td></tr>') if preview else ""}
 <tr><td style="padding:22px 24px 4px"><div style="font-size:13px;color:#5d6d84">{rng}</div><div style="font-size:20px;font-weight:700;color:#0d1b2e;margin-top:4px">Hi {hello}, here's your week</div>
 <p style="font-size:15px;color:#33445c;line-height:1.5;margin:10px 0 0">{w['verdict']}</p></td></tr>
 <tr><td style="padding:16px 18px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="6"><tr>
