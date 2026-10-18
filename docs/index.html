@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-ZN40pxcUdaWWLomSQC59iGn3/qcFrPh8ScKxJrMmUPw=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-awVgge8rXJ1mij5+B9w5agc1Yi5N6QZprfbr5p6yKE0=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-93aVTRxI0fHfViqEG1hD/rsLqVwKX7AzH+D587bIfOY=' 'sha256-VvI+vZUNb7kphNusuYJfdF7sVa1NDNmrGlNjHtR5m5c=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-RS9NxBRCCm0MNktqHb6M2N1JXFjL/4rWWPTrpnEKnmM=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "61a55fc740";</script>
+<script>window.ELEV8_BUILD = "553b97b28b";</script>
 <script>
   // First-time visitors see the homepage. Anyone who has signed in here before, the installed app,
   // email buttons (?verify) and confirmation links, and ?login / ?signup / ?demo / ?app all open the journal directly.
@@ -2968,17 +2968,21 @@ async function sbSync() {
       const next = Object.assign({}, DEFAULT_SETTINGS, st[0].data);
       if (JSON.stringify(next) !== JSON.stringify(settings)) { settings = next; store.set(KEY_SETTINGS, settings); settingsChanged = true; }
     }
-    sb.lastSync = Date.now(); sb.offline = false; sb.synced = true;
+    const wasWaiting = !sb.synced;
+    sb.lastSync = Date.now(); sb.offline = false; sb.failed = false; sb.synced = true;
     setSync("cloud", "Synced · " + sb.session.user.email);
     if (settingsChanged) { refreshLists(); renderListEditors(); renderAccount(); }
     if (changed || settingsChanged) { syncView(); onDataChanged(); }
+    else if (wasWaiting) renderDashboard(); // swap "Loading your journal…" for the journal
     migrateFees();
     sbRender();
     maybeStartTour();
   } catch (e) {
     if (!sb.session) { /* signed out during sync */ }
     else if (e instanceof TypeError || !navigator.onLine) { sb.offline = true; setSync("local", "Offline · changes will sync"); }
-    else setSync("err", "Sync problem: " + e.message);
+    else { sb.failed = true; setSync("err", "Sync problem: " + e.message); }
+    // Stop showing "Loading your journal…" if the first sync couldn't finish.
+    if (sb.session && !sb.synced) try { renderDashboard(); } catch (err) { /* still starting up */ }
   } finally {
     sb.busy = false;
     if (sb.again) { sb.again = false; sbSync(); }
@@ -3789,6 +3793,16 @@ function stats(list) {
 /* ======================================================================
    Rendering — Dashboard
    ====================================================================== */
+// Still fetching the journal: the claude.ai copy loading, or just signed in and the first sync not back yet.
+// While true, nothing asks the person to register an account or says the journal is empty.
+function journalLoading() {
+  if (persist.loading) return true;
+  try { return !!(sbOn() && !sb.synced && !sb.offline && !sb.failed); } catch (e) { return false; }
+}
+// Signed in but the journal couldn't be fetched (offline or a server problem): we don't know what's in it yet.
+function journalUnsynced() {
+  try { return !!(sbOn() && !sb.synced && (sb.offline || sb.failed)); } catch (e) { return false; }
+}
 function renderDashboard() {
   syncFilters();
   renderWeekly();
@@ -3807,16 +3821,18 @@ function renderDashboard() {
 
   const empty = list.length === 0;
   // On Overview the quick log already invites the first trade, so skip the empty-journal card there.
-  $("#dashEmpty").hidden = !empty || (!hasAny && !persist.loading && currentTab() === "overview");
+  const loading = journalLoading(), unsynced = !loading && journalUnsynced();
+  $("#dashEmpty").hidden = !empty || (!hasAny && !loading && !unsynced && currentTab() === "overview");
   $$(".needs-data").forEach(el => el.hidden = empty);
   const freshWeek = hasAny && ui.range === "week" && filterCount() === 0;
-  F("welcomeCard").hidden = DEMO || hasAny || persist.loading || !!ui.welcomeDone || currentTab() !== "overview";
+  F("welcomeCard").hidden = DEMO || hasAny || loading || unsynced || !!ui.welcomeDone || currentTab() !== "overview";
   // No trading account yet: ask for one instead of offering to log a trade.
-  const noAcct = !DEMO && !persist.loading && !persist.readOnly && !allAccounts().length;
+  const noAcct = !DEMO && !loading && !unsynced && !persist.readOnly && !allAccounts().length;
   F("acctFirstCard").hidden = !noAcct; F("quickLog").hidden = noAcct;
   F("dashEmptyBtn").textContent = noAcct && !hasAny ? "Register an account" : "Log a trade";
-  $("#dashEmpty h3").textContent = persist.loading ? "Loading your journal…" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
-  $("#dashEmptyText").textContent = persist.loading ? "Fetching your trades." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
+  F("dashEmptyBtn").hidden = loading || unsynced;
+  $("#dashEmpty h3").textContent = loading ? "Loading your journal…" : unsynced ? "Couldn't load your journal" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
+  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically, or tap Sync now in Settings." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
   renderOpen(open);
