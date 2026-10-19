@@ -886,6 +886,9 @@ html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.si
 .ts-box.floating { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 200; margin: 0; }
 .del-acct { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
 .del-acct p { margin: 2px 0 0; font-size: 13px; }
+.del-acct-more { margin-top: 18px; }
+.del-acct-more summary { cursor: pointer; font-size: 12.5px; color: var(--muted); width: fit-content; }
+.del-acct-more summary:hover { color: var(--text-2); }
 /* Open trades */
 .open-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; color: var(--text-2); cursor: pointer; }
 .open-toggle input { width: auto; margin: 0; }
@@ -1240,7 +1243,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     border-right: 1px solid var(--border); transition: transform .26s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
   .side-collapsed header.top::before { transform: translateX(-172px); }
   @keyframes sideFadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .side-anim .tabs .tab > span, .side-anim .side-link > span, .side-anim .brand h1, .side-anim .brand .sync, .side-anim #exportJournalTop { animation: sideFadeIn .22s ease .08s both; }
+  .side-anim .tabs .tab > span, .side-anim .side-link > span, .side-anim .brand h1, .side-anim .brand .sync { animation: sideFadeIn .22s ease .08s both; }
   /* Small arrow at the top, beside the sync status; flips to point right when collapsed. */
   .side-toggle { grid-area: toggle; display: flex; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px;
     background: transparent; color: var(--muted); align-items: center; justify-content: center; cursor: pointer; transition: color .15s, background .15s; }
@@ -1467,7 +1470,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
       <div class="side-actions">
         <button class="side-link" type="button" id="sideTheme"></button>
-        <button class="side-link" type="button" id="exportJournalTop" title="Save a copy of your journal, with all your trades, as a file"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11.5M7 10l5 5 5-5M4.5 20.5h15"/></svg><span>Export journal</span></button>
         <button class="side-link" type="button" id="sideBug"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7.5" width="10" height="13" rx="5"/><path d="M12 11.5v9M9.5 4.5l1.3 3M14.5 4.5l-1.3 3M3 13.5h4M17 13.5h4M4 8.5l3 2M20 8.5l-3 2M4 19.5l3-2M20 19.5l-3-2"/></svg><span>Report a bug</span></button>
         <button class="side-link danger" type="button" id="sideLogout" hidden><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5.5A2.5 2.5 0 0 1 3 18.5v-13A2.5 2.5 0 0 1 5.5 3H9"/><path d="M16 17l5-5-5-5M21 12H9"/></svg><span>Log out</span></button>
       </div>
@@ -2088,10 +2090,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
                 <button class="btn danger" type="button" id="syncSignOut">Sign out</button>
               </div>
-              <div class="del-acct">
-                <div><strong>Delete account</strong><p class="muted">Permanently delete your account and everything in it. This can't be undone.</p></div>
-                <button class="btn danger-text ghost" type="button" id="delAcct">Delete account</button>
-              </div>
             </div>
           </section>
           </div>
@@ -2184,6 +2182,13 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <p class="muted" style="margin:0;font-size:13.5px">Deletes every trade in this journal. Export a copy first if you might want them back.</p>
               <div><button class="btn danger" type="button" id="clearAll">Delete all trades</button></div>
             </div>
+            <details class="del-acct-more" id="delAcctWrap" hidden>
+              <summary>Account options</summary>
+              <div class="del-acct">
+                <div><strong>Delete account</strong><p class="muted">Permanently delete your account and everything in it. This can't be undone.</p></div>
+                <button class="btn danger-text ghost" type="button" id="delAcct">Delete account</button>
+              </div>
+            </details>
           </section>
         </div>
       </div>
@@ -3035,6 +3040,7 @@ function sbRender() {
   const on = !!sb.session;
   F("profileCard").hidden = !on;
   F("pushCard").hidden = !on;
+  F("delAcctWrap").hidden = !on;
   F("newsAlertBtn").hidden = !on;
   if (!on) F("pushNudge").hidden = true;
   if (on) setTimeout(() => { renderPush(); pushResync(); }); // after start-up has defined them
@@ -3894,7 +3900,7 @@ function renderDashboard() {
   F("dashEmptyBtn").textContent = noAcct && !hasAny ? "Register an account" : "Log a trade";
   F("dashEmptyBtn").hidden = loading || unsynced;
   $("#dashEmpty h3").textContent = loading ? "Loading your journal…" : unsynced ? "Couldn't load your journal" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
-  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically, or tap Sync now in Settings." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
+  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
   renderOpen(open);
@@ -4993,8 +4999,7 @@ function setSideCollapsed(on, save) {
   b.setAttribute("aria-label", on ? "Expand sidebar" : "Collapse sidebar");
   b.title = (on ? "Expand" : "Collapse") + " sidebar ( [ )";
   // Names as tooltips while only the icons show.
-  $$("#mainNav .tab, #mainNav .side-link, #exportJournalTop").forEach(el => { if (on) el.setAttribute("title", el.textContent.trim()); else if (el.id !== "exportJournalTop") el.removeAttribute("title"); });
-  if (!on) F("exportJournalTop").title = "Save a copy of your journal, with all your trades, as a file";
+  $$("#mainNav .tab, #mainNav .side-link").forEach(el => { if (on) el.setAttribute("title", el.textContent.trim()); else el.removeAttribute("title"); });
   if (save) { ui.sideCollapsed = on; saveUi(); }
 }
 /* Settings sections: one shown at a time, remembered between visits. Profile only exists in the synced app. */
@@ -5804,8 +5809,24 @@ function closeTrade(id) {
   setTimeout(() => F("tOpen").closest("fieldset").scrollIntoView({ block: "start", behavior: calm() ? "auto" : "smooth" }), 80);
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-close]"); if (b) closeTrade(b.dataset.close); });
+// An open trade whose order never filled (a limit that wasn't reached): remove it, so it's not closed into the stats.
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-unfilled]");
+  if (!b) return;
+  const t = trades.find(x => x.id === b.dataset.unfilled);
+  if (!t) return;
+  if (persist.loading && trades === cachedTrades) return toast("Still syncing your journal. Try again in a moment.");
+  askConfirm(`Remove the ${t.pair} ${t.direction ? t.direction.toLowerCase() + " " : ""}from ${fmtDate(t.date)}? Use this when the order never filled. It won't count in your stats or analytics.`,
+    { title: "Order didn't fill?", ok: "Remove trade" }).then(ok => {
+    if (!ok) return;
+    if (F("tId").value === t.id) resetForm(false, true);
+    removeTrade(t.id);
+    syncView(); renderDashboard(); renderRecent();
+    toast(`Removed ${t.pair}: the order didn't fill`);
+  });
+});
 F("openList").addEventListener("click", e => {
-  if (e.target.closest("[data-close]")) return;
+  if (e.target.closest("[data-close], [data-unfilled]")) return;
   const row = e.target.closest("[data-open-id]");
   const t = row && trades.find(x => x.id === row.dataset.openId);
   if (t) openTrade(t);
@@ -5820,7 +5841,7 @@ function renderOpen(list) {
       <div class="oi-main"><b>${esc(t.pair)} <span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span></b>
         <span>${esc([fmtDate(t.date) + (t.time ? " " + t.time : ""), t.setup, t.session, a ? acctLabel(a) : ""].filter(Boolean).join(" · "))}</span>
         ${bits.length ? `<span class="mono oi-bits">${esc(bits.join(" · "))}</span>` : ""}</div>
-      <div class="oi-btns"><button class="btn sm ghost" type="button" data-view="${esc(t.id)}">View</button><button class="btn sm primary" type="button" data-close="${esc(t.id)}">Close trade</button></div>
+      <div class="oi-btns"><button class="btn sm ghost" type="button" data-view="${esc(t.id)}">View</button><button class="btn sm ghost" type="button" data-unfilled="${esc(t.id)}" title="The order never filled: remove it">Didn't fill</button><button class="btn sm primary" type="button" data-close="${esc(t.id)}">Close trade</button></div>
     </div>`;
   }).join("");
 }
@@ -7823,7 +7844,6 @@ function exportable() {
   return true;
 }
 F("exportJournal").addEventListener("click", exportJournal);
-F("exportJournalTop").addEventListener("click", exportJournal);
 F("exportXlsx").addEventListener("click", () => {
   if (!exportable()) return;
   const bytes = toXlsx(realTrades);
