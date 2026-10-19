@@ -48,7 +48,7 @@ jobs:
           fi
       - uses: actions/checkout@v5
         if: steps.when.outputs.send == 'yes'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         if: steps.when.outputs.send == 'yes'
         with:
           python-version: "3.12"
