@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-ArW+xQLVICPBo9nI92DsqrIzlwMshqhJUO58p4T33rs=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-olx2KIM/wNjurxMC4nGPtbs6LwrwaGtm0JDtYMUuZvc=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-TnYfkMxHfpcDwAyi4F79g33wyqyp2LlRH/Uf6V+d9Rk=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-wyY+NxPSSZdqrnRFx7R40zCzOppIKlrlxODFQLSB7Po=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "6026fce0e4";</script>
+<script>window.ELEV8_BUILD = "8d3344c720";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -639,6 +639,11 @@ input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-dat
 .set-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .danger-zone { border-color: rgba(255, 92, 122, 0.22); }
 .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 18px; }
+.settings-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 1040px; }
+.set-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; max-width: 1040px; }
+.set-col { display: grid; gap: 18px; min-width: 0; }
+.set-cols:not(:has(#pushCard:not([hidden]))) { grid-template-columns: minmax(0, 560px); }
+@media (max-width: 900px) { .settings-grid.two, .set-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 400px) { .settings-grid { grid-template-columns: 1fr; } }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border-strong); font-size: 13px; }
@@ -1182,7 +1187,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .ni { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: .75; transition: opacity .2s, color .2s; }
 .tab:hover .ni, .side-link:hover .ni { opacity: 1; }
 .tab[aria-selected="true"] .ni { color: var(--accent); opacity: 1; }
-#exportJournalTop .ni { width: 16px; height: 16px; opacity: .85; }
 /* Line icons inside Settings: section switcher, theme toggle and data buttons */
 .seg-tabs button[aria-pressed="true"] .ni, .seg label:has(input:checked) .ni { color: var(--accent); opacity: 1; }
 .seg.theme-seg label { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -1249,7 +1253,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 .tablist > .nav-label:first-child { padding-top: 6px; }
 @media (min-width: 1041px) {
   header.top { position: fixed; top: 0; left: 0; bottom: 0; width: 244px; z-index: 40; border-bottom: 0; border-right: 1px solid var(--border);
-    background: var(--sidebar-bg); padding: 20px 0 84px; overflow-y: auto; }
+    background: var(--sidebar-bg); padding: 20px 0 18px; overflow-y: auto; }
   header.top .container { padding: 0 14px; max-width: none; }
   header.top { display: flex; flex-direction: column; }
   header.top > .container:last-child { flex: 1 0 auto; display: flex; flex-direction: column; }
@@ -1257,7 +1261,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .tablist .nav-bottom { margin-top: auto; padding-top: 18px; background: none; height: auto; }
   .tablist .nav-bottom::before { content: ""; display: block; height: 1px; background: var(--border); }
   .top-inner { flex-direction: column; align-items: flex-start; gap: 0; min-height: 0; padding: 0 14px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
-  #exportJournalTop { position: fixed; left: 14px; bottom: 20px; width: 216px; justify-content: center; }
   .tabs { flex-direction: column; background: transparent; border: 0; padding: 0; gap: 2px; overflow: visible; margin: 0; scroll-snap-type: none; }
   .tabs .tab, .side-link { justify-content: flex-start; flex: none; padding: 8px 12px; font-size: 13.5px; gap: 12px; border-radius: 9px; letter-spacing: .1px; }
   .tabs .tab[aria-selected="true"] { box-shadow: inset 2px 0 0 var(--accent); }
@@ -1299,15 +1302,12 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .side-collapsed .tabs .tab, .side-collapsed .side-link { justify-content: center; padding: 9px 0; gap: 0; }
   .side-collapsed .tabs .tab > span, .side-collapsed .side-link > span { display: none; }
   .side-collapsed .side-actions { margin-top: 12px; }
-  .side-collapsed #exportJournalTop { width: 48px; left: 12px; padding: 8px 0; font-size: 0; gap: 0; }
-  .side-collapsed #exportJournalTop .ni { width: 17px; height: 17px; }
 }
 @media (max-width: 1040px) { .side-toggle { display: none; } }
 @media (min-width: 1041px) and (prefers-reduced-motion: reduce) { header.top::before, .side-toggle, .side-toggle svg { transition: none; } .side-anim * { animation: none !important; } }
 @media (max-width: 1040px) {
   .menu-btn { display: inline-flex; margin-left: auto; font-size: 20px; padding: 6px 12px; }
   .menu-btn .ni { width: 20px; height: 20px; opacity: .9; }
-  #exportJournalTop { display: none; }
   .tabs { position: fixed; top: 0; left: 0; bottom: 0; width: min(290px, 86vw); z-index: 60; margin: 0; border-radius: 0; border: 0;
     border-right: 1px solid var(--border-strong); flex-direction: column; flex-wrap: nowrap; gap: 2px; overflow-y: auto; scroll-snap-type: none;
     padding: calc(22px + env(safe-area-inset-top, 0px)) 14px calc(22px + env(safe-area-inset-bottom, 0px)); background: var(--drawer-bg); box-shadow: 20px 0 60px rgba(0, 0, 0, 0.35);
@@ -1484,7 +1484,6 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       </div>
       <button class="side-toggle" type="button" id="sideToggle" aria-controls="mainNav" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar ( [ )"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
     </div>
-    <button class="btn sm" type="button" id="exportJournalTop" title="Save a copy of your journal, with all your trades, as a file"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11.5M7 10l5 5 5-5M4.5 20.5h15"/></svg>Export journal</button>
     <button class="btn ghost menu-btn" type="button" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mainNav"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
   <div class="container">
@@ -1507,7 +1506,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1" data-tab="settings"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M18 6h2M4 12h3M12 12h8M4 18h11M20 18h0"/><circle cx="15.5" cy="6" r="2.2"/><circle cx="9.5" cy="12" r="2.2"/><circle cx="17.5" cy="18" r="2.2"/></svg><span>Settings</span></button>
       </div>
       <div class="side-actions">
+        <button class="side-link" type="button" data-tour-start><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg><span>Take the tour</span></button>
         <button class="side-link" type="button" id="sideTheme"></button>
+        <button class="side-link" type="button" id="exportJournalTop" title="Save a copy of your journal, with all your trades, as a file"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11.5M7 10l5 5 5-5M4.5 20.5h15"/></svg><span>Export journal</span></button>
         <button class="side-link" type="button" id="sideBug"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7.5" width="10" height="13" rx="5"/><path d="M12 11.5v9M9.5 4.5l1.3 3M14.5 4.5l-1.3 3M3 13.5h4M17 13.5h4M4 8.5l3 2M20 8.5l-3 2M4 19.5l3-2M20 19.5l-3-2"/></svg><span>Report a bug</span></button>
         <button class="side-link danger" type="button" id="sideLogout" hidden><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5.5A2.5 2.5 0 0 1 3 18.5v-13A2.5 2.5 0 0 1 5.5 3H9"/><path d="M16 17l5-5-5-5M21 12H9"/></svg><span>Log out</span></button>
       </div>
@@ -2078,6 +2079,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <h2>Settings</h2>
           <p class="lead">Your profile, notifications, preferences and data.</p>
         </div>
+        <button class="btn sm" type="button" data-tour-start><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Take the tour</button>
       </div>
 
       <div class="seg-tabs set-nav reveal" style="--d:0" role="group" aria-label="Settings sections" id="setNav">
@@ -2090,7 +2092,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <!-- Profile & sync -->
       <div class="set-pane" data-pane="profile" hidden>
         <div class="set-head"><h3>Profile</h3><p>Your details, your sign-in and what ELEV8 tells you about.</p></div>
-        <div class="settings-grid">
+        <div class="set-cols">
+          <div class="set-col">
           <section class="card accent-blue" aria-labelledby="profTitle" id="profileCard" hidden>
             <div class="card-head"><div><h3 id="profTitle">Your details</h3><div class="sub">Your name, birthday and sign-in email</div></div></div>
             <form id="profileForm" class="stack" novalidate>
@@ -2132,6 +2135,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               </div>
             </div>
           </section>
+          </div>
+          <div class="set-col">
           <section class="card accent-teal" aria-labelledby="pushTitle" id="pushCard" hidden>
             <div class="card-head"><div><h3 id="pushTitle">Notifications</h3><div class="sub">Your weekly review email, and alerts on your phone or computer even when ELEV8 is closed</div></div></div>
             <label class="toggle" style="margin-bottom:16px"><input type="checkbox" id="weeklyEmail"> <span><b>Email me my weekly review</b><br><span class="muted" style="font-size:12.5px">Every Sunday at 10am (Irish time), from reviews@elev8tradingjournal.com</span></span></label>
@@ -2151,6 +2156,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <button class="btn ghost" type="button" id="pushHereOff" hidden>Turn off for this device</button>
             </div>
           </section>
+          </div>
         </div>
       </div>
 
@@ -2158,28 +2164,18 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
       <!-- Preferences -->
       <div class="set-pane" data-pane="prefs" hidden>
-        <div class="set-head"><h3>Preferences</h3><p>Defaults used when you log trades and when your balance and sessions are worked out.</p></div>
-        <form id="acctForm" class="set-narrow stack">
-          <section class="card accent-blue" aria-labelledby="acctTitle">
-            <div class="card-head"><div><h3 id="acctTitle">Balance &amp; risk</h3><div class="sub">Pick the account you're trading from the sidebar or the Accounts page</div></div></div>
-            <div class="fields fields-pair" style="margin:0">
-              <div class="field" id="sBalanceWrap"><label for="sBalance">Starting balance</label><input type="number" step="any" id="sBalance" inputmode="decimal" aria-describedby="sBalanceHint"><span class="hint" id="sBalanceHint">Used until you add a trading account on the Accounts page</span></div>
-              <div class="field"><label for="sCurrency">Currency symbol</label><input type="text" id="sCurrency" maxlength="4"></div>
-              <div class="field"><label for="sRisk">Default risk per trade</label><input type="number" step="any" id="sRisk" inputmode="decimal"></div>
-            </div>
-          </section>
-          <section class="card accent-teal" aria-labelledby="sessPrefTitle">
-            <div class="card-head"><div><h3 id="sessPrefTitle">Sessions</h3><div class="sub">How the session is filled in from a trade's time</div></div></div>
-            <div class="field">
-              <label for="sSessionMode">Session time zone for auto-fill</label>
-              <select id="sSessionMode">
-                <option value="utc">UTC</option>
-                <option value="local">My local time</option>
-              </select>
-            </div>
-          </section>
-          <div><button class="btn primary" type="submit">Save preferences</button></div>
-        </form>
+        <div class="set-head"><h3>Preferences</h3><p>How amounts and sessions show in your journal.</p></div>
+        <section class="card accent-teal set-narrow" aria-labelledby="prefTitle" id="acctForm">
+          <div class="card-head"><div><h3 id="prefTitle">Journal</h3><div class="sub">Saved as soon as you change them</div></div></div>
+          <div class="fields fields-pair" style="margin:0">
+            <div class="field"><label for="sCurrency">Currency</label><select id="sCurrency">
+              <option value="$">$ US dollar</option><option value="€">€ Euro</option><option value="£">£ Pound</option><option value="¥">¥ Yen</option>
+              <option value="A$">A$ Australian dollar</option><option value="C$">C$ Canadian dollar</option><option value="CHF">CHF Swiss franc</option></select></div>
+            <div class="field"><label for="sSessionMode">Session times</label><select id="sSessionMode">
+              <option value="utc">UTC</option><option value="local">My local time</option></select><span class="hint">Used to fill in the session from a trade's time</span></div>
+          </div>
+          <p class="muted" style="margin:14px 0 0;font-size:12.5px">Risk per trade is remembered from the last trade you logged with one.</p>
+        </section>
       </div>
 
       <!-- Dropdown lists -->
@@ -2191,7 +2187,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <!-- Import, export, delete -->
       <div class="set-pane" data-pane="data" hidden>
         <div class="set-head"><h3>Data</h3><p>Bring trades in, take a copy out, or start again.</p></div>
-        <div class="settings-grid">
+        <div class="settings-grid two">
           <section class="card accent-teal" aria-labelledby="mtTitle">
             <div class="card-head"><div><h3 id="mtTitle">Import from MetaTrader</h3><div class="sub">MT4 or MT5 account statement (.htm or .xlsx)</div></div></div>
             <div class="stack">
@@ -5049,10 +5045,10 @@ function showSetPane(name) {
 }
 function renderAccount() {
   F("weeklyEmail").checked = !!settings.weeklyEmail;
-  F("sBalance").value = settings.balance;
   renderAccounts();
-  F("sCurrency").value = settings.currency;
-  F("sRisk").value = settings.defaultRisk;
+  const cur = F("sCurrency"), sym = curSym();
+  if (![...cur.options].some(o => o.value === sym)) cur.add(new Option(sym, sym));
+  cur.value = sym;
   F("sSessionMode").value = settings.sessionMode;
 }
 
@@ -5876,7 +5872,10 @@ function commitTrade(t) {
   const newPair = !settings.pairs.includes(t.pair), newSetup = !settings.setups.includes(t.setup);
   if (newPair) settings.pairs.push(t.pair);
   if (newSetup) settings.setups.push(t.setup);
-  if (newPair || newSetup) saveSettings();
+  // Risk per trade follows the last trade logged with one (quick log and the calculator start from it).
+  const newRisk = Number(t.risk) > 0 && Number(t.risk) !== Number(settings.defaultRisk);
+  if (newRisk) settings.defaultRisk = Number(t.risk);
+  if (newPair || newSetup || newRisk) saveSettings();
   renderRecent();
   renderListEditors();
   setTimeout(maybePushNudge, 1800);
@@ -6228,7 +6227,6 @@ function renderAccounts() {
   }
   renderArchive();
   renderSwitcher();
-  F("sBalanceWrap").hidden = !!live.length;
   F("mtAccountWrap").hidden = !live.length;
   const mtCur = F("mtAccount").value;
   F("mtAccount").innerHTML = live.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
@@ -7767,16 +7765,13 @@ F("setNav").addEventListener("click", e => {
   const b = e.target.closest("button[data-pane]");
   if (b) showSetPane(b.dataset.pane);
 });
-F("acctForm").addEventListener("submit", e => {
-  e.preventDefault();
-  if (!accounts().length) settings.balance = num(F("sBalance").value) ?? 0;
-  settings.currency = F("sCurrency").value.trim().replace(/[<>&"'`\\]/g, "").slice(0, 4) || "$";
-  settings.defaultRisk = num(F("sRisk").value) ?? 0;
+["sCurrency", "sSessionMode"].forEach(id => F(id).addEventListener("change", () => {
+  settings.currency = F("sCurrency").value.replace(/[<>&"'`\\]/g, "").slice(0, 4) || "$";
   settings.sessionMode = F("sSessionMode").value;
   saveSettings();
-  toast("Preferences saved");
+  toast("Saved");
   refreshAll();
-});
+}));
 F("listEditors").addEventListener("click", e => {
   const b = e.target.closest("[data-rm]");
   if (!b) return;
