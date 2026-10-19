@@ -1,8 +1,8 @@
 name: News alerts
 
-# Notifies everyone with "High-impact news" on (Settings › Profile › Notifications) 15 minutes before
-# high-impact news for the currencies they trade. Runs every 30 minutes; most runs find nothing due and
-# finish in seconds, the rest wait for the alert time. See site/news_alerts.py.
+# Timed notifications (Settings › Profile › Notifications), every 30 minutes: prop firm limit warnings,
+# weekday journal reminders, and high-impact news 15 minutes before for the currencies each person
+# trades. Most runs find nothing due and finish in seconds; the rest wait for the news. See site/news_alerts.py.
 # Run it by hand with an email address to send that account a test alert for the next high-impact news.
 on:
   schedule:

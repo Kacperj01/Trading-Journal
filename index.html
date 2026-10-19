@@ -561,6 +561,16 @@ input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-dat
 .seg.acct-type label:first-child { border-left: 0; }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
 .toggle { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--input-bg); cursor: pointer; font-size: 14px; }
+.push-time { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: -2px 0 2px 34px; font-size: 13.5px; color: var(--muted); }
+.push-time input { width: auto; min-width: 118px; padding: 7px 10px; }
+.push-time[hidden] { display: none; }
+.news-alert-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.push-nudge { position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; width: min(440px, calc(100vw - 32px)); padding: 16px 18px; border-radius: 16px; border: 1px solid var(--border-strong); background: var(--bg-2); color: var(--text); box-shadow: 0 18px 50px -12px rgba(0,0,0,.55); display: grid; gap: 12px; animation: nudgeIn .35s ease both; }
+.push-nudge[hidden] { display: none; }
+.push-nudge p { margin: 0; font-size: 14px; line-height: 1.45; }
+.push-nudge .row { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+@keyframes nudgeIn { from { opacity: 0; transform: translate(-50%, -14px); } }
+@media (prefers-reduced-motion: reduce) { .push-nudge { animation: none; } }
 .range-row { display: flex; gap: 12px; align-items: center; }
 .range-row output { font: 600 14px var(--font-mono); color: var(--accent); min-width: 40px; }
 .form-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 18px; }
@@ -1744,7 +1754,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <h2>Economic calendar</h2>
           <p class="lead" id="newsLead">This week's news events, in your local time.</p>
         </div>
-        <button class="btn sm" type="button" id="newsRefresh"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L19.5 9M19.5 4v5h-5"/></svg>Refresh</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm news-alert-btn" type="button" id="newsAlertBtn" aria-pressed="false" hidden><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span>Alert me before news</span></button>
+        <button class="btn sm" type="button" id="newsRefresh"><svg class="ni" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L19.5 9M19.5 4v5h-5"/></svg>Refresh</button></div>
       </div>
 
       <div class="card news-next reveal" style="--d:1" id="newsNext" hidden></div>
@@ -2059,6 +2070,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="stack" style="gap:10px">
               <label class="toggle"><input type="checkbox" id="pushWeekly"> <span><b>Weekly review is ready</b><br><span class="muted" style="font-size:12.5px">Sundays at 10am (Irish time), with your week in one line</span></span></label>
               <label class="toggle"><input type="checkbox" id="pushNews"> <span><b>High-impact news</b><br><span class="muted" style="font-size:12.5px">15 minutes before, for the currencies in your pairs</span></span></label>
+              <label class="toggle"><input type="checkbox" id="pushProp"> <span><b>Prop firm limits</b><br><span class="muted" style="font-size:12.5px">When a prop account reaches 80% of its daily or max loss, and if it hits the limit</span></span></label>
+              <label class="toggle"><input type="checkbox" id="pushRemind"> <span><b>Journal reminder</b><br><span class="muted" style="font-size:12.5px">Weekday evenings, if you have open trades or haven't logged today's trading</span></span></label>
+              <div class="push-time" id="pushRemindRow"><label for="pushRemindAt">Remind me at</label><input type="time" id="pushRemindAt" value="21:00" step="900"></div>
+              <label class="toggle"><input type="checkbox" id="pushQuiet"> <span><b>Quiet hours</b><br><span class="muted" style="font-size:12.5px">No news or limit alerts overnight</span></span></label>
+              <div class="push-time" id="pushQuietRow"><label for="pushQuietFrom">From</label><input type="time" id="pushQuietFrom" value="23:00" step="900"><label for="pushQuietTo">to</label><input type="time" id="pushQuietTo" value="07:00" step="900"></div>
             </div>
             <div class="btn-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
               <button class="btn primary" type="button" id="pushHereOn" hidden>Turn on for this device</button>
@@ -2197,6 +2213,10 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<section class="push-nudge" id="pushNudge" role="dialog" aria-labelledby="pushNudgeText" hidden>
+  <p id="pushNudgeText"><b>Want a heads-up before high-impact news?</b><br>ELEV8 can notify you 15 minutes before news for the currencies you trade.</p>
+  <div class="row"><button class="btn ghost sm" type="button" id="pushNudgeNo">Not now</button><button class="btn primary sm" type="button" id="pushNudgeYes">Turn on alerts</button></div>
+</section>
 <div class="scrim" id="navScrim" hidden></div>
 
 <section id="home" class="home" role="main" hidden aria-labelledby="homeTitle">
@@ -2630,7 +2650,14 @@ const DEFAULT_SETTINGS = {
   lastAccount: "",  // the active account, chosen in Preferences: new trades start on it
   weeklyEmail: false, // email me my weekly review (sent Sundays by the weekly-review GitHub Action)
   pushWeekly: false,  // notify when the weekly review is ready (same Action)
-  pushNews: false     // notify 15 min before high-impact news (news-alerts GitHub Action)
+  pushNews: false,    // notify 15 min before high-impact news (news-alerts GitHub Action)
+  pushProp: false,    // notify when a prop account reaches 80% of a loss limit, or hits it (same Action)
+  pushRemind: false,  // weekday evening reminder if trades are open or today isn't logged (same Action)
+  pushRemindAt: "21:00",
+  pushQuiet: false,   // hold news and limit alerts during these hours
+  pushQuietFrom: "23:00",
+  pushQuietTo: "07:00",
+  pushTz: ""          // this person's time zone, for reminders and quiet hours (set from the device)
 };
 
 // A believable journal for the demo: five weeks of trades on a $100K challenge, dated up to today.
@@ -3019,6 +3046,8 @@ function sbRender() {
   const on = !!sb.session;
   F("profileCard").hidden = !on;
   F("pushCard").hidden = !on;
+  F("newsAlertBtn").hidden = !on;
+  if (!on) F("pushNudge").hidden = true;
   if (on) setTimeout(() => { renderPush(); pushResync(); }); // after start-up has defined them
   F("syncSignedOut").hidden = on;
   F("syncSignedIn").hidden = !on;
@@ -5471,7 +5500,7 @@ async function importFile(file) {
     // Settings in the file (trading accounts, lists, preferences) are only used if the person agrees, and
     // never switch the weekly email on or off.
     const st = data.settings && typeof data.settings === "object" && !Array.isArray(data.settings) ? data.settings : null;
-    const keys = st ? SETTINGS_KEYS.filter(k => !["weeklyEmail", "pushWeekly", "pushNews"].includes(k) && k in st) : [];
+    const keys = st ? SETTINGS_KEYS.filter(k => k !== "weeklyEmail" && !k.startsWith("push") && k in st) : [];
     if (keys.length && await askConfirm("This file also contains journal settings, such as trading accounts, pairs, setups and preferences. Use them too? Where the file has its own, they replace yours.", { title: "Import the settings too?", ok: "Use settings" })) {
       keys.forEach(k => { settings[k] = st[k]; }); saveSettings();
     }
@@ -5820,6 +5849,7 @@ function commitTrade(t) {
   if (newPair || newSetup) saveSettings();
   renderRecent();
   renderListEditors();
+  setTimeout(maybePushNudge, 1800);
   return true;
 }
 
@@ -7582,11 +7612,23 @@ async function pushResync() {
   const sub = await pushSub();
   if (sub) pushSave(sub).catch(() => { pushSynced = false; });
 }
+const PUSH_KINDS = ["pushWeekly", "pushNews", "pushProp", "pushRemind"];
+const pushWanted = () => PUSH_KINDS.some(k => settings[k]);
+const pushCan = () => PUSH_OK && !(IOS && !STANDALONE) && Notification.permission !== "denied";
+const deviceTz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } };
+function savePushSettings() { settings.pushTz = deviceTz() || settings.pushTz || ""; saveSettings(); }
 async function renderPush() {
   if (!SB || !sb.session) return;
-  F("pushWeekly").checked = !!settings.pushWeekly;
-  F("pushNews").checked = !!settings.pushNews;
-  const want = settings.pushWeekly || settings.pushNews;
+  PUSH_KINDS.forEach(k => { F(k).checked = !!settings[k]; });
+  F("pushQuiet").checked = !!settings.pushQuiet;
+  F("pushRemindAt").value = settings.pushRemindAt || "21:00";
+  F("pushQuietFrom").value = settings.pushQuietFrom || "23:00";
+  F("pushQuietTo").value = settings.pushQuietTo || "07:00";
+  F("pushRemindRow").hidden = !settings.pushRemind;
+  F("pushQuietRow").hidden = !settings.pushQuiet;
+  // Keep the time zone current (reminders and quiet hours follow it) if this device has moved.
+  if (pushWanted() && deviceTz() && settings.pushTz !== deviceTz()) savePushSettings();
+  const want = pushWanted();
   let msg, can = PUSH_OK && !(IOS && !STANDALONE) && Notification.permission !== "denied";
   if (IOS && !STANDALONE) msg = "On iPhone and iPad, add ELEV8 to your Home Screen first: tap Share, then Add to Home Screen. Open it from there to turn these on.";
   else if (!PUSH_OK) msg = "This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.";
@@ -7598,11 +7640,27 @@ async function renderPush() {
   }
   if (want && !can) msg += " Your choices below apply to your other devices.";
   F("pushStatus").textContent = msg;
-  F("pushWeekly").disabled = F("pushNews").disabled = !can;
+  PUSH_KINDS.forEach(k => { F(k).disabled = !can; });
   F("pushHereOn").hidden = !(can && want && !pushHere);
   F("pushHereOff").hidden = F("pushTest").hidden = !(can && pushHere);
+  renderNewsAlertBtn();
 }
-["pushWeekly", "pushNews"].forEach(id => F(id).addEventListener("change", async e => {
+// Turn one or more kinds on, asking this device for permission first if it isn't set up yet.
+// Must be called straight from a tap (the permission prompt needs it).
+async function pushTurnOn(kinds) {
+  if (!pushHere) await pushEnable();
+  kinds.forEach(k => { settings[k] = true; });
+  savePushSettings();
+  renderPush();
+}
+const PUSH_ON_MSG = {
+  pushWeekly: "You'll get a notification when your weekly review is ready, Sundays at 10am",
+  pushNews: "You'll be told 15 minutes before high-impact news for your pairs",
+  pushProp: "You'll be told when a prop account nears its daily or max loss limit",
+  pushRemind: "You'll get a reminder on weekday evenings if there's something to log"
+};
+const PUSH_OFF_MSG = { pushWeekly: "Weekly review notifications turned off", pushNews: "News alerts turned off", pushProp: "Prop limit alerts turned off", pushRemind: "Journal reminders turned off" };
+PUSH_KINDS.forEach(id => F(id).addEventListener("change", async e => {
   const box = e.target, on = box.checked;
   if (on && !pushHere) {
     box.disabled = true;
@@ -7611,12 +7669,54 @@ async function renderPush() {
     box.disabled = false;
   }
   settings[id] = on;
-  saveSettings();
-  if (!settings.pushWeekly && !settings.pushNews) await pushDisable();
-  toast(!on ? (id === "pushNews" ? "News alerts turned off" : "Weekly review notifications turned off")
-    : id === "pushNews" ? "You'll be told 15 minutes before high-impact news for your pairs" : "You'll get a notification when your weekly review is ready, Sundays at 10am");
+  savePushSettings();
+  if (!pushWanted()) await pushDisable();
+  toast(on ? PUSH_ON_MSG[id] : PUSH_OFF_MSG[id]);
   renderPush();
 }));
+F("pushQuiet").addEventListener("change", e => {
+  settings.pushQuiet = e.target.checked; savePushSettings(); renderPush();
+  toast(e.target.checked ? `No news or limit alerts from ${settings.pushQuietFrom || "23:00"} to ${settings.pushQuietTo || "07:00"}` : "Quiet hours turned off");
+});
+[["pushRemindAt", "21:00"], ["pushQuietFrom", "23:00"], ["pushQuietTo", "07:00"]].forEach(([id, dflt]) => F(id).addEventListener("change", e => {
+  const v = /^([01]\d|2[0-3]):[0-5]\d$/.test(e.target.value) ? e.target.value : dflt;
+  if (settings[id] === v) return;
+  settings[id] = v; savePushSettings();
+  toast(id === "pushRemindAt" ? `Reminder set for ${v} on weekdays` : `Quiet hours: ${settings.pushQuietFrom} to ${settings.pushQuietTo}`);
+}));
+
+// News page: "Alert me before news" turns news alerts on in one tap (or explains where it can't).
+function renderNewsAlertBtn() {
+  const b = F("newsAlertBtn"), on = !!(settings.pushNews && pushHere);
+  b.hidden = !(SB && sb.session && !inViewer());
+  b.setAttribute("aria-pressed", String(on));
+  b.querySelector("span").textContent = on ? "News alerts on" : "Alert me before news";
+}
+F("newsAlertBtn").addEventListener("click", async () => {
+  if (settings.pushNews && pushHere) { showSetPane("profile"); showTab("settings"); F("pushCard").scrollIntoView({ block: "center" }); return; }
+  if (!pushCan()) { showSetPane("profile"); showTab("settings"); setTimeout(() => F("pushCard").scrollIntoView({ block: "center" }), 100); return; }
+  try { await pushTurnOn(["pushNews"]); toast(PUSH_ON_MSG.pushNews); } catch (err) { toast(err.message || "Notifications couldn't be turned on"); renderPush(); }
+});
+
+// After someone logs a trade, offer alerts once (per device) if they haven't any yet.
+const KEY_PUSH_NUDGE = "tj.push.nudge.v1";
+function maybePushNudge() {
+  if (!SB || !sb.session || inViewer() || DEMO || !pushCan() || pushHere || pushWanted() || store.get(KEY_PUSH_NUDGE, false)) return;
+  if (!realTrades.length || tourAt >= 0 || document.querySelector("dialog[open]")) return;
+  const prop = accounts().some(a => a.type === "Prop firm");
+  F("pushNudgeText").innerHTML = prop
+    ? "<b>Want alerts for your prop account?</b><br>ELEV8 can tell you before high-impact news for your pairs and when an account nears its daily or max loss limit."
+    : "<b>Want a heads-up before high-impact news?</b><br>ELEV8 can notify you 15 minutes before news for the currencies you trade.";
+  F("pushNudge").dataset.kinds = prop ? "pushNews,pushProp" : "pushNews";
+  F("pushNudge").hidden = false;
+}
+function closePushNudge() { F("pushNudge").hidden = true; store.set(KEY_PUSH_NUDGE, true); }
+F("pushNudgeNo").addEventListener("click", () => { closePushNudge(); toast("You can turn alerts on any time in Settings › Profile"); });
+F("pushNudgeYes").addEventListener("click", async () => {
+  const kinds = (F("pushNudge").dataset.kinds || "pushNews").split(",");
+  try { await pushTurnOn(kinds); closePushNudge(); toast(kinds.length > 1 ? "Alerts are on: news and prop limits. Change them in Settings › Profile." : PUSH_ON_MSG.pushNews); }
+  catch (err) { closePushNudge(); toast(err.message || "Notifications couldn't be turned on"); renderPush(); }
+});
 F("pushHereOn").addEventListener("click", async () => {
   try { await pushEnable(); toast("Notifications are on for this device"); } catch (err) { toast(err.message || "Notifications couldn't be turned on"); }
   renderPush();

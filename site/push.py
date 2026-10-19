@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -76,6 +77,11 @@ def claim(key):
     """True the first time a key is claimed (so a news alert is sent once, even if two jobs overlap)."""
     rows = sb("POST", "/rest/v1/push_log", {"key": key}, "resolution=ignore-duplicates,return=representation")
     return bool(rows)
+
+
+def claimed(key):
+    """True if a key was already claimed (without claiming it)."""
+    return bool(sb("GET", "/rest/v1/push_log?select=key&key=eq." + urllib.parse.quote(key, safe="")))
 
 
 def tidy_log(days=30):
