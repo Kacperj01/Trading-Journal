@@ -2708,6 +2708,10 @@ function markAlive() { try { document.cookie = "tj_alive=1; path=/; SameSite=Str
 if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie()) {
   // End the sign-in on the server too (best effort), so its refresh token stops working.
   const old = store.get("tj.sb.session.v1", null), cfg = window.ELEV8_SUPABASE;
+  // Opened at the site's address (not the journal itself): go on to the homepage once that's done.
+  const toHome = () => { if (window.ELEV8_FORGET_HOME) location.replace("home/"); };
+  // This device stops getting the account's notifications (the server forgets it on the next send).
+  const unsub = (() => { try { return navigator.serviceWorker.getRegistration().then(r => r && r.pushManager.getSubscription()).then(p => p && p.unsubscribe()).catch(() => {}); } catch (e) { return Promise.resolve(); } })();
   if (old && old.refresh_token && cfg && cfg.url && cfg.key) (async () => {
     try {
       let token = old.access_token;
@@ -2715,12 +2719,13 @@ if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie()) {
         const r = await fetch(cfg.url + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: cfg.key, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: old.refresh_token }) });
         token = r.ok ? (await r.json()).access_token : null;
       }
-      if (token) await fetch(cfg.url + "/auth/v1/logout", { method: "POST", headers: { apikey: cfg.key, Authorization: "Bearer " + token } });
+      if (token) await fetch(cfg.url + "/auth/v1/logout", { method: "POST", keepalive: true, headers: { apikey: cfg.key, Authorization: "Bearer " + token } });
     } catch (e) { /* offline: the device copy is cleared anyway */ }
+    await unsub;
+    toHome();
   })();
+  else unsub.then(toHome);
   ["tj.sb.session.v1", "tj.sb.outbox.v1", "tj.sb.user.v1", "tj.sb.email.v1", KEY_TRADES, KEY_CACHE, KEY_SETTINGS, KEY_DRAFT, KEY_FORGET].forEach(k => store.del(k));
-  // This device stops getting the account's notifications (the server forgets it on the next send).
-  try { navigator.serviceWorker.getRegistration().then(r => r && r.pushManager.getSubscription()).then(p => p && p.unsubscribe()).catch(() => {}); } catch (e) { /* not supported */ }
 }
 ["dlgRemember", "syncRemember"].forEach(id => { const el = document.getElementById(id); if (el) el.checked = store.get(KEY_REMEMBER, true) !== false; });
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));

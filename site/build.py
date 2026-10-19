@@ -106,6 +106,9 @@ page = f"""<!doctype html>
     var session = get("tj.sb.session.v1"), trades = get("tj.trades.v1");
     if (session && session.refresh_token && !gone) return;
     if (!get("tj.sb.email.v1") && trades && trades.length) return;
+    // Signed out because the browser was closed: let the journal clear this device and end the sign-in on
+    // the server first (it goes to the homepage when done), hidden, with a fallback in case it can't.
+    if (gone) {{ window.ELEV8_FORGET_HOME = 1; document.documentElement.style.visibility = "hidden"; setTimeout(function () {{ location.replace("home/"); }}, 3000); return; }}
     location.replace("home/");
   }} catch (e) {{}} }})();
 </script>

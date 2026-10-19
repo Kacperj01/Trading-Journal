@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-yDehRM2APwsr8x0jss+cYJK4MSn2CxwXGBGYkMU5/w8=' 'sha256-dCW1n1koarGTQCGNfKwYTpGqbHkSqlZuElrWH+UTZns=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-7C46uxOPhS1aR62+Cq7L2ySmHNHlH2FSkvaH78MX2lY=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-lulAGHlV8YCr9J1093znF73NE4+XAZJg3EeQGtehvX0=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-PHy/2AGc0SxBIcPMNkPiUyHvXX8bZtZsNebaoi0keQI=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "62fb4721b6";</script>
+<script>window.ELEV8_BUILD = "09c7945b66";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -19,6 +19,9 @@
     var session = get("tj.sb.session.v1"), trades = get("tj.trades.v1");
     if (session && session.refresh_token && !gone) return;
     if (!get("tj.sb.email.v1") && trades && trades.length) return;
+    // Signed out because the browser was closed: let the journal clear this device and end the sign-in on
+    // the server first (it goes to the homepage when done), hidden, with a fallback in case it can't.
+    if (gone) { window.ELEV8_FORGET_HOME = 1; document.documentElement.style.visibility = "hidden"; setTimeout(function () { location.replace("home/"); }, 3000); return; }
     location.replace("home/");
   } catch (e) {} })();
 </script>
@@ -2748,6 +2751,10 @@ function markAlive() { try { document.cookie = "tj_alive=1; path=/; SameSite=Str
 if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie()) {
   // End the sign-in on the server too (best effort), so its refresh token stops working.
   const old = store.get("tj.sb.session.v1", null), cfg = window.ELEV8_SUPABASE;
+  // Opened at the site's address (not the journal itself): go on to the homepage once that's done.
+  const toHome = () => { if (window.ELEV8_FORGET_HOME) location.replace("home/"); };
+  // This device stops getting the account's notifications (the server forgets it on the next send).
+  const unsub = (() => { try { return navigator.serviceWorker.getRegistration().then(r => r && r.pushManager.getSubscription()).then(p => p && p.unsubscribe()).catch(() => {}); } catch (e) { return Promise.resolve(); } })();
   if (old && old.refresh_token && cfg && cfg.url && cfg.key) (async () => {
     try {
       let token = old.access_token;
@@ -2755,12 +2762,13 @@ if (!DEMO && store.get(KEY_FORGET, false) && !aliveCookie()) {
         const r = await fetch(cfg.url + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: cfg.key, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: old.refresh_token }) });
         token = r.ok ? (await r.json()).access_token : null;
       }
-      if (token) await fetch(cfg.url + "/auth/v1/logout", { method: "POST", headers: { apikey: cfg.key, Authorization: "Bearer " + token } });
+      if (token) await fetch(cfg.url + "/auth/v1/logout", { method: "POST", keepalive: true, headers: { apikey: cfg.key, Authorization: "Bearer " + token } });
     } catch (e) { /* offline: the device copy is cleared anyway */ }
+    await unsub;
+    toHome();
   })();
+  else unsub.then(toHome);
   ["tj.sb.session.v1", "tj.sb.outbox.v1", "tj.sb.user.v1", "tj.sb.email.v1", KEY_TRADES, KEY_CACHE, KEY_SETTINGS, KEY_DRAFT, KEY_FORGET].forEach(k => store.del(k));
-  // This device stops getting the account's notifications (the server forgets it on the next send).
-  try { navigator.serviceWorker.getRegistration().then(r => r && r.pushManager.getSubscription()).then(p => p && p.unsubscribe()).catch(() => {}); } catch (e) { /* not supported */ }
 }
 ["dlgRemember", "syncRemember"].forEach(id => { const el = document.getElementById(id); if (el) el.checked = store.get(KEY_REMEMBER, true) !== false; });
 let settings = Object.assign({}, DEFAULT_SETTINGS, store.get(KEY_SETTINGS, {}));
