@@ -6,7 +6,7 @@ itself is never shown in the email.
 
 - `make_templates.py` builds the six `.html` files from that design. Edit the wording there.
 - `site/apply_auth_config.py` sends them to Supabase with their subjects, and also sets the Site URL
-  (https://elev8tradingjournal.com), the allowed redirect URLs and a 24-hour link expiry, so the
+  (https://elev8tradingjournal.com), the allowed redirect URLs and a 1-hour link expiry, so the
   buttons always bring people back to the journal.
 - The **Account emails** GitHub Action runs that script. It needs one secret,
   `SUPABASE_ACCESS_TOKEN`: a personal access token from supabase.com/dashboard/account/tokens,

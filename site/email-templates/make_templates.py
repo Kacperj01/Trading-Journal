@@ -80,7 +80,7 @@ def code_box():
 
 def page(kind, pre, heading, body, label):
     action = button(label, kind) if label else code_box()
-    expiry = "The button works once and expires in 24 hours." if label else "The code works once and expires in 24 hours."
+    expiry = "The button works once and expires in 1 hour." if label else "The code works once and expires in 1 hour."
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"><title>{heading}</title></head>
 <body style="margin:0;padding:0;background:#06111f">
