@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-3etbdUuMGDkSB8w7XqtcuMTfwnJAv33eazp3FjDxb/0=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-cEUauHJVcW6oaRYD+/K0JyDgMsXrcn5yU1LmH18kunI=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-erTvKdzaGqk7h8fvEC6Ji4FwFtxfrXHok9X7gK2FfXw=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-6GefDyo1CtiI6pHWcklOLUQFVIsMKoVcSCJf+ZuZ+ys=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "ea60842f06";</script>
+<script>window.ELEV8_BUILD = "27bc0a6106";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -926,6 +926,23 @@ html.side-collapsed .acct-switch.side .as-t, html.side-collapsed .acct-switch.si
 .del-acct { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); }
 .del-acct p { margin: 2px 0 0; font-size: 13px; }
 .del-acct-more { margin-top: 18px; }
+.push-preview { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 3000; width: min(400px, calc(100vw - 24px)); transform: translateX(-50%);
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 20px; background: rgba(30, 40, 56, .86); color: #f2f6fb;
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 16px 40px rgba(0,0,0,.45); cursor: pointer; animation: ppIn .4s cubic-bezier(.2,.8,.2,1) both; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+.push-preview[hidden] { display: none; }
+.push-preview img { border-radius: 9px; flex: none; }
+.push-preview > div { min-width: 0; flex: 1; }
+.push-preview .pp-top { display: flex; justify-content: space-between; font-size: 12.5px; color: rgba(242,246,251,.7); }
+.push-preview .pp-top b { font-weight: 600; letter-spacing: .3px; }
+.push-preview strong { display: block; font-size: 14.5px; margin-top: 2px; }
+.push-preview p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.35; color: rgba(242,246,251,.88); }
+@keyframes ppIn { from { opacity: 0; transform: translate(-50%, -24px); } }
+@media (prefers-reduced-motion: reduce) { .push-preview { animation: none; } }
+.pw-meter { display: flex; align-items: center; gap: 10px; margin-top: 7px; font-size: 12.5px; color: var(--muted); min-height: 16px; }
+.pw-meter[hidden] { display: none; }
+.pw-meter i { flex: 1; height: 5px; border-radius: 3px; background: var(--border); position: relative; overflow: hidden; }
+.pw-meter i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w, 0%); background: var(--c, transparent); transition: width .2s ease; }
+.pw-meter span { min-width: 58px; text-align: right; }
 .del-acct-more summary { cursor: pointer; font-size: 12.5px; color: var(--muted); width: fit-content; }
 .del-acct-more summary:hover { color: var(--text-2); }
 /* Open trades */
@@ -1068,7 +1085,9 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .share-opts .check-row { display: flex; gap: 10px; align-items: center; cursor: pointer; }
 .share-opts input { width: 18px; height: 18px; accent-color: var(--accent); }
 @media (max-width: 560px) { #wkShare span, #tdShare span { display: none; } }
-.tour { position: fixed; inset: 0; z-index: 2000; }
+.tour { position: fixed; inset: 0; z-index: 2000; pointer-events: none; }
+.tour-tip, .tour-block { pointer-events: auto; }
+.tour-block { position: fixed; }
 .tour-hole { position: fixed; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(2, 8, 16, .72), 0 0 0 2px var(--accent), 0 0 30px 4px rgba(47,208,200,.35); transition: all .25s ease; pointer-events: none; }
 .tour-hole.none { width: 0 !important; height: 0 !important; left: 50% !important; top: 40% !important; box-shadow: 0 0 0 9999px rgba(2, 8, 16, .72); }
 .tour-tip { position: fixed; width: min(360px, calc(100vw - 32px)); padding: 20px 20px 16px; border-radius: var(--radius); background: var(--bg-2); border: 1px solid var(--border-strong); box-shadow: var(--shadow); transition: top .25s ease, left .25s ease; }
@@ -2141,6 +2160,9 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="card-head"><div><h3 id="pushTitle">Notifications</h3><div class="sub">Your weekly review email, and alerts on your phone or computer even when ELEV8 is closed</div></div></div>
             <label class="toggle" style="margin-bottom:16px"><input type="checkbox" id="weeklyEmail"> <span><b>Email me my weekly review</b><br><span class="muted" style="font-size:12.5px">Every Sunday at 10am (Irish time), from reviews@elev8tradingjournal.com</span></span></label>
             <p class="muted" id="pushStatus" role="status" style="margin:0 0 12px;font-size:13.5px"></p>
+            <div id="pushDemo" hidden style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px">
+              <button class="btn sm" type="button" data-preview="news">News alert</button><button class="btn sm" type="button" data-preview="prop">Prop limit</button>
+              <button class="btn sm" type="button" data-preview="weekly">Weekly review</button><button class="btn sm" type="button" data-preview="remind">Reminder</button></div>
             <div class="stack" style="gap:10px">
               <label class="toggle"><input type="checkbox" id="pushWeekly"> <span><b>Weekly review is ready</b><br><span class="muted" style="font-size:12.5px">Sundays at 10am (Irish time), with your week in one line</span></span></label>
               <label class="toggle"><input type="checkbox" id="pushNews"> <span><b>High-impact news</b><br><span class="muted" style="font-size:12.5px">15 minutes before, for the currencies in your pairs</span></span></label>
@@ -2244,6 +2266,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="push-preview" id="pushPreview" role="status" aria-live="polite" hidden><img src="icons/icon-192.png" alt="" width="38" height="38"><div><div class="pp-top"><b>ELEV8</b><span>now</span></div><strong id="ppTitle"></strong><p id="ppBody"></p></div></div>
 <section class="push-nudge" id="pushNudge" role="dialog" aria-labelledby="pushNudgeText" hidden>
   <p id="pushNudgeText"><b>Want a heads-up before high-impact news?</b><br>ELEV8 can notify you 15 minutes before news for the currencies you trade.</p>
   <div class="row"><button class="btn ghost sm" type="button" id="pushNudgeNo">Not now</button><button class="btn primary sm" type="button" id="pushNudgeYes">Turn on alerts</button></div>
@@ -2260,7 +2283,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
       <div class="field signup-only" hidden><label for="dlgName">Full name</label><input type="text" id="dlgName" autocomplete="name" autocapitalize="words"></div>
       <div class="field signup-only" hidden><label for="dlgDob">Date of birth</label><input type="date" id="dlgDob" autocomplete="bday"></div>
       <div class="field"><label for="dlgEmail">Email</label><input type="email" id="dlgEmail" autocomplete="email" inputmode="email" autocapitalize="off" required></div>
-      <div class="field"><div class="pw-label"><label for="dlgPassword">Password</label><button type="button" class="link-btn signin-only" id="dlgForgot">Forgot password?</button></div><input type="password" id="dlgPassword" autocomplete="current-password" required></div>
+      <div class="field"><div class="pw-label"><label for="dlgPassword">Password</label><button type="button" class="link-btn signin-only" id="dlgForgot">Forgot password?</button></div><input type="password" id="dlgPassword" autocomplete="current-password" required><div class="pw-meter signup-only" id="dlgPwMeter" hidden aria-live="polite"><i></i><span></span></div></div>
       <label class="remember"><input type="checkbox" id="dlgRemember" checked> Remember me</label>
       <p id="dlgMsg" role="status" aria-live="polite"></p>
       <p class="signup-only home-legal" hidden>By creating an account you agree to the <a href="terms/" target="_blank" rel="noopener">Terms of Use</a> and <a href="privacy/" target="_blank" rel="noopener">Privacy Policy</a>. ELEV8 is a journal for education only, not financial advice, and isn't affiliated with any prop firm or broker.</p>
@@ -2279,8 +2302,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 <dialog id="pwDlg" class="bug-dlg" aria-labelledby="pwTitle" aria-describedby="pwIntro">
   <form id="pwForm" class="dlg-body" novalidate>
     <h3 id="pwTitle">Change password</h3>
-    <p id="pwIntro">Choose a new password of at least 8 characters.</p>
-    <div class="field"><label for="pwNew">New password</label><input type="password" id="pwNew" autocomplete="new-password" minlength="8"></div>
+    <p id="pwIntro">Choose a new password: at least 8 characters, with letters and a number.</p>
+    <div class="field"><label for="pwNew">New password</label><input type="password" id="pwNew" autocomplete="new-password" minlength="8"><div class="pw-meter" id="pwMeter" aria-live="polite"><i></i><span></span></div></div>
     <div class="field"><label for="pwNew2">Confirm new password</label><input type="password" id="pwNew2" autocomplete="new-password" minlength="8"></div>
     <p id="pwMsg" class="q-msg" role="alert"></p>
     <div class="dlg-actions">
@@ -2521,6 +2544,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
 <div id="tour" class="tour" hidden>
   <div class="tour-hole" id="tourHole"></div>
+  <div class="tour-block"></div><div class="tour-block"></div><div class="tour-block"></div><div class="tour-block"></div>
   <div class="tour-tip" id="tourTip" role="dialog" aria-modal="false" aria-labelledby="tourTitle">
     <div class="tour-step" id="tourStep"></div>
     <h3 id="tourTitle"></h3>
@@ -2990,6 +3014,16 @@ async function sbSync() {
   sb.busy = true;
   const uid = sb.session.user.id;
   try {
+    // An account deleted on another device: its sign-in token can still read (empty) data for up to an
+    // hour, so ask the sign-in service whether the account still exists (at most once a minute).
+    if (Date.now() - (sb.userChecked || 0) > 60000) {
+      sb.userChecked = Date.now();
+      const r = await fetch(SB.url + "/auth/v1/user", { headers: { apikey: SB.key, Authorization: "Bearer " + await sbToken() } });
+      if (!r.ok && [401, 403, 404].includes(r.status)) {
+        const j = await r.json().catch(() => ({}));
+        if (/user_not_found|does not exist|not found/i.test([j.error_code, j.code, j.msg, j.message].join(" "))) { accountGone(); return; }
+      }
+    }
     // First sign-in on this device for this account: add this device's trades to the account.
     const prevUser = store.get(KEY_SB_USER, null);
     if (prevUser !== uid) {
@@ -3175,7 +3209,9 @@ async function sbStart() {
   sb.listening = true;
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") sbSync(); });
   window.addEventListener("online", () => sbSync());
-  setInterval(() => { if (document.visibilityState === "visible") sbSync(); }, 30000);
+  // Trades logged on another device show up within about 15 seconds, or as soon as this one is back in focus.
+  setInterval(() => { if (document.visibilityState === "visible") sbSync(); }, 15000);
+  window.addEventListener("focus", () => sbSync());
 }
 // Sign-in window shown when the app opens and this device isn't signed in.
 function showHome(note) {
@@ -3256,6 +3292,26 @@ function setHomeMode(mode) {
   F(up ? "dlgName" : (F("dlgEmail").value ? "dlgPassword" : "dlgEmail")).focus();
 }
 
+// Password rules for new passwords (sign-up, change, reset). Supabase checks length and letters + digits too
+// (Authentication › Providers › Email); this also turns away the most common passwords.
+const COMMON_PW = new Set(("password,password1,password12,password123,passw0rd,p@ssw0rd,12345678,123456789,1234567890,87654321,qwerty123,qwertyui,"
+  + "qwerty12,qwerty1234,1q2w3e4r,1qaz2wsx,zaq12wsx,abc12345,abcd1234,a1b2c3d4,iloveyou1,letmein1,welcome1,welcome123,trading1,trader123,"
+  + "trading123,forex123,elev8trading,elev8123,football1,monkey123,sunshine1,princess1,admin123,11111111,00000000,12341234,asdf1234,test1234").split(","));
+function passwordProblem(pw, email) {
+  if (pw.length < 8) return "Use at least 8 characters.";
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return "Use letters and at least one number.";
+  const low = pw.toLowerCase(), name = String(email || "").split("@")[0].toLowerCase();
+  if (COMMON_PW.has(low) || /^(.)\1+$/.test(pw) || (name.length >= 4 && low.includes(name))) return "That password is too easy to guess. Try something less common.";
+  return "";
+}
+function renderPwMeter(meter, pw, email) {
+  let lvl = null;
+  if (pw) { lvl = passwordProblem(pw, email) ? 0 : 1 + (pw.length >= 12) + (/[a-z]/.test(pw) && /[A-Z]/.test(pw) || /[^A-Za-z0-9]/.test(pw)); }
+  const [w, c, t] = lvl == null ? ["0%", "transparent", ""] : [["20%", "var(--red)", "Too weak"], ["50%", "var(--warn)", "OK"], ["75%", "var(--accent)", "Good"], ["100%", "var(--green)", "Strong"]][lvl];
+  meter.style.setProperty("--w", w); meter.style.setProperty("--c", c);
+  meter.querySelector("span").textContent = t;
+}
+
 async function sbSignIn(signUp, from = "card") {
   const ids = from === "dialog" ? ["dlgEmail", "dlgPassword", "dlgMsg"] : ["syncEmail", "syncPassword", "syncMsg"];
   const email = F(ids[0]).value.trim(), password = F(ids[1]).value;
@@ -3271,7 +3327,8 @@ async function sbSignIn(signUp, from = "card") {
   }
   if (!email || !password) { msg.textContent = "Enter your email and password."; return; }
   // New accounts need 8+ characters; existing accounts made under the old 6-character rule can still sign in.
-  if (signUp && password.length < 8) { msg.textContent = "Choose a password of at least 8 characters."; return; }
+  const pwBad = signUp && passwordProblem(password, email);
+  if (pwBad) { msg.textContent = pwBad; F(ids[1]).focus(); return; }
   msg.textContent = signUp ? "Creating your account…" : "Signing in…";
   try {
     const back = encodeURIComponent(location.origin + location.pathname);
@@ -3343,17 +3400,21 @@ document.getElementById("mailResend").addEventListener("click", e => resendConfi
 function openPasswordDlg(fromReset) {
   F("pwForm").reset(); F("pwMsg").textContent = "";
   F("pwTitle").textContent = fromReset ? "Set a new password" : "Change password";
-  F("pwIntro").textContent = fromReset ? "You opened a password reset link. Choose a new password to finish." : "Choose a new password of at least 8 characters.";
+  F("pwIntro").textContent = fromReset ? "You opened a password reset link. Choose a new password to finish: at least 8 characters, with letters and a number." : "Choose a new password: at least 8 characters, with letters and a number.";
   const dlg = F("pwDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   F("pwNew").focus();
 }
 document.getElementById("pwCancel").addEventListener("click", () => F("pwDlg").close());
+{ const el = id => document.getElementById(id); // (F isn't defined yet at this point in the page)
+  el("pwNew").addEventListener("input", () => renderPwMeter(el("pwMeter"), el("pwNew").value, sb.session && sb.session.user.email));
+  el("dlgPassword").addEventListener("input", () => { if (homeMode === "signup") renderPwMeter(el("dlgPwMeter"), el("dlgPassword").value, el("dlgEmail").value); }); }
 document.getElementById("pwChange").addEventListener("click", () => openPasswordDlg(false));
 document.getElementById("pwForm").addEventListener("submit", async e => {
   e.preventDefault();
   const a = F("pwNew").value, b = F("pwNew2").value, msg = F("pwMsg");
-  if (a.length < 8) { msg.textContent = "Use at least 8 characters."; F("pwNew").focus(); return; }
+  const pwBad = passwordProblem(a, sb.session && sb.session.user.email);
+  if (pwBad) { msg.textContent = pwBad; F("pwNew").focus(); return; }
   if (a !== b) { msg.textContent = "The two passwords don't match."; F("pwNew2").focus(); return; }
   msg.textContent = "Saving…";
   try {
@@ -4282,9 +4343,21 @@ function ruleStats(list) {
     .sort((a, b) => (a.broke.n ? a.broke.total : 1e12) - (b.broke.n ? b.broke.total : 1e12) || b.broke.n - a.broke.n);
 }
 
-function renderCalendar(list) {
-  const months = Array.from(new Set(list.map(t => t.date.slice(0, 7)))).sort();
-  if (!ui.calMonth || !months.includes(ui.calMonth)) ui.calMonth = months[months.length - 1];
+// The calendar pages through every month from the first trade to now, whatever the date filter is
+// (session, setup and account filters still apply); it opens on the month the date filter ends in.
+const calList = () => sortChrono(trades).filter(t => !isOpen(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup) && inAccount(t));
+function calMonths(list) {
+  const now = isoDate(new Date()).slice(0, 7), have = list.map(t => t.date.slice(0, 7)).sort();
+  const first = have[0] || now, last = have.length && have[have.length - 1] > now ? have[have.length - 1] : now, out = [];
+  for (let [y, m] = first.split("-").map(Number); ; m === 12 ? (y++, m = 1) : m++) { const k = y + "-" + String(m).padStart(2, "0"); out.push(k); if (k >= last || out.length > 600) break; }
+  return out;
+}
+function renderCalendar() {
+  const list = calList(), months = calMonths(list);
+  if (!ui.calMonth || !months.includes(ui.calMonth)) {
+    const to = rangeBounds()[1], want = to.startsWith("9999") ? isoDate(new Date()).slice(0, 7) : to.slice(0, 7);
+    ui.calMonth = months.includes(want) ? want : want < months[0] ? months[0] : months[months.length - 1];
+  }
   const [y, m] = ui.calMonth.split("-").map(Number);
   const first = new Date(y, m - 1, 1);
   const days = new Date(y, m, 0).getDate();
@@ -5747,9 +5820,9 @@ F("fAccount").addEventListener("change", e => { ui.account = e.target.value; sav
 
 // Calendar navigation
 const shiftMonth = d => {
-  const months = Array.from(new Set(filtered().map(t => t.date.slice(0, 7)))).sort();
+  const months = calMonths(calList());
   const i = months.indexOf(ui.calMonth) + d;
-  if (months[i]) { ui.calMonth = months[i]; renderCalendar(filtered()); }
+  if (months[i]) { ui.calMonth = months[i]; renderCalendar(); }
 };
 F("calPrev").addEventListener("click", () => shiftMonth(-1));
 F("calNext").addEventListener("click", () => shiftMonth(1));
@@ -7750,10 +7823,36 @@ function renderNewsAlertBtn() {
   b.querySelector("span").textContent = on ? "News alerts on" : "Alert me before news";
 }
 F("newsAlertBtn").addEventListener("click", async () => {
+  if (DEMO) { pushPreview("news"); return; }
   if (settings.pushNews && pushHere) { showSetPane("profile"); showTab("settings"); F("pushCard").scrollIntoView({ block: "center" }); return; }
   if (!pushCan()) { showSetPane("profile"); showTab("settings"); setTimeout(() => F("pushCard").scrollIntoView({ block: "center" }), 100); return; }
   try { await pushTurnOn(["pushNews"]); toast(PUSH_ON_MSG.pushNews); } catch (err) { toast(err.message || "Notifications couldn't be turned on"); renderPush(); }
 });
+
+// The demo can't send real notifications (no account), so it shows what they look like instead.
+let ppTimer;
+function pushPreview(kind) {
+  const nh = nextHigh(null), m0 = v => money(v, { signed: false, decimals: 0 }), wk = stats(filtered());
+  const P = {
+    news: [nh ? `${nh.cur} ${nh.title} in 15 minutes` : "USD CPI m/m in 15 minutes", "High-impact news. Check your open trades and your prop firm's news rules."],
+    prop: ["100K Challenge: 84% of today's loss limit used", `${m0(4200)} of your ${m0(5000)} daily limit is used. ${m0(800)} left today.`],
+    weekly: ["Your weekly review is ready", wk.n ? `${money(wk.total)} · ${plural(wk.n, "trade")} · ${Math.round(wk.winRate * 100)}% win rate. See what worked and what to focus on next week.` : "See what worked and what to focus on next week."],
+    remind: ["You have 1 open trade", "Close it in your journal once it is done, while the details are fresh."]
+  }[kind];
+  F("ppTitle").textContent = P[0]; F("ppBody").textContent = P[1];
+  const el = F("pushPreview"); el.hidden = true; void el.offsetWidth; el.hidden = false;
+  clearTimeout(ppTimer); ppTimer = setTimeout(() => { el.hidden = true; }, 6000);
+  if (DEMO) toast("A preview. In your own journal, alerts arrive on your phone even when ELEV8 is closed.");
+}
+F("pushPreview").addEventListener("click", () => { F("pushPreview").hidden = true; });
+document.addEventListener("click", e => { const b = e.target.closest("[data-preview]"); if (b) pushPreview(b.dataset.preview); });
+if (DEMO) {
+  F("setNavProfile").hidden = false; F("pushCard").hidden = false; F("newsAlertBtn").hidden = false;
+  F("pushStatus").textContent = "In your own journal, these arrive on your phone or computer, even when ELEV8 is closed. Tap one to see what it looks like:";
+  F("pushDemo").hidden = false;
+  [...PUSH_KINDS, "pushQuiet", "weeklyEmail", "pushRemindAt", "pushQuietFrom", "pushQuietTo"].forEach(id => { F(id).disabled = true; });
+  F("pushNews").checked = F("pushProp").checked = true;
+}
 
 // After someone logs a trade, offer alerts once (per device) if they haven't any yet.
 const KEY_PUSH_NUDGE = "tj.push.nudge.v1";
@@ -8123,6 +8222,7 @@ const TOUR = [
   { tab: "overview", sel: "#quickLog", title: "Log a trade in seconds", text: "Tap Show to open the quick log. Tick Still open to log a trade before it closes, and close it from Open trades later." },
   { tab: "overview", sel: "#propPanel", title: "Your prop challenge, live", text: "Profit target, daily loss, max loss and trading days are tracked as you log. You get a warning before you get close to a limit." },
   { tab: "overview", sel: "#filterBtn", title: "This week, by default", text: "Your stats start fresh every Monday. Open Filters for last week, this month, all time, or a session, setup or account." },
+  { tab: "news", sel: "#newsAlertBtn", title: "Alerts before the news", text: "Get a notification on your phone 15 minutes before high-impact news for your pairs, and when a prop account nears its limits. " + (DEMO ? "Tap it to see one." : "Tap it to turn them on.") },
   { tab: "insights", sel: "#weeklyReview", title: "Your weekly review", text: "What worked, what cost you and what to focus on next week, read from your trades and notes. Tap Share to post your week." },
   { tab: "journal", sel: "#tableBody tr", title: "Every trade, in one place", text: "Tap a trade to see its before and after screenshots, notes and emotions, and to share a recap card." },
   { tab: "accounts", sel: "#acctGrid", title: "Accounts and rewards", text: "Switch between challenges, live and demo accounts. Mark a phase passed or failed, and log your payouts under Rewards." },
@@ -8133,7 +8233,7 @@ if (DEMO) TOUR.unshift({ tab: "overview", sel: null, title: "This is a demo jour
   text: TOUR_FROM_JOURNAL
     ? "These are sample trades, not yours. This is what your journal will look like once you've logged a few weeks of trading. Nothing you do here is saved, and your own journal is waiting for you after the tour."
     : "These are sample trades, not real ones. This is what your journal will look like once you've logged a few weeks of trading. Nothing you do here is saved." });
-let tourAt = -1;
+let tourAt = -1, tourWatch = null;
 // Whether the tour has been offered is remembered per account, so a new account on a phone that
 // has seen it before (someone else's, or a test account) still gets the welcome.
 function tourOwner() { return (SB && sb.session && sb.session.user.id) || "local"; }
@@ -8156,20 +8256,28 @@ function tourStop(i) {
   F("tourSkip").hidden = last && !DEMO;
   F("tourSkip").textContent = last && DEMO ? (TOUR_FROM_JOURNAL ? "Keep exploring the demo" : "Explore the demo") : "Skip";
   if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
+  // Follow the highlighted part if it grows or shrinks (e.g. opening the quick log).
+  if (tourWatch) tourWatch.disconnect();
+  if (el && window.ResizeObserver) { tourWatch = new ResizeObserver(() => requestAnimationFrame(tourPlace)); tourWatch.observe(el); }
   requestAnimationFrame(tourPlace);
 }
 function tourPlace() {
   if (tourAt < 0) return;
   const step = TOUR[tourAt], el = step.sel ? $(step.sel) : null, hole = F("tourHole"), tip = F("tourTip"), pad = 8;
   const vw = innerWidth, vh = innerHeight, tw = tip.offsetWidth, th = tip.offsetHeight;
+  // Everything outside the highlight stays blocked; the highlighted part works as normal.
+  const blocks = $$(".tour-block"), box = (b, l, t, w, h) => Object.assign(b.style, { left: l + "px", top: t + "px", width: Math.max(0, w) + "px", height: Math.max(0, h) + "px" });
   if (!el) {
+    blocks.forEach((b, i) => box(b, 0, 0, i ? 0 : vw, i ? 0 : vh));
     hole.classList.add("none");
     tip.style.left = Math.round((vw - tw) / 2) + "px"; tip.style.top = Math.round((vh - th) / 2) + "px";
     return;
   }
   hole.classList.remove("none");
   const r = el.getBoundingClientRect(), top = Math.max(4, r.top - pad), h = Math.min(r.height + pad * 2, vh - 8 - top);
-  Object.assign(hole.style, { left: Math.max(4, r.left - pad) + "px", top: top + "px", width: Math.min(r.width + pad * 2, vw - 8) + "px", height: h + "px" });
+  const L = Math.max(4, r.left - pad), W = Math.min(r.width + pad * 2, vw - 8);
+  Object.assign(hole.style, { left: L + "px", top: top + "px", width: W + "px", height: h + "px" });
+  box(blocks[0], 0, 0, vw, top); box(blocks[1], 0, top + h, vw, vh - top - h); box(blocks[2], 0, top, L, h); box(blocks[3], L + W, top, vw - L - W, h);
   const below = top + h + 12, above = top - th - 12;
   const y = below + th <= vh - 8 ? below : above >= 8 ? above : Math.max(8, vh - th - 8);
   const x = Math.min(Math.max(16, r.left + r.width / 2 - tw / 2), vw - tw - 16);
@@ -8191,6 +8299,7 @@ function startTour() {
 }
 function endTour() {
   tourAt = -1;
+  if (tourWatch) { tourWatch.disconnect(); tourWatch = null; }
   F("tour").hidden = true;
   document.documentElement.classList.remove("touring");
   markTourSeen();
@@ -8322,6 +8431,19 @@ if (SB) {
   F("syncSignUp").addEventListener("click", () => sbSignIn(true));
   F("syncSignOut").addEventListener("click", signOutFlow);
   F("sideLogout").addEventListener("click", () => { setMenu(false); signOutFlow(); });
+}
+// The account was deleted (on another device): sign out here and clear this device's copy.
+function accountGone() {
+  pushSub().then(p => p && p.unsubscribe()).catch(() => {});
+  sbSaveSession(null);
+  realTrades = []; saveLocal(); syncView();
+  settings = Object.assign({}, DEFAULT_SETTINGS); store.set(KEY_SETTINGS, settings); ui.account = ""; saveUi();
+  store.set(KEY_SB_OUTBOX, []);
+  try { localStorage.removeItem(KEY_SB_USER); localStorage.removeItem(KEY_DRAFT); } catch (e) { /* ignore */ }
+  resetForm(false, true);
+  sbRender(); refreshAll();
+  setSync("local", "Signed out");
+  showHome("This account has been deleted, so you've been signed out on this device.");
 }
 async function signOutFlow() {
     // Send any last changes first, so nothing is lost when this device's copy is cleared.
