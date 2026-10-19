@@ -10,8 +10,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-FIRMS = {"ftmo": "https://ftmo.com/en/", "fundingpips": "https://fundingpips.com/", "alpha": "https://alphacapitalgroup.uk/",
-         "fundingrock": "https://www.fundingrock.com/"}
+FIRMS = {"ftmo": "https://ftmo.com/en/", "fundingpips": "https://fundingpips.com/", "alpha": "https://alphacapitalgroup.uk/"}
 OUT = Path(__file__).resolve().parent / "firm-logos"
 UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}
 

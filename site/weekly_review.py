@@ -102,7 +102,7 @@ def scratch_size(t):
     return risk * 0.1 if risk > 0 else acct_base(t.get("account")) * 0.0002
 
 
-# Which prop programmes deduct payouts from the balance (FundingRock) rather than resetting the account,
+# Which prop programmes deduct payouts from the balance rather than resetting the account,
 # read from the prop rules built into the app so the email counts payouts the same way.
 def _deduct_programs():
     try:
@@ -247,7 +247,7 @@ def build_week(trades, start, cur, settings=None):
     earlier = lambda t: id(t) not in week_ids and t.get("status") != "open" and close_key(t) < first
     if ids and all(a in CTX["sizes"] for a in ids):
         # Per account; payouts before the week count like the app and the prop tracker: most firms reset
-        # the account to its size after a payout, FundingRock-style programmes deduct the payout instead.
+        # the account to its size after a payout, programmes marked "deduct" take the payout instead.
         by_id = {a.get("id"): a for a in accounts}
         bal = 0.0
         for a in ids:
