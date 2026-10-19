@@ -91,7 +91,8 @@ def people():
 def message(evs, minutes):
     """Title and body for the events at one time, e.g. 'USD CPI m/m in 15 minutes'."""
     first, rest = evs[0], evs[1:]
-    lead = "now" if minutes <= 0 else f"in {minutes} minute{'s' if minutes != 1 else ''}"
+    lead = ("now" if minutes <= 0 else f"in {minutes} minute{'s' if minutes != 1 else ''}" if minutes < 60
+            else f"in {minutes // 60}h {minutes % 60}m")
     title = f"{first['cur']} {first['title']} {lead}"
     also = ", ".join(f"{e['cur']} {e['title']}" for e in rest[:3]) + (f" and {len(rest) - 3} more" if len(rest) > 3 else "")
     body = ("Also at the same time: " + also + ". " if rest else "High-impact news. ") + "Check your open trades and your prop firm's news rules."
