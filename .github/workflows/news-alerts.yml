@@ -3,6 +3,7 @@ name: News alerts
 # Timed notifications (Settings › Profile › Notifications), every 30 minutes: prop firm limit warnings,
 # weekday journal reminders, and high-impact news 15 minutes before for the currencies each person
 # trades. Most runs find nothing due and finish in seconds; the rest wait for the news. See site/news_alerts.py.
+# It also emails new bug reports to the address set in Supabase (site/bug_alerts.py).
 # Run it by hand with an email address to send that account a test alert for the next high-impact news.
 on:
   schedule:
@@ -32,6 +33,12 @@ jobs:
           python-version: "3.12"
       - name: Install the notification sender
         run: pip install pywebpush==2.0.3
+      - name: Email new bug reports
+        continue-on-error: true
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: python3 site/bug_alerts.py
       - name: Send news alerts
         env:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

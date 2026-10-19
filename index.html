@@ -7491,7 +7491,9 @@ function bugReport() {
 const canSendBug = () => !!(BUG_DB && sbOn());
 function openBugReport() {
   setMenu(false);
-  F("bugMsg").textContent = canSendBug() ? "" : "Sign in to send a report. You can still tap Copy report and send it to us another way.";
+  // Not signed in (or in the demo): say plainly that nothing will be sent, and where to send a copy.
+  F("bugMsg").textContent = canSendBug() ? "" : (DEMO ? "Reports can't be sent from the demo journal." : "You need to be signed in to send a report.")
+    + " Tap Copy report and send it to us on Instagram (@elev8trading_) or Discord instead.";
   F("bugSend").hidden = !canSendBug();
   const dlg = F("bugDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");

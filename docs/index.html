@@ -2,10 +2,10 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-sK1QpWu+oqECjreGCAGc/+Hd/CPgNzSd8jfN+h4KXz4=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-B0BQ/6IjuGKYMpHeQBBG2g956AtY3Ergeg4KG4Ea7BY=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-3etbdUuMGDkSB8w7XqtcuMTfwnJAv33eazp3FjDxb/0=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-cEUauHJVcW6oaRYD+/K0JyDgMsXrcn5yU1LmH18kunI=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>window.ELEV8_BUILD = "ffff183865";</script>
+<script>window.ELEV8_BUILD = "ea60842f06";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -7534,7 +7534,9 @@ function bugReport() {
 const canSendBug = () => !!(BUG_DB && sbOn());
 function openBugReport() {
   setMenu(false);
-  F("bugMsg").textContent = canSendBug() ? "" : "Sign in to send a report. You can still tap Copy report and send it to us another way.";
+  // Not signed in (or in the demo): say plainly that nothing will be sent, and where to send a copy.
+  F("bugMsg").textContent = canSendBug() ? "" : (DEMO ? "Reports can't be sent from the demo journal." : "You need to be signed in to send a report.")
+    + " Tap Copy report and send it to us on Instagram (@elev8trading_) or Discord instead.";
   F("bugSend").hidden = !canSendBug();
   const dlg = F("bugDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");

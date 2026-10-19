@@ -185,3 +185,14 @@ revoke all on function public.push_unsubscribe(text) from public, anon;
 grant execute on function public.push_public_key() to authenticated;
 grant execute on function public.push_subscribe(text, text, text) to authenticated;
 grant execute on function public.push_unsubscribe(text) to authenticated;
+
+-- Bug report emails: every new report is emailed to this address by the news-alerts GitHub Action
+-- (site/bug_alerts.py). The address is kept here in Supabase rather than in the public repo; change
+-- 'you@example.com' to yours. Only the secret service key can read this table.
+create table if not exists public.app_config (key text primary key, value text not null);
+alter table public.app_config enable row level security;
+revoke all on public.app_config from anon, authenticated;
+grant select on public.app_config to service_role;
+grant select on public.bug_reports to service_role;
+insert into public.app_config (key, value) values ('bug_report_email', 'you@example.com')
+  on conflict (key) do update set value = excluded.value;
