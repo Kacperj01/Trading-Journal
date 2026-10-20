@@ -92,6 +92,13 @@ page = f"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ELEV8 Trading Journal">
+<meta property="og:title" content="ELEV8 Trading Journal">
+<meta property="og:description" content="Know exactly why you win and lose. Log trades, track prop firm rules and review every week.">
+<meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
+<meta property="og:url" content="https://elev8tradingjournal.com/">
+<meta name="twitter:card" content="summary_large_image">
 <script>window.ELEV8_BUILD = "{version}";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
@@ -251,6 +258,7 @@ home_page = f"""<!doctype html>
 <meta property="og:title" content="ELEV8 Trading Journal">
 <meta property="og:description" content="Know exactly why you win and lose. Log trades, track prop firm rules and review every week.">
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="canonical" href="https://elev8tradingjournal.com/home/">
@@ -305,6 +313,7 @@ for slug in ("privacy", "terms"):
 <meta property="og:title" content="{title_l}">
 <meta property="og:description" content="{LEGAL_DESC[slug]}">
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://elev8tradingjournal.com/{slug}/">
 <style>{LEGAL_CSS}</style>
 </head>
