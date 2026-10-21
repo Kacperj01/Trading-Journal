@@ -1,0 +1,24 @@
+name: Security check
+
+# Checks from outside that the live Supabase project keeps every account's data private: a visitor
+# who isn't signed in must not be able to read or write any table, call the account functions or list
+# private files. Uses only the public key already in the app (no secrets). See site/security_check.py.
+on:
+  schedule:
+    - cron: "17 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Try to read other people's data without signing in
+        run: python site/security_check.py
