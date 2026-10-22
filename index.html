@@ -1126,6 +1126,10 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .td-item > span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 2px; }
 .td-item b { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
 .td-notes { white-space: pre-line; color: var(--text-2); font-size: 14px; margin: 0; }
+.td-note { margin-top: 14px; }
+.td-note > span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 4px; }
+td.notes .notes-after { margin-top: 4px; }
+td.notes .notes-after b { font-weight: 600; color: var(--text); }
 
 /* Home page shown while signed out (hosted app): the journal stays hidden until you sign in. */
 .gated header.top, .gated main, .gated footer { display: none; }
@@ -2076,10 +2080,14 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
 
           <fieldset>
             <legend>Notes</legend>
-            <div class="fields">
-              <div class="field wide">
-                <label for="tNotes">Trade notes</label>
-                <textarea id="tNotes" placeholder="Why did you take it? What did you see? What would you do differently?"></textarea>
+            <div class="fields fields-pair">
+              <div class="field">
+                <label for="tNotes">Notes before</label>
+                <textarea id="tNotes" placeholder="Why are you taking it? What do you see? What's the plan?"></textarea>
+              </div>
+              <div class="field">
+                <label for="tNotesAfter">Notes after</label>
+                <textarea id="tNotesAfter" placeholder="How did it play out? What would you do differently?"></textarea>
               </div>
             </div>
           </fieldset>
@@ -2882,6 +2890,8 @@ function demoJournal() {
   [[-120, 1840], [-85, 2615], [-50, 3120]].forEach(([d, amt], i) => { const x = new Date(today); x.setDate(x.getDate() + d); funded.payouts.push({ id: "demo-pay" + i, date: iso(x), amount: amt, note: i ? "" : "First payout" }); });
   const setups = { "Asia Sweep": [0.62, "London"], "PDH/PDL Sweep": [0.58, "London"], "Break & Retest": [0.52, "New York"], "Breakout": [0.36, "New York"] };
   const pairs = ["GBPUSD", "EURUSD", "XAUUSD", "NAS100", "GBPJPY"];
+  const DEMO_AFTER_WIN = ["Held to target and let it play out. Same again next time.", "Patience paid off: waited for the close before entering.", "Took partials at 1R, which made holding the runner easy.", "Textbook. Plan followed from entry to exit."];
+  const DEMO_AFTER_LOSS = ["Entered before confirmation. Next time wait for the candle to close.", "Valid setup, just didn't work. Nothing to change.", "Shouldn't have taken it after a loss. Step away next time.", "News spiked it. Check the calendar before entering."];
   const winNotes = ["Swept the Asia high, waited for the 15m close back inside and entered on the retest.", "Clean retest of the level, held to target.", "Took partials at 1R, runner hit TP.", "Patient entry after the sweep. Textbook."];
   const lossNotes = ["Entered before the candle closed and got stopped.", "Setup was valid, just didn't work out.", "Chased it after missing the first entry. Revenge trade.", "Got caught by the CPI spike."];
   const out = []; let n = 0, weekLoss = 0;
@@ -2901,7 +2911,7 @@ function demoJournal() {
         pair: pick(pairs), session, direction: rnd() < 0.5 ? "Long" : "Short", setup, risk, pnl: Math.round(R * risk * 100) / 100,
         emotionBefore: win ? pick(["Confident", "Confident", "Neutral"]) : pick(["FOMO", "Neutral", "Unsure", "Impatient"]),
         emotionAfter: win ? pick(["Proud", "Satisfied"]) : pick(["Lesson learned", "Disappointed"]), confidence: win ? pick([3, 4, 5]) : pick([2, 3]),
-        notes: win ? pick(winNotes) : pick(lossNotes), mistakes: mistake, followedPlan: win || !mistake, account: onLive ? live.id : challenge.id, chartBefore: "", chartAfter: "", screenshot: "" });
+        notes: win ? pick(winNotes) : pick(lossNotes), notesAfter: (win ? DEMO_AFTER_WIN : DEMO_AFTER_LOSS)[n % (win ? DEMO_AFTER_WIN : DEMO_AFTER_LOSS).length], mistakes: mistake, followedPlan: win || !mistake, account: onLive ? live.id : challenge.id, chartBefore: "", chartAfter: "", screenshot: "" });
     }
   }
   // The funded account's history: each payout follows a run of winning trades a little bigger than it.
@@ -3898,7 +3908,7 @@ const NOTE_TAGS = {
   emotional: /\b(revenge|fomo|tilt(ed)?|greed(y)?|scared|fear(ful)?|impatien(t|ce)|bored|overtrad(e|ed|ing)|chas(e|ed|ing))\b/i
 };
 function noteTags(t) {
-  const text = `${t.notes || ""} ${t.mistakes || ""}`;
+  const text = `${t.notes || ""} ${t.notesAfter || ""} ${t.mistakes || ""}`;
   return Object.keys(NOTE_TAGS).filter(k => NOTE_TAGS[k].test(text));
 }
 // Mistakes are typed freely; the review names them in standard trading terms rather than quoting them.
@@ -4900,7 +4910,7 @@ function renderTable(list) {
   list.forEach(t => counts[resultOf(t)]++);
   $$("[data-cnt]", F("tResultTabs")).forEach(el => el.textContent = counts[el.dataset.cnt]);
   let rows = indexed.filter(({ t }) => (!res || resultOf(t) === res)
-    && (!q || [t.pair, t.setup, t.session, t.notes, t.direction, t.emotionBefore, t.emotionAfter, t.mistakes, t.date].join(" ").toLowerCase().includes(q)));
+    && (!q || [t.pair, t.setup, t.session, t.notes, t.notesAfter, t.direction, t.emotionBefore, t.emotionAfter, t.mistakes, t.date].join(" ").toLowerCase().includes(q)));
   const k = ui.sortKey, dir = ui.sortDir === "asc" ? 1 : -1;
   const val = ({ t, idx }) => k === "idx" ? idx : k === "date" ? t.date + (t.time || "") : k === "r" ? (rOf(t) ?? -Infinity) : k === "result" ? resultOf(t) : (t[k] ?? "");
   rows.sort((a, b) => { const va = val(a), vb = val(b); return (va > vb ? 1 : va < vb ? -1 : a.idx - b.idx) * dir; });
@@ -4926,7 +4936,7 @@ function renderTable(list) {
       <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${isOpen(t) ? "Open" : money(t.pnl)}</strong></td>
       <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : result === "Open" ? "open" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
       <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span class="plan-flag" title="${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}" role="img" aria-label="Plan broken">${ico("warn")}</span>` : ""}</td>
-      <td class="notes${t.notes || t.mistakes || hasCharts(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${(t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? ` <button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : ""}${t.sourceUrl ? ` <a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
+      <td class="notes${t.notes || t.notesAfter || t.mistakes || hasCharts(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.notesAfter ? `<div class="notes-after"><b>After:</b> ${esc(t.notesAfter)}</div>` : ""}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${(t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? ` <button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : ""}${t.sourceUrl ? ` <a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
       <td class="c-act"><div class="row-actions">
         <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="View">${ico("eye")}<span class="ra-l">View</span></button>
         ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}" aria-label="Close trade ${idx}, ${esc(t.pair)}" title="Close trade">${ico("check")}<span class="ra-l">Close</span></button>` : ""}<button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="Edit">${ico("pen")}<span class="ra-l">Edit</span></button>
@@ -5094,6 +5104,7 @@ function readForm() {
     followedPlan: (c => c ? Object.values(c).every(Boolean) : F("tPlan").checked)(readPlanChecks("tPlanChecks")),
     mistakes: F("tMistakes").value.trim(),
     notes: F("tNotes").value.trim(),
+    notesAfter: F("tNotesAfter").value.trim(),
     chartBefore: safeLink(F("tBefore").value),
     chartAfter: safeLink(F("tAfter").value),
     shotBefore: formShots.before, shotAfter: formShots.after,
@@ -5125,6 +5136,7 @@ function loadIntoForm(t) {
   syncPlanForm(t);
   F("tMistakes").value = t.mistakes || "";
   F("tNotes").value = t.notes || "";
+  F("tNotesAfter").value = t.notesAfter || "";
   F("tBefore").value = beforeChart(t);
   F("tAfter").value = afterChart(t);
   const saved = t.id && realTrades.find(x => x.id === t.id);
@@ -5349,7 +5361,7 @@ const SHEET_COLS = [
   ["P&L", t => t.pnl], ["R", t => { const r = rOf(t); return r == null ? "" : Math.round(r * 100) / 100; }], ["Risk", t => t.risk],
   ["Entry", t => t.entry], ["Stop", t => t.stop], ["Target", t => t.target], ["Exit", t => t.exit], ["Size", t => t.size], ["Fees", t => t.fees],
   ["Emotion before", t => t.emotionBefore || ""], ["Emotion after", t => t.emotionAfter || ""], ["Confidence", t => t.confidence],
-  ["Status", t => isOpen(t) ? "Open" : "Closed"], ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Rules broken", t => brokenRules(t).join(", ")], ["Mistakes", t => t.mistakes || ""], ["Notes", t => t.notes || ""],
+  ["Status", t => isOpen(t) ? "Open" : "Closed"], ["Followed plan", t => t.followedPlan === false ? "No" : "Yes"], ["Rules broken", t => brokenRules(t).join(", ")], ["Mistakes", t => t.mistakes || ""], ["Notes before", t => t.notes || ""], ["Notes after", t => t.notesAfter || ""],
   ["Before chart", t => beforeChart(t)], ["After chart", t => afterChart(t)], ["Source", t => t.sourceUrl || ""]
 ];
 function sheetRows(list) {
@@ -5396,7 +5408,7 @@ function toXlsx(list) {
     if (v === "") return "";
     return `<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${x(v)}</t></is></c>`;
   }).join("") + "</row>").join("");
-  const widths = SHEET_COLS.map((c, i) => `<col min="${i + 1}" max="${i + 1}" width="${c[0] === "Notes" ? 70 : c[0] === "Chart" || c[0] === "Source" ? 40 : 14}" customWidth="1"/>`).join("");
+  const widths = SHEET_COLS.map((c, i) => `<col min="${i + 1}" max="${i + 1}" width="${c[0] === "Notes before" || c[0] === "Notes after" ? 50 : c[0] === "Chart" || c[0] === "Source" ? 40 : 14}" customWidth="1"/>`).join("");
   const last = col(SHEET_COLS.length - 1) + rows.length;
   return zipStore([
     ["[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
@@ -5525,7 +5537,8 @@ const ALIASES = {
   mistakes: ["mistakes", "mistake", "errors"],
   account: ["account", "accountname", "acct", "tradingaccount"],
   status: ["status", "state", "openclosed"],
-  notes: ["notes", "note", "comment", "comments", "journal", "remarks", "description", "lessons"],
+  notes: ["notes", "note", "notesbefore", "beforenotes", "pretradenotes", "comment", "comments", "journal", "remarks", "description"],
+  notesAfter: ["notesafter", "afternotes", "posttradenotes", "review", "reflection", "lessons", "lessonslearned"],
   chartBefore: ["beforechart", "chartbefore", "before", "entrychart", "setupchart"],
   chartAfter: ["afterchart", "chartafter", "after", "exitchart", "resultchart", "chart", "screenshot", "image", "link", "url"]
 };
@@ -5622,7 +5635,7 @@ function rowsToTrades(rows) {
       emotionBefore: String(g("emotionBefore")).trim(), emotionAfter: String(g("emotionAfter")).trim(),
       confidence: parseMoney(g("confidence")) || null,
       followedPlan: plan ? !/^(n|no|false|0|x)$/.test(plan) : true,
-      mistakes: String(g("mistakes")).trim(), notes: String(g("notes")).trim(),
+      mistakes: String(g("mistakes")).trim(), notes: String(g("notes")).trim(), notesAfter: String(g("notesAfter")).trim(),
       chartBefore: safeLink(g("chartBefore")), chartAfter: safeLink(g("chartAfter")), screenshot: ""
     });
     const t = out[out.length - 1];
@@ -6240,7 +6253,8 @@ function openTrade(t) {
       ${item("Mistakes", esc(t.mistakes || ""), "warn-text")}
     </div>
     ${newsNear(t).length ? `<p class="td-news"><span class="imp High" aria-hidden="true"></span> High-impact news within an hour: ${newsNear(t).map(e => `${esc(e.cur)} ${esc(e.title)} (${fmtTime(new Date(e.t))})`).join(", ")}</p>` : ""}
-    ${t.notes ? `<p class="td-notes" style="margin-top:14px">${esc(t.notes)}</p>` : ""}
+    ${t.notes ? `<div class="td-note"><span>Notes before</span><p class="td-notes">${esc(t.notes)}</p></div>` : ""}
+    ${t.notesAfter ? `<div class="td-note"><span>Notes after</span><p class="td-notes">${esc(t.notesAfter)}</p></div>` : ""}
     ${safeLink(t.sourceUrl) ? `<p style="margin:10px 0 0;font-size:13px"><a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Open in Notion ↗</a></p>` : ""}`;
   loadShots(F("tdBody"));
   const dlg = F("tradeDlg");
@@ -8122,7 +8136,7 @@ function snapshotHtml() {
   // A plain, pre-rendered copy of the trades so the file is readable even where scripts don't run
   // (for example a quick preview in the iPhone Files app). The live page removes it on load.
   const st = stats(sortChrono(realTrades));
-  const rows = sortChrono(realTrades).map(t => `<tr><td>${esc(t.date)}</td><td>${esc(t.pair)}</td><td>${esc(t.session)}</td><td>${esc(t.direction)}</td><td>${esc(t.setup)}</td><td>${esc(resultOf(t) === "BE" ? "Breakeven" : resultOf(t))}</td><td style="text-align:right;color:${t.pnl > 0 ? "#34d27b" : t.pnl < 0 ? "#ff5c7a" : "#4a9af0"}">${esc(money(t.pnl))}</td><td>${esc(fmtR(rOf(t)))}</td><td>${esc(t.emotionBefore || "")}</td><td style="white-space:pre-line">${esc(t.notes || "")}</td></tr>`).join("");
+  const rows = sortChrono(realTrades).map(t => `<tr><td>${esc(t.date)}</td><td>${esc(t.pair)}</td><td>${esc(t.session)}</td><td>${esc(t.direction)}</td><td>${esc(t.setup)}</td><td>${esc(resultOf(t) === "BE" ? "Breakeven" : resultOf(t))}</td><td style="text-align:right;color:${t.pnl > 0 ? "#34d27b" : t.pnl < 0 ? "#ff5c7a" : "#4a9af0"}">${esc(money(t.pnl))}</td><td>${esc(fmtR(rOf(t)))}</td><td>${esc(t.emotionBefore || "")}</td><td style="white-space:pre-line">${esc(t.notes || "")}</td><td style="white-space:pre-line">${esc(t.notesAfter || "")}</td></tr>`).join("");
   const cell = "padding:6px 8px;border-bottom:1px solid #263049;text-align:left;vertical-align:top";
   const section = doc.createElement("section");
   section.id = "static-snapshot";
@@ -8130,7 +8144,7 @@ function snapshotHtml() {
   section.innerHTML = `<h2 style="margin:0 0 4px">Trading Journal: ${realTrades.length} trades</h2>
     <p style="margin:0 0 12px;color:#8a93a8">Exported ${esc(new Date().toLocaleString("en-GB"))} · Total ${esc(money(st.total))} · Win rate ${esc(pct(st.winRate))} · Profit factor ${st.pf === Infinity ? "∞" : st.pf.toFixed(2)}</p>
     <div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:900px;font-size:13px">
-    <thead><tr>${["Date", "Pair", "Session", "Direction", "Setup", "Result", "P&L", "R", "Emotion", "Notes"].map(h => `<th style="${cell};color:#8a93a8">${h}</th>`).join("")}</tr></thead>
+    <thead><tr>${["Date", "Pair", "Session", "Direction", "Setup", "Result", "P&L", "R", "Emotion", "Notes before", "Notes after"].map(h => `<th style="${cell};color:#8a93a8">${h}</th>`).join("")}</tr></thead>
     <tbody>${rows.replace(/<td/g, `<td style="${cell}"`).replace(/<td style="([^"]*)" style="/g, '<td style="$1;')}</tbody></table></div>`;
   doc.body.insertBefore(section, doc.body.firstChild);
   return "\uFEFF<!doctype html>\n" + doc.documentElement.outerHTML;

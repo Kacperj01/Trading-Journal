@@ -118,7 +118,7 @@ DEDUCT = _deduct_programs()
 # Fields shown as text: anything else stored there (a number, a list) is turned into text, so one odd
 # trade can't break the review.
 TEXT_FIELDS = ("date", "time", "closedDate", "closedTime", "pair", "setup", "session", "direction",
-               "emotionBefore", "emotionAfter", "mistakes", "notes", "status", "account")
+               "emotionBefore", "emotionAfter", "mistakes", "notes", "notesAfter", "status", "account")
 
 
 def clean_trade(t):
@@ -147,7 +147,7 @@ NOTE_TAGS = {
 
 
 def note_tags(t):
-    text = f"{t.get('notes') or ''} {t.get('mistakes') or ''}"
+    text = f"{t.get('notes') or ''} {t.get('notesAfter') or ''} {t.get('mistakes') or ''}"
     return [k for k, rx in NOTE_TAGS.items() if rx.search(text)]
 
 
