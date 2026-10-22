@@ -1720,7 +1720,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="field"><label for="qFees">Fees <span class="muted">(optional)</span></label><input type="number" step="any" id="qFees" inputmode="decimal" placeholder="e.g. 7"></div>
             <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
             <div class="field" id="qAccountWrap" hidden><label for="qAccount">Account</label><select id="qAccount"></select></div>
-            <div class="field q-wide"><label for="qNotes">Notes</label><input type="text" id="qNotes" placeholder="Why did you take it?"></div>
+            <div class="field q-wide"><label for="qNotes">Notes before</label><input type="text" id="qNotes" placeholder="Why are you taking it?"></div>
             <div class="field q-full" id="qPlanWrap"><span class="lbl" id="qPlanLbl">Plan rules followed <span class="muted">(untick any you broke)</span></span><div class="plan-checks" id="qPlanChecks" role="group" aria-labelledby="qPlanLbl"></div></div>
           </div>
           <p id="qMsg" class="q-msg" role="alert"></p>
@@ -2079,14 +2079,20 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           </fieldset>
 
           <fieldset>
-            <legend>Notes</legend>
-            <div class="fields fields-pair">
-              <div class="field">
-                <label for="tNotes">Notes before</label>
+            <legend id="tNotesLbl">Notes before</legend>
+            <div class="fields">
+              <div class="field wide">
+                <label for="tNotes" class="sr-only">Notes before</label>
                 <textarea id="tNotes" placeholder="Why are you taking it? What do you see? What's the plan?"></textarea>
               </div>
-              <div class="field">
-                <label for="tNotesAfter">Notes after</label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend id="tNotesAfterLbl">Notes after</legend>
+            <div class="fields">
+              <div class="field wide">
+                <label for="tNotesAfter" class="sr-only">Notes after</label>
                 <textarea id="tNotesAfter" placeholder="How did it play out? What would you do differently?"></textarea>
               </div>
             </div>
