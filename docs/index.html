@@ -2,7 +2,7 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-a0tJiMLUqiJs8Hji6hL/hklorOi+sMEgypf5NU2ZkLY=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-N7KsO+B5+7TutbGytHgoz+qi98A5FIyjpKB5JIpM2VY=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-ELOdBbR/GH970sRtOMWV2g0zT8j/r11CQ3AIYIarouA=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-Xk/8KBUTuN/7ugHAfo8Hx9fUh6gQ5nKPWkc0ygIQ/K4=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta property="og:type" content="website">
@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
 <meta property="og:url" content="https://elev8tradingjournal.com/">
 <meta name="twitter:card" content="summary_large_image">
-<script>window.ELEV8_BUILD = "aaea9a428a";</script>
+<script>window.ELEV8_BUILD = "931ee100b8";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -515,6 +515,7 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--re
 .day.up { background: var(--green-soft); border-color: rgba(52, 210, 123, 0.35); }
 .day.down { background: var(--red-soft); border-color: rgba(255, 92, 122, 0.35); }
 .day.flat { background: var(--blue-soft); border-color: rgba(74, 154, 240, 0.3); }
+.day.out { opacity: .35; } /* outside the date filter */
 .day.today { box-shadow: inset 0 0 0 1px var(--accent); }
 @media (max-width: 640px) { .calendar { --day-h: 56px; } .day { padding: 4px 5px; } .day .p { font-size: 10px; letter-spacing: -.03em; } .day .pf { display: none; } .day .pc { display: inline; } .day .n { display: none; } }
 
@@ -4547,8 +4548,9 @@ function ruleStats(list) {
     .sort((a, b) => (a.broke.n ? a.broke.total : 1e12) - (b.broke.n ? b.broke.total : 1e12) || b.broke.n - a.broke.n);
 }
 
-// The calendar pages through every month from the first trade to now, whatever the date filter is
-// (session, setup and account filters still apply); it opens on the month the date filter ends in.
+// The calendar pages through every month from the first trade to now, whatever the date filter is, so
+// any month can be looked at. The date filter still counts: only trades inside it fill the days and the
+// month total, days outside it are faded, and changing it jumps to the month it ends in.
 const calList = () => sortChrono(trades).filter(t => !isOpen(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup) && inAccount(t));
 function calMonths(list) {
   const now = isoDate(new Date()).slice(0, 7), have = list.map(t => t.date.slice(0, 7)).sort();
@@ -4558,6 +4560,8 @@ function calMonths(list) {
 }
 function renderCalendar() {
   const list = calList(), months = calMonths(list);
+  const [from, to] = rangeBounds(), rangeKey = from + "|" + to;
+  if (ui.calRange !== rangeKey) { ui.calRange = rangeKey; ui.calMonth = ""; }
   if (!ui.calMonth || !months.includes(ui.calMonth)) {
     const to = rangeBounds()[1], want = to.startsWith("9999") ? isoDate(new Date()).slice(0, 7) : to.slice(0, 7);
     ui.calMonth = months.includes(want) ? want : want < months[0] ? months[0] : months[months.length - 1];
@@ -4567,7 +4571,7 @@ function renderCalendar() {
   const days = new Date(y, m, 0).getDate();
   const offset = (first.getDay() + 6) % 7; // Monday first
   const byDay = {};
-  list.forEach(t => { if (t.date.startsWith(ui.calMonth)) { (byDay[t.date] = byDay[t.date] || []).push(t); } });
+  list.forEach(t => { if (t.date.startsWith(ui.calMonth) && t.date >= from && t.date <= to) { (byDay[t.date] = byDay[t.date] || []).push(t); } });
   const monthPnl = sum(Object.values(byDay).flat().map(t => t.pnl));
   const tradingDays = Object.keys(byDay).length;
   const greenDays = Object.values(byDay).filter(d => sum(d.map(t => t.pnl)) > 0).length;
@@ -4585,7 +4589,8 @@ function renderCalendar() {
     const iso = `${ui.calMonth}-${String(d).padStart(2, "0")}`;
     const ts = byDay[iso];
     const p = ts ? sum(ts.map(t => t.pnl)) : null;
-    const cls = ts ? (p > 0 ? "up" : p < 0 ? "down" : "flat") : "";
+    // Faded: outside the date filter (days still to come in a period that ends today aren't faded).
+    const cls = (ts ? (p > 0 ? "up" : p < 0 ? "down" : "flat") : "") + (iso < from || (iso > to && to !== todayIso) ? " out" : "");
     const lbl = ts ? `${fmtDate(iso)}: ${money(p)} from ${plural(ts.length, "trade")}` : `${fmtDate(iso)}: no trades`;
     html += `<div class="day ${cls} ${iso === todayIso ? "today" : ""}" role="listitem" aria-label="${esc(lbl)}" title="${esc(lbl)}">
       <span class="d">${d}</span>${ts ? `<span class="p ${tone(p)}"><span class="pf">${money(p, { decimals: 0 })}</span><span class="pc">${moneyShort(p)}</span></span><span class="n">${plural(ts.length, "trade")}</span>` : ""}</div>`;
