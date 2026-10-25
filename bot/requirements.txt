@@ -1,0 +1,3 @@
+# The bot itself needs only Python 3.11+. Install what your platform needs:
+MetaTrader5>=5.0.45; sys_platform == "win32"   # MT5 (Windows only)
+websocket-client>=1.7                          # Tradovate live bars

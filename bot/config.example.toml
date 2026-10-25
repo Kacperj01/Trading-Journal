@@ -1,0 +1,76 @@
+# ELEV8 bot settings. Copy to config.toml and edit. Anything left out uses the default.
+# Education only, not financial advice. Test on paper before going live.
+
+[instrument]
+symbol = "EURUSD"          # MT5 symbol, or futures name like "MES" (see [broker] for Tradovate/Ninja names)
+tick_size = 0.00001        # MT5 fills tick size/value/lot step from the broker automatically
+tick_value = 1.0           # money per tick per 1 lot / 1 contract. MES: tick_size 0.25, tick_value 1.25
+qty_step = 0.01            # 0.01 lots for forex; 1 for futures contracts
+min_qty = 0.01
+max_qty = 5.0
+commission_per_unit = 7.0  # round-turn per lot / contract
+slippage_ticks = 2         # backtest only
+
+[timeframes]
+ltf_minutes = 5            # entry timeframe: sweeps and breaks of structure
+htf_minutes = 60           # zone timeframe: supply and demand
+swing_length = 2           # bars each side to count a swing high / low
+htf_swing_length = 2
+
+[zones]
+# A zone must pass ALL of these, so random bases are ignored.
+require_bos = true             # the move out of the zone broke structure
+displacement_atr = 1.5         # and moved at least 1.5 ATR away
+require_fvg = true             # and left a fair value gap
+max_height_atr = 1.0           # zone no taller than 1 ATR
+require_liquidity_origin = false  # true = zone must have swept a swing / PDH / PDL before the move
+max_age_bars = 120             # HTF bars until a zone expires
+one_trade_per_zone = true      # first tap only
+
+[sessions]
+# New York time, daylight saving handled automatically.
+asia = ["20:00", "00:00"]
+london = ["02:00", "05:00"]
+newyork = ["07:00", "10:00"]
+trade_in = ["london", "newyork"]  # only enter in these sessions
+day_start = "17:00"               # trading day roll for PDH / PDL
+flatten_at = ""                   # e.g. "15:55" to be flat before the futures close
+
+[entry]
+confirmation = "sweep_then_bos"  # or "bos", or "sweep"
+trade_key_level_sweeps = true    # PDH / PDL / session high-low sweep + BOS counts as a setup too
+setup_timeout_bars = 24          # give up waiting for confirmation after this many entry bars
+stop_buffer_ticks = 20           # beyond the swept low / high (20 ticks = 2 pips on 5-digit forex)
+max_stop_atr = 3.0
+target_mode = "liquidity"        # next untaken liquidity pool; or "fixed"
+min_rr = 2.0                     # skip if the next liquidity is closer than this
+fixed_rr = 3.0
+max_rr = 8.0
+
+[risk]
+account_size = 50000             # backtest / paper starting balance
+risk_per_trade_pct = 0.5
+max_trades_per_day = 2
+max_daily_loss_pct = 2.0
+max_drawdown_pct = 6.0           # bot stops for good past this
+max_consecutive_losses = 3
+
+[broker]
+mode = "paper"                   # "live" places real orders (also needs --confirm-live)
+broker = "mt5"                   # "mt5", "tradovate", "ninjatrader" or "paper"
+data_source = ""                 # live bars from "mt5" or "tradovate"; blank = same as broker
+poll_seconds = 5
+
+# MetaTrader 5
+mt5_magic = 880088
+mt5_server_utc_offset = "auto"
+
+# Tradovate (login comes from environment variables, see README)
+tradovate_env = "demo"
+tradovate_symbol = ""            # e.g. "MESZ6"
+tradovate_account = ""
+
+# NinjaTrader 8
+ninjatrader_account = "Sim101"
+ninjatrader_instrument = ""      # e.g. "MES 12-26"
+ninjatrader_incoming = ""        # blank = Documents/NinjaTrader 8/incoming

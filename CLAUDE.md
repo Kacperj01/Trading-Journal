@@ -7,4 +7,5 @@
 
 ## Repo
 - App source: `index.html`. Homepage: `site/home/`. Legal: `site/legal/`. `python3 site/build.py` builds into `docs/`, which GitHub Pages serves. (Ready for Cloudflare Pages if hosting ever moves: output folder `docs`, no build command; `docs/_headers` sets response headers there.)
+- Trading bot: `bot/` (Python, separate from the site). See `bot/README.md`; tests: `cd bot && python3 -m unittest discover -s tests`.
 - Never put API keys or the Supabase service key in the app or the repo.
