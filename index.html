@@ -4187,7 +4187,7 @@ function renderDashboard() {
   F("dashEmptyBtn").textContent = noAcct && !hasAny ? "Register an account" : "Log a trade";
   F("dashEmptyBtn").hidden = loading || unsynced;
   $("#dashEmpty h3").textContent = loading ? "Loading your journal…" : unsynced ? "Couldn't load your journal" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
-  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
+  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : ui.acctType && !allAccounts().some(a => a.type === ui.acctType) ? `No ${ui.acctType.toLowerCase()} accounts yet. Add one in Accounts, or pick another account type in Filters.` : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
   renderOpen(open);
@@ -5034,12 +5034,12 @@ function refreshLists() {
   fillSelect($("#qEmo"), settings.emotions, { placeholder: "—", value: $("#qEmo").value });
   fillSelect($("#fSession"), allSessions, { placeholder: "All sessions", value: ui.session });
   fillSelect($("#fSetup"), allSetups, { placeholder: "All setups", value: ui.setup });
-  // Accounts: the filter appears once there are two; the trade forms keep their choice while it still exists.
+  // Accounts: the filter shows whenever there's an account; the trade forms keep their choice while it still exists.
   const accts = accounts(), every = allAccounts();
   if (ui.account && (!acctById(ui.account) || !ofType(acctById(ui.account)))) { ui.account = ""; saveUi(); }
   const opts = accts.map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("");
   const shown = every.filter(ofType);
-  F("fAccountWrap").hidden = shown.length < 2;
+  F("fAccountWrap").hidden = !allAccounts().length;
   F("fAccount").innerHTML = `<option value="">${ui.acctType ? "All " + esc(ui.acctType.toLowerCase()) + " accounts" : "All accounts"}</option>`
     + shown.filter(a => !a.archived).map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))}</option>`).join("")
     + shown.filter(a => a.archived).map(a => `<option value="${esc(a.id)}">${esc(acctLabel(a))} (${propState(a) || "archived"})</option>`).join("");
@@ -5946,7 +5946,7 @@ window.addEventListener("hashchange", () => showTab(location.hash.slice(1), { pu
 // Function declarations, so the start-up renders can call them before this point runs.
 // Stats show the current week (Monday to Sunday) by default; any other period counts as a filter.
 const DEFAULT_RANGE = "week";
-function filterCount() { return (ui.range !== DEFAULT_RANGE ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && allAccounts().length > 1 && acctById(ui.account) ? 1 : 0) + (ui.acctType ? 1 : 0) + (ui.propStatus ? 1 : 0); }
+function filterCount() { return (ui.range !== DEFAULT_RANGE ? 1 : 0) + (ui.session ? 1 : 0) + (ui.setup ? 1 : 0) + (ui.account && acctById(ui.account) ? 1 : 0) + (ui.acctType ? 1 : 0) + (ui.propStatus ? 1 : 0); }
 function syncFilters() {
   const n = filterCount();
   F("filterBadge").hidden = !n; F("filterBadge").textContent = n;
@@ -5954,10 +5954,10 @@ function syncFilters() {
   F("filterBtn").setAttribute("aria-label", n ? `Filters, ${n} on` : "Filters");
   $$("#fPeriods button").forEach(b => b.setAttribute("aria-checked", b.dataset.range === ui.range));
   // Prop firm status: only when there are prop firm accounts; Funded only when one is funded.
-  // Account type: only when accounts of more than one type exist.
-  const types = Object.keys(ACCT_TYPES).filter(k => allAccounts().some(a => a.type === k));
+  // Account type: every type is always offered once there's an account.
+  const types = Object.keys(ACCT_TYPES);
   if (ui.acctType && !types.includes(ui.acctType)) ui.acctType = "";
-  F("fTypeWrap").hidden = types.length < 2;
+  F("fTypeWrap").hidden = !allAccounts().length;
   F("fType").innerHTML = [["", "All"], ...types.map(k => [k, ACCT_TYPES[k]])].map(([v, t]) => `<button type="button" role="radio" data-type="${esc(v)}" aria-checked="${v === (ui.acctType || "")}">${esc(t)}</button>`).join("");
   const states = new Set(allAccounts().map(propState).filter(Boolean));
   if (ui.propStatus && (!states.size || (ui.acctType && ui.acctType !== "Prop firm"))) ui.propStatus = "";
