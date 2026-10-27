@@ -520,6 +520,87 @@ tbody tr:last-child td { border-bottom: 0; }
 td.num { white-space: nowrap; }
 td.notes { min-width: 120px; max-width: 260px; color: var(--text-2); white-space: pre-line; }
 td.nowrap { white-space: nowrap; }
+/* Trade log: trades grouped by day, one short row each; tap a row to see the rest. */
+.log-sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+.log-sum[hidden] { display: none; }
+.log-sum div { background: var(--bg); padding: 12px 16px; min-width: 0; }
+:root.light-mode .log-sum div { background: #fff; }
+.log-sum span { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.log-sum b { display: block; font: 700 20px var(--font-mono); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trade-list { display: grid; gap: 18px; }
+.lg-open { border: 1px solid rgba(74, 154, 240, .35); background: linear-gradient(120deg, rgba(74, 154, 240, .09), rgba(47, 208, 200, .05)); border-radius: 14px; padding: 12px 16px; }
+.lg-open-h { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); }
+.lg-open-h .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 4px rgba(74, 154, 240, .2); }
+.lg-open-h .muted { letter-spacing: 0; text-transform: none; font-weight: 500; font-size: 13px; }
+.lg-open-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0 2px; border-top: 1px dashed var(--border); margin-top: 10px; }
+.lg-open-row:first-of-type { border-top: 0; margin-top: 4px; }
+.lg-open-row .pair { font: 700 15px var(--font-mono); }
+.lg-open-row .meta { color: var(--muted); font-size: 13.5px; }
+.lg-open-row .btns { margin-left: auto; display: flex; gap: 6px; }
+.lg-day-h { display: flex; align-items: baseline; gap: 10px; padding: 0 4px 8px; font-size: 13.5px; }
+.lg-day-h b { font-size: 15px; font-weight: 700; }
+.lg-day-h .muted { flex: 1; }
+.lg-day-h .lg-pnl { font: 700 15px var(--font-mono); }
+.lg-rows { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface-2); }
+.lg-row { position: relative; border-top: 1px solid var(--border); }
+.lg-row:first-child { border-top: 0; }
+.lg-row::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--border-strong); }
+.lg-row.k-win::before { background: var(--green); } .lg-row.k-loss::before { background: var(--red); } .lg-row.k-be::before { background: var(--blue); }
+.lg-row.open-x { background: var(--surface); }
+.lg-main { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 58px minmax(120px, 150px) minmax(130px, 180px) minmax(0, 1fr) auto 80px 112px 16px; align-items: center; gap: 14px; padding: 13px 16px 13px 18px; -webkit-tap-highlight-color: transparent; }
+.lg-main:hover { background: var(--surface); }
+.lg-main:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+.lg-tm { font: 500 13.5px var(--font-mono); color: var(--muted); }
+.lg-pc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lg-pc .pair { font: 700 15px var(--font-mono); letter-spacing: .02em; }
+.lg-set { font-size: 14px; min-width: 0; }
+.lg-set small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.lg-set, .lg-note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lg-note { color: var(--text-2); font-size: 13.5px; min-width: 0; }
+.lg-ic { display: flex; gap: 5px; justify-content: flex-end; }
+.lg-ic i { font-style: normal; width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 11.5px; font-weight: 800; }
+.lg-ic .i-aft { background: rgba(47, 208, 200, .13); color: var(--accent); }
+.lg-ic .i-mis { background: rgba(245, 184, 74, .15); color: var(--warn); }
+.lg-ic .i-pic { background: rgba(74, 154, 240, .14); color: var(--blue); }
+.lg-r { font: 500 13.5px var(--font-mono); text-align: right; color: var(--muted); }
+.lg-r.pos, .lg-pnl.pos { color: var(--green); } .lg-r.neg, .lg-pnl.neg { color: var(--red); } .lg-r.neu, .lg-pnl.neu { color: var(--blue); }
+.lg-pnl { font: 700 16px var(--font-mono); text-align: right; white-space: nowrap; }
+.k-open .lg-pnl, .lg-pnl.k-open { color: var(--blue); }
+.lg-chev { width: 16px; height: 16px; color: var(--muted); transition: transform .2s; }
+.lg-main[aria-expanded="true"] .lg-chev { transform: rotate(180deg); }
+.lg-exp { padding: 2px 18px 16px 18px; }
+.lg-exp[hidden] { display: none; }
+.lg-exp-in { border-top: 1px dashed var(--border-strong); padding-top: 12px; }
+.lg-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.lg-notes .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.lg-notes p { font-size: 14.5px; line-height: 1.5; margin: 4px 0 0; white-space: pre-line; }
+.lg-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.lg-tags span { font-size: 12.5px; padding: 4px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--text-2); }
+.lg-tags .warn { color: var(--warn); border-color: rgba(245, 184, 74, .4); background: rgba(245, 184, 74, .08); }
+.lg-links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; font-size: 13.5px; }
+.lg-acts { display: flex; gap: 8px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+.lg-acts .del { margin-left: auto; color: var(--red); }
+.lg-none { text-align: center; padding: 30px; color: var(--muted); border: 1px dashed var(--border); border-radius: 14px; }
+@media (max-width: 760px) {
+  .log-sum { grid-template-columns: 1fr 1fr; } .log-sum div { padding: 10px 12px; } .log-sum b { font-size: 17px; } .log-sum span { font-size: 10.5px; }
+  .lg-main { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "a p" "b r" "c c"; gap: 3px 10px; padding: 12px 14px 12px 16px; }
+  .lg-tm, .lg-chev { display: none; }
+  .lg-pc { grid-area: a; flex-direction: row; align-items: center; gap: 8px; }
+  .lg-pnl { grid-area: p; }
+  .lg-set { grid-area: b; color: var(--muted); font-size: 13px; }
+  .lg-set small { display: inline; font-size: 13px; }
+  .lg-set small::before { content: " · "; }
+  .lg-r { grid-area: r; font-size: 12.5px; }
+  .lg-note { grid-area: c; margin-top: 4px; }
+  .lg-note:empty { display: none; }
+  .lg-main > .lg-ic { display: none; }
+  .lg-pc .lg-ic-m { display: inline-flex; gap: 4px; }
+  .lg-exp { padding: 0 14px 14px 16px; }
+  .lg-notes { grid-template-columns: 1fr; gap: 10px; }
+  .lg-open-row .btns { margin-left: 0; width: 100%; }
+  .lg-open-row .btns .primary { flex: 1; justify-content: center; }
+}
+@media (min-width: 761px) { .lg-ic-m { display: none; } }
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; }
 .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .badge.win { color: var(--green); background: var(--green-soft); border-color: rgba(52, 210, 123, 0.35); }
@@ -1901,7 +1982,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <button type="button" data-res="BE" aria-pressed="false">Breakeven <span class="cnt" data-cnt="BE"></span></button>
             </div>
             <label class="sr-only" for="tSort">Sort trades</label>
-            <select id="tSort" class="mobile-only">
+            <select id="tSort">
               <option value="date:desc">Newest first</option>
               <option value="date:asc">Oldest first</option>
               <option value="pnl:desc">Biggest win first</option>
@@ -1912,15 +1993,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <button class="btn sm primary" type="button" data-goto="log">+ New trade</button>
           </div>
         </div>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Trade log table, scrollable">
-          <table>
-            <caption id="tableCaption">Click a column heading to sort.</caption>
-            <thead>
-              <tr id="tableHead"></tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
+        <div class="log-sum" id="logSum" aria-label="Totals for the trades shown"></div>
+        <div id="tradeList" class="trade-list"></div>
       </section>
     </section>
 
@@ -4939,56 +5013,106 @@ function renderInsights(list, st) {
 /* ======================================================================
    Trade table
    ====================================================================== */
-const COLS = [
-  // Side and session sit under the pair so the whole row fits without side scrolling.
-  { key: "date", label: "Date" }, { key: "pair", label: "Pair" }, { key: "setup", label: "Setup" },
-  { key: "r", label: "R" }, { key: "pnl", label: "P&L" }, { key: "result", label: "Result" },
-  { key: "emotionBefore", label: "Emotion" }, { key: "notes", label: "Notes", static: true }, { key: "actions", label: "Actions", static: true }
-];
+// Trades open in the log (tapped to show notes, tags and actions). Kept while the list redraws.
+const logOpen = new Set();
+const CHEV = '<svg class="lg-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const dirTag = t => `<span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction || "")}</span>`;
+const kindOf = t => ({ Win: "win", Loss: "loss", BE: "be", Open: "open" })[resultOf(t)] || "be";
 
 let resultFilter = "";
 function renderTable(list) {
-  const indexed = list.map((t, i) => ({ t, idx: i + 1 })), thisYear = String(new Date().getFullYear());
   const q = $("#tSearch").value.trim().toLowerCase();
   const res = resultFilter;
   const counts = { "": list.length, Win: 0, Loss: 0, BE: 0, Open: 0 };
   list.forEach(t => counts[resultOf(t)]++);
   $$("[data-cnt]", F("tResultTabs")).forEach(el => el.textContent = counts[el.dataset.cnt]);
+  const indexed = list.map((t, i) => ({ t, idx: i + 1 }));
   let rows = indexed.filter(({ t }) => (!res || resultOf(t) === res)
     && (!q || [t.pair, t.setup, t.session, t.notes, t.notesAfter, t.direction, t.emotionBefore, t.emotionAfter, t.mistakes, t.date].join(" ").toLowerCase().includes(q)));
   const k = ui.sortKey, dir = ui.sortDir === "asc" ? 1 : -1;
   const val = ({ t, idx }) => k === "idx" ? idx : k === "date" ? t.date + (t.time || "") : k === "r" ? (rOf(t) ?? -Infinity) : k === "result" ? resultOf(t) : (t[k] ?? "");
   rows.sort((a, b) => { const va = val(a), vb = val(b); return (va > vb ? 1 : va < vb ? -1 : a.idx - b.idx) * dir; });
 
-  $("#tableHead").innerHTML = COLS.map(c => {
-    if (c.static) return `<th scope="col" class="static">${c.label}</th>`;
-    const active = ui.sortKey === c.key;
-    const sortAttr = active ? ` aria-sort="${ui.sortDir === "asc" ? "ascending" : "descending"}"` : "";
-    return `<th scope="col"${sortAttr}><button type="button" data-sort="${c.key}">${c.label}<span class="arrow" aria-hidden="true">${active ? (ui.sortDir === "asc" ? "▲" : "▼") : "↕"}</span></button></th>`;
-  }).join("");
-
   const sortSel = F("tSort");
   const sv = ui.sortKey + ":" + ui.sortDir;
   sortSel.value = Array.from(sortSel.options).some(o => o.value === sv) ? sv : "date:desc";
   $("#logCount").textContent = `${plural(rows.length, "trade")} shown${rows.length !== list.length ? ` of ${list.length}` : ""}`;
-  $("#tableBody").innerHTML = rows.length ? rows.map(({ t, idx }) => {
-    const r = rOf(t), result = resultOf(t);
-    return `<tr>
-      <td class="num nowrap" data-label="Date" title="${esc(fmtDate(t.date))}">${fmtDate(t.date, t.date.slice(0, 4) === thisYear ? { day: "numeric", month: "short" } : undefined)}${t.time ? `<div class="muted" style="font-size:11.5px">${esc(t.time)}</div>` : ""}</td>
-      <td class="num nowrap" data-label="Pair"><strong>${esc(t.pair)}</strong><div class="pair-sub"><span class="dir ${t.direction === "Long" ? "long" : "short"}">${t.direction === "Long" ? "▲" : "▼"} ${esc(t.direction)}</span>${t.session ? ` · ${esc(t.session)}` : ""}</div></td>
-      <td class="c-setup" data-label="Setup">${esc(t.setup)}</td>
-      <td class="num ${tone(r)}" data-label="R multiple">${fmtR(r)}</td>
-      <td class="num ${tone(t.pnl)}" data-label="P&amp;L"><strong>${isOpen(t) ? "Open" : money(t.pnl)}</strong></td>
-      <td data-label="Result"><span class="badge ${result === "Win" ? "win" : result === "Loss" ? "loss" : result === "Open" ? "open" : "be"}">${result === "BE" ? "Breakeven" : result}</span></td>
-      <td class="nowrap c-emo" data-label="Emotion">${esc(t.emotionBefore || "—")}${t.followedPlan === false ? ` <span class="plan-flag" title="${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}" role="img" aria-label="Plan broken">${ico("warn")}</span>` : ""}</td>
-      <td class="notes${t.notes || t.notesAfter || t.mistakes || hasCharts(t) || t.sourceUrl ? "" : " c-empty"}" data-label="Notes">${esc(t.notes || "")}${t.notesAfter ? `<div class="notes-after"><b>After:</b> ${esc(t.notesAfter)}</div>` : ""}${t.mistakes ? `<div style="margin-top:4px;font-size:12px" class="warn-text">Mistakes: ${esc(t.mistakes)}</div>` : ""}${beforeChart(t) ? ` <a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before ↗</a>` : ""}${afterChart(t) ? ` <a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After ↗</a>` : ""}${(t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? ` <button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : ""}${t.sourceUrl ? ` <a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""}</td>
-      <td class="c-act"><div class="row-actions">
-        <button class="btn sm ghost" type="button" data-view="${esc(t.id)}" aria-label="View trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="View">${ico("eye")}<span class="ra-l">View</span></button>
-        ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}" aria-label="Close trade ${idx}, ${esc(t.pair)}" title="Close trade">${ico("check")}<span class="ra-l">Close</span></button>` : ""}<button class="btn sm ghost" type="button" data-edit="${esc(t.id)}" aria-label="Edit trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="Edit">${ico("pen")}<span class="ra-l">Edit</span></button>
-        <button class="btn sm ghost" type="button" data-del="${esc(t.id)}" aria-label="Delete trade ${idx}, ${esc(t.pair)} on ${fmtDate(t.date)}" title="Delete" style="color:var(--red)">${ico("trash")}<span class="ra-l">Delete</span></button>
-      </div></td>
-    </tr>`;
-  }).join("") : `<tr><td colspan="${COLS.length}" class="none" style="text-align:center;padding:30px">No trades to show.</td></tr>`;
+
+  const open = rows.filter(r => isOpen(r.t)).map(r => r.t), closed = rows.filter(r => !isOpen(r.t)).map(r => r.t);
+  // Totals for what's on screen (closed trades only).
+  const sumEl = F("logSum");
+  sumEl.hidden = !closed.length;
+  if (closed.length) {
+    const st = stats(closed);
+    sumEl.innerHTML = `<div><span>Net P&amp;L</span><b class="${tone(st.total)}">${money(st.total)}</b></div>
+      <div><span>Win rate</span><b>${pct(st.winRate, 0)}</b></div>
+      <div><span>Avg R</span><b class="${tone(st.avgR)}">${st.avgR == null ? "—" : fmtR(st.avgR)}</b></div>
+      <div><span>Trades</span><b>${st.n}</b></div>`;
+  }
+
+  const thisYear = String(new Date().getFullYear());
+  const dayName = d => fmtDate(d, Object.assign({ weekday: "short", day: "numeric", month: "short" }, d.slice(0, 4) === thisYear ? {} : { year: "numeric" }));
+  const icons = t => [t.notesAfter ? `<i class="i-aft" title="Has notes after" aria-label="Has notes after">✎</i>` : "",
+    t.mistakes || t.followedPlan === false ? `<i class="i-mis" title="${esc(t.mistakes ? "Mistake: " + t.mistakes : "Plan broken")}" aria-label="Mistake">!</i>` : "",
+    hasCharts(t) ? `<i class="i-pic" title="Has charts" aria-label="Has charts">▣</i>` : ""].join("");
+  const row = (t, showDate) => {
+    const r = rOf(t), kd = kindOf(t), ex = logOpen.has(t.id), id = "lgx-" + t.id;
+    const when = showDate ? fmtDate(t.date, t.date.slice(0, 4) === thisYear ? { day: "numeric", month: "short" } : undefined) : (t.time || "—");
+    const ic = icons(t);
+    const charts = [beforeChart(t) ? `<a href="${esc(beforeChart(t))}" target="_blank" rel="noopener noreferrer">Before chart ↗</a>` : "",
+      afterChart(t) ? `<a href="${esc(afterChart(t))}" target="_blank" rel="noopener noreferrer">After chart ↗</a>` : "",
+      (t.shotBefore && t.shotBefore.path) || (t.shotAfter && t.shotAfter.path) ? `<button type="button" class="link-btn" data-view="${esc(t.id)}">Screenshots</button>` : "",
+      t.sourceUrl ? `<a href="${esc(safeLink(t.sourceUrl))}" target="_blank" rel="noopener noreferrer">Notion ↗</a>` : ""].filter(Boolean).join("");
+    const a = acctById(t.account);
+    const tags = [t.emotionBefore ? `Before: ${esc(t.emotionBefore)}` : "", t.emotionAfter ? `After: ${esc(t.emotionAfter)}` : "",
+      t.risk ? `Risk ${money(t.risk, { signed: false, decimals: 0 })}` : "", feeOf(t) ? `Fees ${money(feeOf(t), { signed: false })}` : "",
+      allAccounts().length > 1 && a ? esc(acctLabel(a)) : ""].filter(Boolean).map(x => `<span>${x}</span>`).join("")
+      + (t.mistakes ? `<span class="warn">Mistake: ${esc(t.mistakes)}</span>` : "")
+      + (t.followedPlan === false ? `<span class="warn">${esc(brokenRules(t).length ? "Broke: " + brokenRules(t).join(", ") : "Plan broken")}</span>` : "");
+    return `<div class="lg-row k-${kd}${ex ? " open-x" : ""}">
+      <button type="button" class="lg-main" aria-expanded="${ex}" aria-controls="${esc(id)}" data-lg="${esc(t.id)}">
+        <span class="lg-tm">${esc(when)}</span>
+        <span class="lg-pc"><span class="pair">${esc(t.pair)}</span>${dirTag(t)}${ic ? `<span class="lg-ic lg-ic-m">${ic}</span>` : ""}</span>
+        <span class="lg-set">${esc(t.setup || "—")}${t.session ? `<small>${esc(t.session)}</small>` : ""}</span>
+        <span class="lg-note">${esc((t.notes || t.notesAfter || "").replace(/\s+/g, " "))}</span>
+        <span class="lg-ic">${ic}</span>
+        <span class="lg-r ${kd === "be" ? "neu" : tone(r)}">${r == null ? "—" : fmtR(r)}</span>
+        <span class="lg-pnl ${isOpen(t) ? "k-open" : { win: "pos", loss: "neg", be: "neu" }[kd]}">${isOpen(t) ? "Open" : money(t.pnl)}</span>
+        ${CHEV}
+      </button>
+      <div class="lg-exp" id="${esc(id)}"${ex ? "" : " hidden"}><div class="lg-exp-in">
+        <div class="lg-notes"><div><div class="lbl">Notes before</div><p>${t.notes ? esc(t.notes) : `<span class="muted">No notes.</span>`}</p></div>
+          <div><div class="lbl">Notes after</div><p>${t.notesAfter ? esc(t.notesAfter) : `<span class="muted">Nothing yet.</span> <button type="button" class="link-btn" data-edit="${esc(t.id)}">Add a reflection</button>`}</p></div></div>
+        ${tags ? `<div class="lg-tags">${tags}</div>` : ""}
+        ${charts ? `<div class="lg-links">${charts}</div>` : ""}
+        <div class="lg-acts">
+          <button class="btn sm ghost" type="button" data-view="${esc(t.id)}">${ico("eye")}View full trade</button>
+          ${isOpen(t) ? `<button class="btn sm primary" type="button" data-close="${esc(t.id)}">${ico("check")}Close trade</button>` : ""}
+          <button class="btn sm ghost" type="button" data-edit="${esc(t.id)}">${ico("pen")}Edit</button>
+          ${isOpen(t) ? "" : `<button class="btn sm ghost" type="button" data-share-trade="${esc(t.id)}">Share</button>`}
+          <button class="btn sm ghost del" type="button" data-del="${esc(t.id)}" aria-label="Delete the ${esc(t.pair)} trade from ${esc(fmtDate(t.date))}">${ico("trash")}Delete</button>
+        </div>
+      </div></div>
+    </div>`;
+  };
+  let html = "";
+  if (open.length) html += `<div class="lg-open"><div class="lg-open-h"><span class="dot"></span>Open now<span class="muted">· ${plural(open.length, "trade")}</span></div>
+    ${open.map(t => `<div class="lg-open-row"><span class="pair">${esc(t.pair)}</span>${dirTag(t)}<span class="meta">${esc([t.session, "since " + (fmtDate(t.date, { day: "numeric", month: "short" }) + (t.time ? " " + t.time : ""))].filter(Boolean).join(" · "))}</span>
+      <span class="btns"><button class="btn sm ghost" type="button" data-view="${esc(t.id)}">View</button><button class="btn sm primary" type="button" data-close="${esc(t.id)}">Close trade</button></span></div>`).join("")}</div>`;
+  if (!closed.length && !open.length) html += `<div class="lg-none">No trades to show.</div>`;
+  else if (closed.length && ui.sortKey === "date") {
+    // Grouped by day, in the chosen order, each with its own total.
+    const days = [];
+    closed.forEach(t => { const last = days[days.length - 1]; if (last && last.d === t.date) last.ts.push(t); else days.push({ d: t.date, ts: [t] }); });
+    html += days.map(({ d, ts }) => {
+      const tot = sum(ts.map(t => Number(t.pnl) || 0)), w = ts.filter(t => resultOf(t) === "Win").length, l = ts.filter(t => resultOf(t) === "Loss").length;
+      return `<section class="lg-day" aria-label="${esc(dayName(d))}"><div class="lg-day-h"><b>${esc(dayName(d))}</b><span class="muted">${plural(ts.length, "trade")} · ${w}W ${l}L</span><span class="lg-pnl ${tone(tot)}">${money(tot)}</span></div>
+        <div class="lg-rows">${ts.map(t => row(t, false)).join("")}</div></section>`;
+    }).join("");
+  } else if (closed.length) {
+    html += `<section class="lg-day"><div class="lg-day-h"><b>${esc(sortSel.options[sortSel.selectedIndex].text)}</b><span class="muted"></span></div><div class="lg-rows">${closed.map(t => row(t, true)).join("")}</div></section>`;
+  }
+  F("tradeList").innerHTML = html;
 }
 
 /* ======================================================================
@@ -6070,17 +6194,18 @@ F("tSort").addEventListener("change", e => {
   const [k, d] = e.target.value.split(":");
   ui.sortKey = k; ui.sortDir = d; saveUi(); renderTable(filtered());
 });
-F("tableHead").addEventListener("click", e => {
-  const b = e.target.closest("[data-sort]");
-  if (!b) return;
-  const k = b.dataset.sort;
-  if (ui.sortKey === k) ui.sortDir = ui.sortDir === "asc" ? "desc" : "asc"; else { ui.sortKey = k; ui.sortDir = k === "date" || k === "idx" || k === "pnl" || k === "r" ? "desc" : "asc"; }
-  saveUi();
-  renderTable(filtered());
-  const nb = $(`[data-sort="${k}"]`, F("tableHead"));
-  if (nb) nb.focus();
-});
-F("tableBody").addEventListener("click", e => {
+F("tradeList").addEventListener("click", e => {
+  const lg = e.target.closest("[data-lg]");
+  if (lg) {
+    const id = lg.dataset.lg, ex = !logOpen.has(id);
+    if (ex) logOpen.add(id); else logOpen.delete(id);
+    lg.setAttribute("aria-expanded", ex);
+    lg.parentElement.classList.toggle("open-x", ex);
+    F("lgx-" + id).hidden = !ex;
+    return;
+  }
+  const sh = e.target.closest("[data-share-trade]");
+  if (sh) { const t = trades.find(x => x.id === sh.dataset.shareTrade); if (t) openShare("trade", t); return; }
   const vw = e.target.closest("[data-view]");
   if (vw) { const t = trades.find(x => x.id === vw.dataset.view); if (t) openTrade(t); return; }
   const ed = e.target.closest("[data-edit]");
@@ -8455,7 +8580,7 @@ const TOUR = [
   { tab: "overview", sel: "#filterBtn", title: "This week, by default", text: "Your stats start fresh every Monday. Open Filters for last week, this month, all time, or a session, setup or account." },
   { tab: "news", sel: "#newsAlertBtn", title: "Alerts before the news", text: "Get a notification on your phone 15 minutes before high-impact news for your pairs, and when a prop account nears its limits. " + (DEMO ? "Tap it to see one." : "Tap it to turn them on.") },
   { tab: "insights", sel: "#weeklyReview", title: "Your weekly review", text: "What worked, what cost you and what to focus on next week, read from your trades and notes. Tap Share to post your week." },
-  { tab: "journal", sel: "#tableBody tr", title: "Every trade, in one place", text: "Tap a trade to see its before and after screenshots, notes and emotions, and to share a recap card." },
+  { tab: "journal", sel: "#tradeList .lg-row, #tradeList .lg-open", title: "Every trade, in one place", text: "Tap a trade to see its before and after screenshots, notes and emotions, and to share a recap card." },
   { tab: "accounts", sel: "#acctGrid", title: "Accounts and rewards", text: "Switch between challenges, live and demo accounts. Mark a phase passed or failed, and log your payouts under Rewards." },
   { tab: "overview", sel: null, title: "You're all set", text: "" }
 ];
