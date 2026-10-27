@@ -4194,7 +4194,7 @@ function renderDashboard() {
   const st = stats(list);
   const startBal = balanceBefore(list);
 
-  renderKpis(st, startBal);
+  renderKpis(st, startBal, list);
   drawEquity(list);
   renderWinLoss(st);
   renderPairs(list);
@@ -4220,8 +4220,32 @@ function renderDirDow(list) {
   animateBars(el);
 }
 
-function renderKpis(st, startBal) {
-  const ret = startBal ? st.total / startBal : 0;
+// % return for a list of closed trades. Each account's P&L is a % of that account's own balance.
+// Accounts traded one after another (Phase 1, then Phase 2, then funded) add up their %s; accounts
+// traded at the same time (copied trades) are one pot, so the same trade isn't counted twice.
+function rangeReturn(list) {
+  const closed = list.filter(t => !isOpen(t));
+  if (!closed.length) return 0;
+  const fb = acctById(ui.account) ? ui.account : defaultAccount();
+  const groups = new Map();
+  closed.forEach(t => { const k = acctById(t.account) ? t.account : fb || ""; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); });
+  const spans = [...groups.values()].map(ts => { const s = sortByClose(ts); return { ts, from: closeKey(s[0]), to: closeKey(s[s.length - 1]) }; })
+    .sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : 0);
+  const pots = [];
+  spans.forEach(sp => {
+    const last = pots[pots.length - 1];
+    if (last && sp.from <= last.to) { last.parts.push(sp.ts); if (sp.to > last.to) last.to = sp.to; }
+    else pots.push({ to: sp.to, parts: [sp.ts] });
+  });
+  return sum(pots.map(pot => {
+    const bal = sum(pot.parts.map(ts => balanceBefore(ts)));
+    const pnl = sum(pot.parts.map(ts => sum(ts.map(t => Number(t.pnl) || 0))));
+    return bal ? pnl / bal : 0;
+  }));
+}
+
+function renderKpis(st, startBal, list) {
+  const ret = list ? rangeReturn(list) : startBal ? st.total / startBal : 0;
   const pfTxt = v => v === Infinity ? "∞" : v.toFixed(2);
   const cards = [
     { label: "Total P&L", tone: tone(st.total), accent: st.total >= 0 ? "green" : "red", val: st.total, fmt: v => money(v),

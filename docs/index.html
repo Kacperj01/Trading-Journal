@@ -2,7 +2,7 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-/0xKF60NAlgluE8qfxmrbaIxFK+Y1yNDMsDRMOBcWd4=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-dZPuE/IDOPcvLyEG3CWzc7FP5wE6inrwKI6SwSzIz1Y=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-+CPNXE4fDNls/io0v2aF/pR9W6k1E/1ldDc7x4eD6+w=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-SCXW+Kf3jc8znBEcsg65DmAEbzS9v3hWxQ2OmR55onY=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta property="og:type" content="website">
@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
 <meta property="og:url" content="https://elev8tradingjournal.com/">
 <meta name="twitter:card" content="summary_large_image">
-<script>window.ELEV8_BUILD = "8804b75214";</script>
+<script>window.ELEV8_BUILD = "e5be7864b7";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -4245,7 +4245,7 @@ function renderDashboard() {
   const st = stats(list);
   const startBal = balanceBefore(list);
 
-  renderKpis(st, startBal);
+  renderKpis(st, startBal, list);
   drawEquity(list);
   renderWinLoss(st);
   renderPairs(list);
@@ -4271,8 +4271,32 @@ function renderDirDow(list) {
   animateBars(el);
 }
 
-function renderKpis(st, startBal) {
-  const ret = startBal ? st.total / startBal : 0;
+// % return for a list of closed trades. Each account's P&L is a % of that account's own balance.
+// Accounts traded one after another (Phase 1, then Phase 2, then funded) add up their %s; accounts
+// traded at the same time (copied trades) are one pot, so the same trade isn't counted twice.
+function rangeReturn(list) {
+  const closed = list.filter(t => !isOpen(t));
+  if (!closed.length) return 0;
+  const fb = acctById(ui.account) ? ui.account : defaultAccount();
+  const groups = new Map();
+  closed.forEach(t => { const k = acctById(t.account) ? t.account : fb || ""; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); });
+  const spans = [...groups.values()].map(ts => { const s = sortByClose(ts); return { ts, from: closeKey(s[0]), to: closeKey(s[s.length - 1]) }; })
+    .sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : 0);
+  const pots = [];
+  spans.forEach(sp => {
+    const last = pots[pots.length - 1];
+    if (last && sp.from <= last.to) { last.parts.push(sp.ts); if (sp.to > last.to) last.to = sp.to; }
+    else pots.push({ to: sp.to, parts: [sp.ts] });
+  });
+  return sum(pots.map(pot => {
+    const bal = sum(pot.parts.map(ts => balanceBefore(ts)));
+    const pnl = sum(pot.parts.map(ts => sum(ts.map(t => Number(t.pnl) || 0))));
+    return bal ? pnl / bal : 0;
+  }));
+}
+
+function renderKpis(st, startBal, list) {
+  const ret = list ? rangeReturn(list) : startBal ? st.total / startBal : 0;
   const pfTxt = v => v === Infinity ? "∞" : v.toFixed(2);
   const cards = [
     { label: "Total P&L", tone: tone(st.total), accent: st.total >= 0 ? "green" : "red", val: st.total, fmt: v => money(v),
