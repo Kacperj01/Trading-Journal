@@ -2,7 +2,7 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-IUlI21ozDZFIdcZ7xkokgbLbPRAQokA47SufHQEyYvY=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-T3k+/akCExZhWY1XBk7pdVPkrA34RcuTsL7ccQ8Ev90=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-/0xKF60NAlgluE8qfxmrbaIxFK+Y1yNDMsDRMOBcWd4=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-dZPuE/IDOPcvLyEG3CWzc7FP5wE6inrwKI6SwSzIz1Y=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta property="og:type" content="website">
@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
 <meta property="og:url" content="https://elev8tradingjournal.com/">
 <meta name="twitter:card" content="summary_large_image">
-<script>window.ELEV8_BUILD = "7f034e3fac";</script>
+<script>window.ELEV8_BUILD = "8804b75214";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -1107,9 +1107,13 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 :root.light-mode .tour-tip { background: #fff; }
 .signed { display: flex; gap: 8px; align-items: stretch; }
 .signed input { flex: 1; min-width: 0; }
-.sign-btn { flex: none; min-width: 52px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-2);
-  font: 600 16px var(--font-mono); cursor: pointer; }
-.sign-btn[aria-pressed="true"] { background: var(--red-soft); border-color: rgba(255, 92, 122, .55); color: var(--red); }
+/* Win/loss switch: "+" and "−" side by side, the active one lit. One tap flips it. */
+.sign-btn { flex: none; display: inline-flex; align-items: stretch; gap: 3px; padding: 3px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong);
+  background: var(--surface-2); color: var(--text-2); font: 700 18px var(--font-mono); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sign-btn span { display: grid; place-items: center; min-width: 34px; border-radius: calc(var(--radius-sm) - 3px); color: var(--muted); transition: background .15s, color .15s; }
+.sign-btn .sg-pos { background: var(--green-soft, rgba(52, 211, 153, .16)); color: var(--green); }
+.sign-btn[aria-pressed="true"] .sg-pos { background: none; color: var(--muted); }
+.sign-btn[aria-pressed="true"] .sg-neg { background: var(--red-soft); color: var(--red); }
 .sign-btn:disabled { opacity: .45; cursor: default; }
 .signed.neg input { color: var(--red); }
 .demo-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin: 0 0 18px; padding: 14px 18px; border-radius: var(--radius-sm);
@@ -1766,7 +1770,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               </div>
             </div>
             <div class="field"><label for="qSetup">Setup</label><input type="text" id="qSetup" list="setupList" autocomplete="off" placeholder="e.g. Asia Sweep" required></div>
-            <div class="field"><label for="qPnl">P&amp;L</label><div class="signed"><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150" required><button type="button" class="sign-btn" data-sign-for="qPnl" aria-pressed="false" aria-label="Make it a loss">+/−</button></div>
+            <div class="field"><label for="qPnl">P&amp;L</label><div class="signed"><input type="number" step="any" id="qPnl" inputmode="decimal" placeholder="e.g. 150" required><button type="button" class="sign-btn" data-sign-for="qPnl" aria-pressed="false" aria-label="Win. Tap to make it a loss"><span class="sg-pos" aria-hidden="true">+</span><span class="sg-neg" aria-hidden="true">−</span></button></div>
               <label class="open-toggle"><input type="checkbox" id="qOpen"> Still open</label></div>
             <div class="field"><label for="qFees">Fees <span class="muted">(optional)</span></label><input type="number" step="any" id="qFees" inputmode="decimal" placeholder="e.g. 7"></div>
             <div class="field"><label for="qEmo">Emotion before</label><select id="qEmo"></select></div>
@@ -2071,7 +2075,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <div class="fields">
               <div class="field">
                 <label for="tPnl">P&amp;L before fees <span class="req" aria-hidden="true">*</span></label>
-                <div class="signed"><input type="number" step="any" id="tPnl" required aria-required="true" inputmode="decimal" aria-describedby="tPnlHint" placeholder="e.g. 250"><button type="button" class="sign-btn" data-sign-for="tPnl" aria-pressed="false" aria-label="Make it a loss">+/−</button></div>
+                <div class="signed"><input type="number" step="any" id="tPnl" required aria-required="true" inputmode="decimal" aria-describedby="tPnlHint" placeholder="e.g. 250"><button type="button" class="sign-btn" data-sign-for="tPnl" aria-pressed="false" aria-label="Win. Tap to make it a loss"><span class="sg-pos" aria-hidden="true">+</span><span class="sg-neg" aria-hidden="true">−</span></button></div>
                 <span class="hint" id="tPnlHint">Tap +/− for a loss, 0 for breakeven</span>
               </div>
               <div class="field">
@@ -3899,13 +3903,13 @@ function tradeCharts(t) {
   return `<div class="chart-pair">${b || beforeChart(t) ? chartSide("Before", b, beforeChart(t)) : ""}${a || afterChart(t) ? chartSide("After", a, afterChart(t)) : ""}</div>`;
 }
 
-// P&L boxes: the iPhone number pad has no minus key, so +/− marks the amount as a loss.
+// P&L boxes: the iPhone number pad has no minus key, so a +/− switch marks the amount as a win or a loss.
 // The box shows the size of the move; signedVal() gives the value with its sign. Typing "-" still works.
 function setSign(id, neg) {
   const btn = document.querySelector(`[data-sign-for="${id}"]`);
   btn.setAttribute("aria-pressed", String(!!neg));
-  btn.setAttribute("aria-label", neg ? "Loss: tap to make it a win" : "Make it a loss");
-  btn.textContent = neg ? "−" : "+/−";
+  btn.setAttribute("aria-label", neg ? "Loss. Tap to make it a win" : "Win. Tap to make it a loss");
+  btn.innerHTML = `<span class="sg-pos" aria-hidden="true">+</span><span class="sg-neg" aria-hidden="true">−</span>`;
   F(id).closest(".signed").classList.toggle("neg", !!neg);
 }
 const isNegSign = id => document.querySelector(`[data-sign-for="${id}"]`).getAttribute("aria-pressed") === "true";
@@ -4095,7 +4099,8 @@ function acctLabel(a) {
 function startingBalance(accountId) {
   const one = acctById(accountId);
   if (one) return Number(one.size) > 0 ? Number(one.size) : Number(settings.balance);
-  const sizes = allAccounts().map(a => Number(a.size)).filter(n => n > 0);
+  // "All accounts": the accounts still in use. Archived ones (failed or finished) aren't part of the balance.
+  const sizes = accounts().map(a => Number(a.size)).filter(n => n > 0);
   return sizes.length ? sum(sizes) : Number(settings.balance);
 }
 // Balance just before the first trade in the list, for the accounts those trades were taken on:
@@ -4103,18 +4108,21 @@ function startingBalance(accountId) {
 // (Overview, weekly review, share cards) is worked out from this, so the numbers always agree.
 function balanceBefore(list) {
   if (!list.length) return startingBalance(ui.account);
-  const ids = [...new Set(list.map(t => t.account))];
-  // Trades not linked to an account can't be sized on their own: fall back to the view's balance.
-  if (ids.some(id => !acctById(id))) ids.length = 0;
+  // Trades not linked to an account are sized as if they were on the account you log to by default
+  // (the one picked in the filter, else the last one used). Only with no accounts at all does the
+  // balance from Settings apply. Adding up every account here made the % far too small.
+  const fallback = acctById(ui.account) ? ui.account : defaultAccount();
+  const ids = [...new Set(list.map(t => acctById(t.account) ? t.account : fallback))];
   const at = sortByClose(list)[0], first = closeKey(at), inList = new Set(list.map(t => t.id));
   const earlier = t => !isOpen(t) && !inList.has(t.id) && closeKey(t) < first;
-  if (!ids.length) return startingBalance(ui.account) + sum(trades.filter(t => inAccount(t) && earlier(t)).map(t => Number(t.pnl) || 0));
+  if (!acctById(ids[0])) return Number(settings.balance) + sum(trades.filter(t => inAccount(t) && earlier(t)).map(t => Number(t.pnl) || 0));
   // Per account. Payouts before these trades count the way the prop tracker counts them: at most firms
   // the account resets to its starting size after a payout, so only P&L since the last one counts; where
   // the programme deducts payouts, they come off the balance instead.
   const firstDay = first.slice(0, 10);
   return sum(ids.map(id => {
-    const a = acctById(id), prior = trades.filter(t => t.account === id && earlier(t));
+    const mine = t => t.account === id || (id === fallback && !acctById(t.account));
+    const a = acctById(id), prior = trades.filter(t => mine(t) && earlier(t));
     const pays = payoutsOf(a).filter(p => p.date < firstDay), prog = programOf(a);
     let base = startingBalance(id), counted = prior;
     if (pays.length && prog && prog.payout === "deduct") base -= sum(pays.map(p => Number(p.amount) || 0));

@@ -86,15 +86,15 @@ def num(v):
 
 # Same rules as the app: a result under a tenth of the trade's risk (or the default risk; with neither,
 # under 0.02% of the account) is a scratch, counted as breakeven rather than a win or a loss.
-CTX = {"risk": 0.0, "sizes": {}, "balance": 10000.0}
+CTX = {"risk": 0.0, "sizes": {}, "active": [], "balance": 10000.0}
 
 
 def acct_base(account_id):
     """The app's startingBalance: the account's size, or the default balance setting when it has none;
-    with no (known) account, all account sizes added together, or the default balance."""
+    with no (known) account, the accounts still in use added together (not archived ones), or the default balance."""
     if account_id in CTX["sizes"]:
         return CTX["sizes"][account_id] if CTX["sizes"][account_id] > 0 else CTX["balance"]
-    return sum(v for v in CTX["sizes"].values() if v > 0) or CTX["balance"]
+    return sum(v for k, v in CTX["sizes"].items() if v > 0 and k in CTX["active"]) or CTX["balance"]
 
 
 def scratch_size(t):
@@ -224,6 +224,10 @@ def build_week(trades, start, cur, settings=None):
     CTX["risk"] = num(settings.get("defaultRisk"))
     accounts = [a for a in (settings.get("accounts") or []) if isinstance(a, dict)]
     CTX["sizes"] = {a.get("id"): num(a.get("size")) for a in accounts}
+    CTX["active"] = [a.get("id") for a in accounts if not a.get("archived")]
+    # Same as the app's defaultAccount(): trades not linked to an account are sized as if they were on it.
+    last = settings.get("lastAccount")
+    default_id = last if last in CTX["active"] else (CTX["active"][0] if CTX["active"] else None)
     CTX["balance"] = num(settings.get("balance")) or 10000.0
     end = start + dt.timedelta(days=6)
     iso = lambda d: d.isoformat()
@@ -240,7 +244,8 @@ def build_week(trades, start, cur, settings=None):
     unit = sum(risks) / len(risks) if risks else CTX["risk"]
     # Same as the app: the balance just before the week, for the accounts traded this week
     # (their sizes plus everything they closed earlier). Every % in the review is of this.
-    ids = {t.get("account") for t in week}
+    acct_of = lambda t: t.get("account") if t.get("account") in CTX["sizes"] else default_id
+    ids = {acct_of(t) for t in week}
     close_key = lambda t: (t.get("closedDate") or t.get("date") or "") + " " + ((t.get("closedTime") if t.get("closedDate") else t.get("time")) or "")
     first = min((close_key(t) for t in week), default="")
     week_ids = {id(t) for t in week}
@@ -251,7 +256,7 @@ def build_week(trades, start, cur, settings=None):
         by_id = {a.get("id"): a for a in accounts}
         bal = 0.0
         for a in ids:
-            prior = [t for t in trades if t.get("account") == a and earlier(t)]
+            prior = [t for t in trades if acct_of(t) == a and earlier(t)]
             acc = by_id.get(a) or {}
             pays = sorted((p for p in (acc.get("payouts") or []) if isinstance(p, dict) and str(p.get("date") or "") and str(p.get("date")) < first[:10]),
                           key=lambda p: str(p.get("date")))
