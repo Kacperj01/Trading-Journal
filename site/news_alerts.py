@@ -134,7 +134,7 @@ def prop_alerts(signer, who):
         for a in p.s.get("accounts") or []:
             if not isinstance(a, dict) or a.get("archived") or a.get("type") != "Prop firm":
                 continue
-            st = prop_status.status(a, p.trades, today)
+            st = prop_status.status(a, p.trades, today, p.tz, now())
             if not st:
                 continue
             name = str(a.get("name") or a.get("firm") or "Prop account")[:40]

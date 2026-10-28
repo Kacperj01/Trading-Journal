@@ -370,14 +370,15 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--re
 .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
 @media (max-width: 1240px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
-.kpi { padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.kpi { padding: 18px; display: flex; flex-direction: column; gap: 6px; container-type: inline-size; }
 .kpi .label { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .9px; font-weight: 500; }
 .kpi .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
-.kpi .value { font-family: var(--font-mono); font-size: 25px; font-weight: 600; letter-spacing: -0.5px; line-height: 1.2; overflow-wrap: anywhere; }
-.kpi .value.split { font-size: 19px; }
+/* Numbers stay on one line: the font shrinks to fit the card (--len is the number's length, set when drawn). */
+.kpi .value { --fs: 25px; font-family: var(--font-mono); font-size: min(var(--fs), calc(100cqi / (var(--len, 8) * 0.62))); font-weight: 600; letter-spacing: -0.5px; line-height: 1.2; white-space: nowrap; }
+.kpi .value.split { --fs: 19px; }
 .kpi .meta { font-size: 12.5px; color: var(--text-2); }
 .kpi .meta .mono { font-size: 12px; }
-@media (max-width: 640px) { .kpi { padding: 14px; } .kpi .value { font-size: 20px; } .kpi .value.split { font-size: 15px; } }
+@media (max-width: 640px) { .kpi { padding: 14px; } .kpi .value { --fs: 20px; } .kpi .value.split { --fs: 15px; } }
 
 /* ---------- Charts ---------- */
 .chart-wrap { position: relative; width: 100%; }
@@ -1578,8 +1579,8 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
   .kpi { padding: 22px; gap: 8px; }
   .kpi .label { font-size: 13px; }
-  .kpi .value { font-size: 32px; }
-  .kpi .value.split { font-size: 26px; }
+  .kpi .value { --fs: 32px; }
+  .kpi .value.split { --fs: 26px; }
   .kpi .meta { font-size: 14px; }
   .kpi .meta .mono { font-size: 13.5px; }
   .grid-main { grid-template-columns: minmax(0, 1.7fr) minmax(380px, 1fr); }
@@ -4342,10 +4343,12 @@ function renderKpis(st, startBal, list) {
       meta: `<span class="mono">${esc(st.best.pair)}</span> · ${esc(st.best.setup)} · <span class="mono">${fmtDate(st.best.date, { day: "2-digit", month: "short" })}</span>` }
   ];
   const wrap = $("#kpis");
+  // The main numbers all shrink together (to fit the longest), so the row stays even.
+  const longest = Math.max(6, ...cards.filter(c => !c.split).map(c => String(c.fmt(c.val)).trim().length));
   wrap.innerHTML = cards.map((c, i) => `
     <article class="card kpi accent-${c.accent} reveal" style="--d:${i + 1}" aria-label="${esc(c.label)}">
       <div class="label"><span class="dot ${c.tone}" aria-hidden="true"></span>${esc(c.label)}</div>
-      <div class="value ${c.split ? "split" : c.tone}" data-i="${i}">${c.html || ""}</div>
+      <div class="value ${c.split ? "split" : c.tone}" data-i="${i}" style="--len:${c.split ? Math.max(4, c.html.replace(/<[^>]*>/g, "").replace(/&[a-z]+;/g, "x").trim().length) : longest}">${c.html || ""}</div>
       <div class="meta">${c.meta}</div>
     </article>`).join("");
   cards.forEach((c, i) => { if (!c.split) countUp($(`.value[data-i="${i}"]`, wrap), c.val, c.fmt); });
@@ -6927,13 +6930,36 @@ function rulesFor(a) {
   };
 }
 
+// A firm's trading day runs from its own reset (Funding Pips: midnight UTC+3; FTMO: midnight Prague time),
+// not the trader's midnight. Trade times are the trader's local time.
+function resetZone(firm) {
+  const r = firm && firm.reset || "";
+  if (/Prague|CE\(S\)T/i.test(r)) return "Europe/Prague";
+  const m = /(?:UTC|GMT)\s*([+-]\d{1,2})/i.exec(r);
+  return m ? Number(m[1]) : null;
+}
+function firmDay(at, zone) {
+  if (zone == null || isNaN(at)) return isoDate(at);
+  if (typeof zone === "number") return new Date(at.getTime() + zone * 36e5).toISOString().slice(0, 10);
+  try { return new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(at); }
+  catch (e) { return isoDate(at); }
+}
+// The firm day a trade closed on. Without a time, its date is used as it is.
+function firmCloseDay(t, zone) {
+  const d = closeDateOf(t), tm = t.closedDate ? t.closedTime : t.time;
+  if (zone == null || !tm || !/^\d{1,2}:\d{2}/.test(tm)) return d;
+  const at = new Date(d + "T" + tm.slice(0, 5).padStart(5, "0"));
+  return isNaN(at) ? d : firmDay(at, zone);
+}
+
 function propStatus(a) {
   const r = rulesFor(a), size = Number(a.size);
   if (!r || !(size > 0)) return null;
   const list = sortChrono(realTrades.filter(t => t.account === a.id && !isOpen(t) && (!a.startDate || t.date >= a.startDate)));
-  // Profit and loss count on the day the trade closed (a trade held overnight hits the day it's closed).
+  // Profit and loss count on the firm's day the trade closed (a trade held overnight hits the day it's closed).
+  const zone = resetZone(findFirm(a.firm));
   const byDay = new Map();
-  list.forEach(t => { const d = closeDateOf(t); byDay.set(d, (byDay.get(d) || 0) + (Number(t.pnl) || 0)); });
+  list.forEach(t => { const d = firmCloseDay(t, zone); byDay.set(d, (byDay.get(d) || 0) + (Number(t.pnl) || 0)); });
   const allDays = Array.from(byDay.keys()).sort();
   // At most firms a payout resets the account to its starting size (FTMO, Funding Pips, Alpha Capital),
   // so the profit target, trading days and consistency count again from the day after it. Where the
@@ -6973,7 +6999,7 @@ function propStatus(a) {
     peak = Math.max(peak, bal);
     if (payDays.has(d)) payout(d);
   }
-  const today = isoDate(new Date()), todayPnl = byDay.get(today) || 0, sod = bal - todayPnl;
+  const today = firmDay(new Date(), zone), todayPnl = byDay.get(today) || 0, sod = bal - todayPnl;
   const dailyLimit = r.daily ? r.daily.pct / 100 * (r.daily.of === "startOfDay" ? sod : size) : null;
   const floor = floorAt(peak);
   const profit = bal - size, targetAmt = r.target ? r.target / 100 * size : null;

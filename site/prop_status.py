@@ -49,9 +49,40 @@ def rules_for(a):
     return {"daily": daily, "max": mx}, prog
 
 
-def status(a, trades, today):
+def reset_zone(firm):
+    """Same as the app's resetZone(): the time zone the firm's trading day starts in."""
+    r = str((firm or {}).get("reset") or "")
+    if re.search(r"Prague|CE\(S\)T", r, re.I):
+        return "Europe/Prague"
+    m = re.search(r"(?:UTC|GMT)\s*([+-]\d{1,2})", r, re.I)
+    return int(m.group(1)) if m else None
+
+
+def _in_zone(at, zone):
+    if isinstance(zone, int):
+        return at.astimezone(dt.timezone(dt.timedelta(hours=zone)))
+    from zoneinfo import ZoneInfo
+    return at.astimezone(ZoneInfo(zone))
+
+
+def firm_close_day(t, zone, tz):
+    """Same as the app's firmCloseDay(): the firm's day a trade closed on (trade times are the trader's local time)."""
+    d = str(t.get("closedDate") or t.get("date") or "")
+    tm = str((t.get("closedTime") if t.get("closedDate") else t.get("time")) or "")
+    if zone is None or tz is None or not re.match(r"^\d{1,2}:\d{2}", tm):
+        return d
+    try:
+        h, mi = tm[:5].split(":")
+        at = dt.datetime.fromisoformat(d).replace(hour=int(h), minute=int(mi), tzinfo=tz)
+        return _in_zone(at, zone).date().isoformat()
+    except Exception:
+        return d
+
+
+def status(a, trades, today, tz=None, now=None):
     """Daily and max loss for a prop account, as the app works them out. `today` is an ISO date in the
-    trader's own time zone. None when the account isn't a known prop programme."""
+    trader's own time zone; with `tz` (the trader's ZoneInfo) and `now` (aware), days follow the firm's
+    reset time like the app. None when the account isn't a known prop programme."""
     got = rules_for(a)
     if not got or not got[0]:
         return None
@@ -62,9 +93,12 @@ def status(a, trades, today):
     start_date = a.get("startDate") or ""
     closed = [t for t in trades if t.get("account") == a.get("id") and t.get("status") != "open" and (not start_date or str(t.get("date") or "") >= start_date)]
     closed.sort(key=lambda t: str(t.get("date") or "") + str(t.get("time") or ""))
+    zone = reset_zone(find_firm(a.get("firm")))
+    if zone is not None and tz is not None and now is not None:
+        today = _in_zone(now, zone).date().isoformat()
     by_day = {}
     for t in closed:
-        d = t.get("closedDate") or t.get("date") or ""
+        d = firm_close_day(t, zone, tz)
         by_day[d] = by_day.get(d, 0.0) + num(t.get("pnl"))
     pays = sorted([p for p in (a.get("payouts") or []) if isinstance(p, dict) and p.get("date")], key=lambda p: p["date"])
     pay_days = {p["date"] for p in pays}
