@@ -270,6 +270,35 @@ class EndToEndTests(unittest.TestCase):
             self.assertEqual(len(resample(bars, 1, 5)), 1)
 
 
+class GoldPresetTests(unittest.TestCase):
+    def test_all_gold_presets_load(self):
+        for name in ("xauusd_mt5", "mgc_tradovate", "mgc_ninjatrader"):
+            cfg = load_config(str(ROOT / "presets" / f"{name}.toml"))
+            self.assertEqual(cfg.broker.mode, "paper", name)  # never ship a preset that trades live
+            self.assertEqual(cfg.sessions.flatten_at, "16:50", name)
+
+    def test_mgc_sizing(self):
+        cfg = load_config(str(ROOT / "presets" / "mgc_tradovate.toml"))
+        rm = RiskManager(cfg, SessionClock(cfg.sessions), 50_000)
+        # $3.00 stop = 30 ticks x $1 + $1.50 commission = $31.50 per contract; $250 risk -> 7 contracts
+        sig = Signal(LONG, 4000.0, 3997.0, 4006.0, ny(2026, 11, 3, 8), "")
+        self.assertEqual(rm.size(sig), 7)
+
+    def test_xauusd_sizing(self):
+        cfg = load_config(str(ROOT / "presets" / "xauusd_mt5.toml"))
+        rm = RiskManager(cfg, SessionClock(cfg.sessions), 50_000)
+        # $3.00 stop = 300 ticks x $1 + $7 commission = $307 per lot; $250 risk -> 0.81 lots
+        sig = Signal(SHORT, 4000.0, 4003.0, 3994.0, ny(2026, 11, 3, 8), "")
+        self.assertAlmostEqual(rm.size(sig), 0.81)
+
+    def test_futures_flatten_window(self):
+        cfg = load_config(str(ROOT / "presets" / "mgc_tradovate.toml"))
+        clock = SessionClock(cfg.sessions)
+        self.assertTrue(clock.should_flatten(ny(2026, 11, 3, 16, 55)))
+        self.assertFalse(clock.should_flatten(ny(2026, 11, 3, 18, 5)))  # reopened
+        self.assertEqual(clock.trading_day(ny(2026, 11, 3, 18, 5)).day, 4)
+
+
 class NinjaTraderTests(unittest.TestCase):
     def test_brackets_sent_only_after_entry_fills(self):
         from elev8bot.brokers.base import BrokerError

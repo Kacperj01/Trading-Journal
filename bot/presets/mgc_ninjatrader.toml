@@ -1,0 +1,52 @@
+# Micro gold futures (MGC, 10 oz) on NinjaTrader 8 (orders), with bars from Tradovate.
+# Education only, not financial advice. Start on the Sim101 account with mode = "paper".
+# Full-size gold (GC, 100 oz): set tick_value = 10.0, max_qty = 2 and the GC contract name.
+
+[instrument]
+symbol = "MGC"
+tick_size = 0.10           # $0.10 per tick
+tick_value = 1.0           # $1 per tick per MGC contract (GC = $10)
+qty_step = 1
+min_qty = 1
+max_qty = 20
+commission_per_unit = 1.5  # round turn per contract incl. fees; check your plan
+slippage_ticks = 1         # backtest only
+
+[timeframes]
+ltf_minutes = 5
+htf_minutes = 60
+
+[zones]
+displacement_atr = 1.5
+require_fvg = true
+max_height_atr = 1.0
+
+[sessions]
+london = ["02:00", "05:00"]
+newyork = ["07:00", "11:00"]     # covers the 08:20 COMEX open and 08:30 US data
+trade_in = ["london", "newyork"]
+day_start = "18:00"              # CME gold reopens at 18:00 New York time
+flatten_at = "16:50"             # flat before the 17:00 close (most prop firms require it)
+
+[entry]
+confirmation = "sweep_then_bos"
+stop_buffer_ticks = 6            # $0.60 beyond the swept high / low
+max_stop_atr = 3.0
+min_rr = 2.0
+
+[risk]
+account_size = 50000
+risk_per_trade_pct = 0.5
+max_trades_per_day = 2
+max_daily_loss_pct = 2.0
+max_drawdown_pct = 6.0
+max_consecutive_losses = 3
+
+[broker]
+mode = "paper"
+broker = "ninjatrader"
+data_source = "tradovate"        # NinjaTrader's order interface has no price feed
+tradovate_env = "demo"
+tradovate_symbol = "MGCZ6"       # Dec 2026. Roll to MGCG7 (Feb 2027) late November.
+ninjatrader_account = "Sim101"
+ninjatrader_instrument = "MGC 12-26"   # roll to "MGC 02-27" late November

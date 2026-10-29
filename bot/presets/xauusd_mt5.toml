@@ -1,0 +1,46 @@
+# Spot gold (XAUUSD) on MetaTrader 5.
+# Education only, not financial advice. Start with mode = "paper", then an MT5 demo account.
+# MT5 fills tick size, tick value and lot step from your broker, so sizing is always right.
+
+[instrument]
+symbol = "XAUUSD"          # use the exact Market Watch name, e.g. "XAUUSD.r" or "GOLD"
+tick_size = 0.01           # overwritten from MT5 on connect
+tick_value = 1.0           # $ per 0.01 move per 1 lot (100 oz); overwritten from MT5
+qty_step = 0.01
+min_qty = 0.01
+max_qty = 5.0
+commission_per_unit = 7.0  # round turn per lot; check your broker
+slippage_ticks = 5         # backtest only ($0.05)
+
+[timeframes]
+ltf_minutes = 5
+htf_minutes = 60
+
+[zones]
+displacement_atr = 1.5
+require_fvg = true
+max_height_atr = 1.0
+
+[sessions]
+london = ["02:00", "05:00"]
+newyork = ["07:00", "11:00"]     # covers the 08:20 COMEX open and 08:30 US data
+trade_in = ["london", "newyork"]
+flatten_at = "16:50"             # flat before the 17:00 roll (spreads widen, swaps charged)
+
+[entry]
+confirmation = "sweep_then_bos"
+stop_buffer_ticks = 60           # $0.60 beyond the swept high / low
+max_stop_atr = 3.0
+min_rr = 2.0
+
+[risk]
+account_size = 50000
+risk_per_trade_pct = 0.5
+max_trades_per_day = 2
+max_daily_loss_pct = 2.0
+max_drawdown_pct = 6.0
+max_consecutive_losses = 3
+
+[broker]
+mode = "paper"
+broker = "mt5"

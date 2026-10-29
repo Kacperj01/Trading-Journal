@@ -4,7 +4,27 @@
 > Automated trading can lose money quickly. Backtest, then paper trade, then use a demo or eval account before real money.
 > Check your prop firm's rules: some ban bots, copy trading or trading during news.
 
-A supply and demand bot for forex (MetaTrader 5) and futures (Tradovate, NinjaTrader 8).
+A supply and demand bot built for **gold**: spot gold (XAUUSD) on MetaTrader 5 and gold futures (MGC / GC) on Tradovate and NinjaTrader 8. The rules work on other markets too, but the ready-made settings are for gold.
+
+## Gold presets
+
+Copy the one for your platform to `config.toml`:
+
+| File | Market | Platform |
+|---|---|---|
+| `presets/xauusd_mt5.toml` | Spot gold, XAUUSD | MetaTrader 5 |
+| `presets/mgc_tradovate.toml` | Micro gold futures, MGC | Tradovate |
+| `presets/mgc_ninjatrader.toml` | Micro gold futures, MGC | NinjaTrader 8 (bars from Tradovate) |
+
+What's tuned for gold:
+- **Sessions:** London 02:00–05:00 and New York 07:00–11:00 (New York time), which covers the 08:20 COMEX open and 08:30 US data.
+- **Stop buffer:** $0.60 beyond the swept high or low (60 ticks on XAUUSD, 6 ticks on MGC).
+- **Flat by 16:50** New York time, before the 17:00 close or roll.
+- **Futures trading day** starts at the 18:00 reopen, so the previous day high and low match the CME session.
+- **Sizing:** MGC is $1 per $0.10 tick per contract. For full-size GC, set `tick_value = 10.0`, `max_qty = 2` and the GC contract name. On MT5 the bot reads gold's contract size from your broker.
+- **Contract roll:** the futures presets use the December 2026 contract (`MGCZ6` / `MGC 12-26`). Switch to February 2027 (`MGCG7` / `MGC 02-27`) in late November, when volume moves over.
+
+Don't run XAUUSD and MGC at the same time on the same money. They're the same market, so it would double your risk.
 
 ## The strategy
 
@@ -42,7 +62,7 @@ pip install -r requirements.txt         # only for MT5 / Tradovate connections
 Export bars from MT5 (History Center, or right-click the chart > Export), NinjaTrader (Tools > Historical Data > Export) or TradingView. 1-minute or 5-minute bars work; the bot resamples them.
 
 ```
-python -m elev8bot backtest --config config.toml --csv data/EURUSD_M5.csv --tz Europe/Athens --trades trades.csv --log decisions.txt
+python -m elev8bot backtest --config config.toml --csv data/XAUUSD_M5.csv --tz Europe/Athens --trades trades.csv --log decisions.txt
 ```
 
 - `--tz` is the timezone your export uses. Many MT5 brokers use server time `Europe/Athens` (GMT+2/+3). Most futures exports use `America/New_York` or UTC. Getting this wrong puts the sessions in the wrong place.
