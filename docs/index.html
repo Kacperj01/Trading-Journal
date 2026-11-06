@@ -2,7 +2,7 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-kcmcrwXck/Q6L5oyDEQXWiGRS/XF9xqvD5WJvIUp/Yk=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-ETRWwdJwpKY9pRc3/ZnwH/qJUIWR8mcXu7bkm2zJh8A=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-3PTw7IjaC9QxZ0YJkNQSr8LE5CGB2KRqUeGKk9cts0I=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-JpV2HLgPvhSLEn3l9xrEvhx3FmtbH6ehNKxXW2+wxj8=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta property="og:type" content="website">
@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
 <meta property="og:url" content="https://elev8tradingjournal.com/">
 <meta name="twitter:card" content="summary_large_image">
-<script>window.ELEV8_BUILD = "94f5802b03";</script>
+<script>window.ELEV8_BUILD = "c2c91d74a5";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -1182,6 +1182,13 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 @media (max-width: 1100px) { .mode-sw { margin: 8px 16px; } }
 .pct-journal #tab-accounts, .pct-journal #tab-rewards, .pct-journal #tAccountWrap, .pct-journal #qAccountWrap,
 .pct-journal #fAccountWrap, .pct-journal #fStatusWrap, .pct-journal #propAlerts, .pct-journal #propPanel, .pct-journal .acct-switch, .pct-journal #acctFirstCard { display: none !important; }
+.pc-bal { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 14px; }
+.pc-bal > div:first-child { grid-column: 1 / -1; }
+.pc-bal > div:first-child b { font-size: 26px; }
+.pc-bal > div { padding: 12px 14px; border-radius: 12px; background: rgba(150,195,245,.05); border: 1px solid var(--border); min-width: 0; }
+.pc-bal small { display: block; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+.pc-bal b { display: block; font-size: 20px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-bal span { font-size: 12.5px; }
 .unit-pick { display: grid; gap: 8px; margin: 0 0 16px; }
 .unit-pick .lbl { font-size: 13px; font-weight: 600; color: var(--text-2); }
 .unit-pick label { text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; }
@@ -7259,6 +7266,15 @@ function propCard(a, manage = false) {
   else if (st.dailyLimit && st.dailyUsed / st.dailyLimit >= .6) status = ["Near daily limit", "warn"];
   else if (!st.targetAmt) status = ["Funded", "ok"];
   const parts = [];
+  // Funded: no target, so lead with the balance and the profit made (since the last payout, where the firm resets).
+  if (!st.targetAmt) {
+    const since = st.payouts && !(prog && prog.payout === "deduct") ? "since last payout" : "since start";
+    parts.push(`<div class="pc-bal">
+      <div><small>Balance</small><b class="mono">${money(st.bal, { signed: false })}</b></div>
+      <div><small>Profit ${since}</small><b class="mono ${tone(st.profit)}">${money(st.profit)}</b><span class="mono ${tone(st.profit)}">${(st.profit >= 0 ? "+" : "−") + Math.abs(st.size ? st.profit / st.size * 100 : 0).toFixed(2)}%</span></div>
+      <div><small>Today</small><b class="mono ${tone(st.todayPnl)}">${money(st.todayPnl)}</b></div>
+    </div>`);
+  }
   if (st.targetAmt) parts.push(meter("Profit target", `${money(st.profit)} / ${m(st.targetAmt)}`, pctOf(st.profit, st.targetAmt), st.hit ? "good" : "",
     st.hit ? (st.daysOk ? "Target reached" : `Target reached · ${plural(st.r.minDays - st.tradingDays, "more trading day")} needed`) : `${m(st.targetAmt - st.profit)} to go`));
   if (st.dailyLimit) { const f = pctOf(st.dailyUsed, st.dailyLimit); parts.push(meter("Daily loss today", `${m(st.dailyUsed)} / ${m(st.dailyLimit)}`, f, level(f), `${m(Math.max(0, st.dailyLimit - st.dailyUsed))} left today · resets ${esc(firm.reset)}`)); }
