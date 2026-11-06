@@ -2,7 +2,7 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-c6W4PE3HIkyULQqRb2MnRhQfaQauP/W0P3/32KxJhAA=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-L3PDd2na2sAg21qh8GNgo3jrGhNNTStGwrfxVdBJoAI=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-rAK8t6xZAWDFsSoXEVv+PUwPq0pX+RRIk4U/hkPDSag=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-Xk5F66/trsBoRzzEgKWQ+CppyMfIp03GkRIatAfgqsI=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta property="og:type" content="website">
@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
 <meta property="og:url" content="https://elev8tradingjournal.com/">
 <meta name="twitter:card" content="summary_large_image">
-<script>window.ELEV8_BUILD = "86dc572a04";</script>
+<script>window.ELEV8_BUILD = "a48339e727";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -3207,9 +3207,11 @@ function convertTrades(list, toPct) {
 // it's on an account with a size, where the % is turned into money on that account's balance at the time.
 function storeAs(t) {
   if (!pctMode()) { delete t.unit; delete t.book; return t; }
-  t.book = "pct";
+  // Journal trades are plain %: never tied to an account, never turned into money.
+  t.book = "pct"; t.unit = "pct"; t.account = ""; t.gross = null; t.fees = null;
+  if (!t.kind) t.kind = "Live";
+  return t;
   const a = sizedAcct(t);
-  if (!a) { t.unit = "pct"; t.gross = null; t.fees = null; return t; }
   const earlier = convertTrades(realTrades.filter(x => x.account === a.id && x.id !== t.id && !isOpen(x)), false)
     .filter(x => closeKey(x) < closeKey(t));
   const bal = Number(a.size) + sum(earlier.map(x => Number(x.pnl) || 0));
@@ -5369,7 +5371,7 @@ function resetForm(keepDate, keepDraft) {
   $("#tradeForm").reset(); setSign("tPnl", false);
   F("tId").value = "";
   F("tDate").value = keepDate && d ? d : isoDate(new Date());
-  F("tRisk").value = settings.defaultRisk || "";
+  F("tRisk").value = pctMode() ? (settings.defaultRisk > 0 && settings.defaultRisk <= 5 ? settings.defaultRisk : 1) : settings.defaultRisk || "";
   F("tAccount").value = pctMode() ? "" : defaultAccount();
   F("tKind").value = "Live"; syncKindField();
   F("tConfOut").textContent = "3/5";
@@ -5434,8 +5436,8 @@ function readForm() {
     time: F("tTime").value,
     pair: F("tPair").value.trim().toUpperCase(),
     session: F("tSessionSel").value,
-    account: F("tAccount").value,
-    kind: pctMode() && !acctById(F("tAccount").value) ? F("tKind").value : "",
+    account: pctMode() ? "" : F("tAccount").value,
+    kind: pctMode() ? F("tKind").value : "",
     direction: ($("input[name=tDir]:checked") || {}).value || "Long",
     setup: F("tSetup").value.trim(),
     entry: num(F("tEntry").value), stop: num(F("tStop").value), target: num(F("tTarget").value), exit: num(F("tExit").value),
@@ -5469,7 +5471,7 @@ function loadIntoForm(t) {
   // A trade from a passed (archived) phase keeps its account when edited.
   const own = acctById(t.account);
   if (own && own.archived && !Array.from(F("tAccount").options).some(o => o.value === own.id)) F("tAccount").insertAdjacentHTML("beforeend", `<option value="${esc(own.id)}">${esc(acctLabel(own))} (${propState(own) || "archived"})</option>`);
-  F("tAccount").value = own ? t.account : t.id || pctMode() ? "" : defaultAccount();
+  F("tAccount").value = pctMode() ? "" : own ? t.account : t.id ? "" : defaultAccount();
   F("tKind").value = t.kind || "Live"; syncKindField();
   $$("input[name=tDir]").forEach(r => r.checked = r.value === t.direction);
   F("tSetup").value = t.setup || "";
