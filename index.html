@@ -1724,7 +1724,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <nav class="tabs" id="mainNav" aria-label="Main">
       <div class="drawer-brand" aria-hidden="true"><img alt="" id="drawerLogo"><b>ELEV8</b></div>
       <div class="mode-sw" role="radiogroup" aria-label="Journal mode" id="modeSw">
-        <button type="button" role="radio" data-mode="pct" aria-checked="false" title="Plain journal: every trade as a %">Journal</button>
+        <button type="button" role="radio" data-mode="pct" aria-checked="false" title="Plain journal: no accounts or prop firms">Journal</button>
         <button type="button" role="radio" data-mode="money" aria-checked="true" title="Linked to your accounts and prop firms">Accounts</button>
       </div>
       <div class="tablist" role="tablist" aria-label="Main sections" aria-orientation="vertical">
@@ -2411,7 +2411,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
           <div class="card-head"><div><h3 id="prefTitle">Journal</h3><div class="sub">Saved as soon as you change them</div></div></div>
           <div class="fields fields-pair" style="margin:0">
             <div class="field wide"><label for="sUnit">Journal mode</label><select id="sUnit">
-              <option value="pct">Journal: a plain journal, every trade as a %</option>
+              <option value="pct">Journal: a plain journal, no accounts or prop firms</option>
               <option value="money">Accounts: linked to your accounts and prop firms</option></select>
               <span class="hint" id="sUnitHint">Two separate journals: trades you log in one don't show in the other. Switching back and forth changes nothing.</span>
               <button type="button" class="btn sm" id="sCopyJournal" style="margin-top:10px;justify-self:start" hidden>Copy account trades into this journal</button></div>
@@ -2618,7 +2618,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
     <p id="introText">Want a one-minute tour of your journal, or would you rather look around yourself? You can take the tour any time from Settings.</p>
     <div class="unit-pick" id="introUnit" role="radiogroup" aria-label="How do you want to log results?" hidden>
       <div class="lbl">How do you want to log your trades?</div>
-      <label><input type="radio" name="introUnit" value="pct"><span><b>Normal journal (%)</b><small>Log each trade as a % win or loss, and tag it live, demo, prop or backtest. No balance or account needed.</small></span></label>
+      <label><input type="radio" name="introUnit" value="pct"><span><b>Normal journal</b><small>Log each trade's result and tag it live, demo or backtest. No account or prop firm needed.</small></span></label>
       <label><input type="radio" name="introUnit" value="money" checked><span><b>Linked to an account</b><small>Log amounts and track balances and prop firm rules on each account.</small></span></label>
     </div>
     <div class="dlg-actions">
@@ -3121,7 +3121,7 @@ function syncView() {
    existed (unit "pct", no sized account) count as normal-journal trades. Account trades can be copied into
    the normal journal from Settings (and are, once, the first time you switch to it). */
 const bookOf = t => t.book === "pct" || (t.book == null && t.unit === "pct" && !sizedAcct(t)) ? "pct" : "acct";
-const inBook = t => bookOf(t) === (pctMode() ? "pct" : "acct");
+const inBook = t => bookOf(t) === (journalMode() ? "pct" : "acct");
 const bookTrades = () => realTrades.filter(inBook);
 /* Both journal modes read the same trades. Trades on an account with a size are stored in money, so balances
    and prop rules stay right; trades logged in the % journal without one are stored as a % (unit "pct").
@@ -3155,9 +3155,9 @@ function convertTrades(list, toPct) {
 // How a trade from the form or an import is saved: in money mode as money; in the % journal as a %, unless
 // it's on an account with a size, where the % is turned into money on that account's balance at the time.
 function storeAs(t) {
-  if (!pctMode()) { delete t.unit; delete t.book; return t; }
-  // Journal trades are plain %: never tied to an account, never turned into money.
-  t.book = "pct"; t.unit = "pct"; t.account = ""; t.gross = null; t.fees = null;
+  if (!journalMode()) { delete t.unit; delete t.book; return t; }
+  // Journal trades are their own: an amount, never tied to an account.
+  t.book = "pct"; delete t.unit; t.account = "";
   if (!t.kind) t.kind = "Live";
   return t;
   const a = sizedAcct(t);
@@ -3175,19 +3175,20 @@ function copyToJournal() {
   if (persist.readOnly) return 0;
   const src = realTrades.filter(t => bookOf(t) === "acct");
   const have = new Set(realTrades.map(t => t.id));
-  const asPct = convertTrades(src, true), byId = new Map(src.map(t => [t.id, t]));
   let n = 0;
-  asPct.forEach(c => {
+  convertTrades(src, false).forEach(c => {
     const id = safeId(("j-" + c.id).slice(0, 100));
     if (have.has(id)) return;
-    const orig = byId.get(c.id);
-    putTrade(Object.assign({}, c, { id, book: "pct", unit: "pct", account: "", kind: typeOf(orig) === "Prop firm" ? "Live" : (typeOf(orig) || "Live"), copiedFrom: orig.id }));
+    const type = (acctById(c.account) || {}).type || c.kind || "Live";
+    const copy = Object.assign({}, c, { id, book: "pct", account: "", kind: type === "Prop firm" ? "Live" : type, copiedFrom: c.id });
+    delete copy.unit;
+    putTrade(copy);
     n++;
   });
   if (n) { settings.journalCopied = true; saveSettings(); }
   return n;
 }
-function syncKindField() { F("tKindWrap").hidden = !pctMode() || !!acctById(F("tAccount").value); }
+function syncKindField() { F("tKindWrap").hidden = !journalMode() || !!acctById(F("tAccount").value); }
 document.addEventListener("change", e => { if (e.target && e.target.id === "tAccount") syncKindField(); });
 function setSync(mode, text) {
   const chip = F("syncChip");
@@ -3451,7 +3452,7 @@ async function sbSync() {
     if (settingsChanged) { refreshLists(); renderListEditors(); renderAccount(); }
     if (changed || settingsChanged) { syncView(); onDataChanged(); }
     else if (wasWaiting) renderDashboard(); // swap "Loading your journal…" for the journal
-    migrateFees();
+    migrateFees(); migrateJournal();
     sbRender();
     maybeStartTour();
   } catch (e) {
@@ -3905,7 +3906,7 @@ function finishLoading(mode) {
   persist.loading = false;
   syncView();
   onDataChanged();
-  if (!SB && !DEMO) migrateFees();
+  if (!SB && !DEMO) { migrateFees(); migrateJournal(); }
 }
 
 /* Trade sets placed in the shared "imports" collection (e.g. a Notion export) are copied
@@ -3983,7 +3984,10 @@ const calm = () => reduced() || document.documentElement.classList.contains("cal
 // The currency symbol from settings, limited to 4 plain characters (it's shown inside HTML everywhere).
 const curSym = () => String(settings.currency || "$").replace(/[<>&"'`\\]/g, "").trim().slice(0, 4) || "$";
 // Standard journal: every trade's P&L is a % of the account (2 means +2%), with no balance behind it.
-const pctMode = () => settings.unit === "pct";
+// settings.unit "pct" now means the plain Journal (its own trades, no accounts on screen). Results are amounts
+// in both modes, so journalMode() (results as %) is off; trades logged as % before this are turned into amounts once.
+const journalMode = () => settings.unit === "pct";
+const pctMode = () => false;
 function money(v, { signed = true, decimals = 2 } = {}) {
   if (v == null || !Number.isFinite(v)) return "—";
   const dp = pctMode() ? Math.max(decimals, 2) : decimals;
@@ -4076,6 +4080,21 @@ const netOf = (gross, fees) => Math.round(((Number(gross) || 0) - Math.abs(Numbe
 // R worked out from the old P&L (not typed in) is recalculated when the net changes.
 const autoR = t => t.r != null && t.risk && t.pnl != null && Math.abs(t.r - Math.round(t.pnl / t.risk * 100) / 100) < 0.005;
 // Trades from this week that were saved before fees were deducted: take the fees off once.
+function migrateJournal() {
+  if (persist.readOnly) return 0;
+  let n = 0;
+  realTrades.slice().forEach(t => {
+    if (!t || t.unit !== "pct") return;
+    const src = t.copiedFrom && realTrades.find(x => x.id === t.copiedFrom && x.unit !== "pct");
+    const next = Object.assign({}, t, { book: "pct" });
+    delete next.unit;
+    if (src) Object.assign(next, { pnl: src.pnl, gross: src.gross ?? null, fees: src.fees ?? null, risk: src.risk ?? null, r: src.r ?? null });
+    else if (Number(next.risk) > 0 && Number(next.risk) <= 5) { next.risk = null; next.r = null; } // a % risk, not an amount
+    putTrade(next); n++;
+  });
+  if (n) { syncView(); onDataChanged(); }
+  return n;
+}
 function migrateFees() {
   if (persist.readOnly) return 0;
   let n = 0;
@@ -4226,7 +4245,7 @@ function propState(a) {
 }
 const PROP_STATES = { progress: "In progress", funded: "Funded", passed: "Passed", failed: "Failed" };
 // A trade's type: its account's (Live, Demo, Prop firm, Backtest), or the type picked for it in the % journal.
-const typeOf = t => (!pctMode() && (acctById(t.account) || {}).type) || t.kind || (acctById(t.account) || {}).type || "";
+const typeOf = t => (!journalMode() && (acctById(t.account) || {}).type) || t.kind || (acctById(t.account) || {}).type || "";
 const inAccount = t => (!ui.account || t.account === ui.account) && (!ui.acctType || typeOf(t) === ui.acctType)
   && (!ui.propStatus || propState(acctById(t.account)) === ui.propStatus);
 const ACCT_TYPES = { Live: "Live", Demo: "Demo", "Prop firm": "Prop firm", Backtest: "Backtest" };
@@ -4244,7 +4263,7 @@ function acctLabel(a) {
 // Balance before any trades: the account's size when one account is in view, every account's size added up
 // for all accounts, or the starting balance from Preferences when no sizes are set.
 function startingBalance(accountId) {
-  if (pctMode()) return 0; // the equity curve starts at 0% and adds up each trade's %
+  if (journalMode()) return 0; // Journal: the equity curve is a running total from 0
   const one = acctById(accountId);
   if (one) return Number(one.size) > 0 ? Number(one.size) : Number(settings.balance);
   // "All accounts": the accounts still in use. Archived ones (failed or finished) aren't part of the balance.
@@ -4255,6 +4274,7 @@ function startingBalance(accountId) {
 // their starting sizes plus everything they closed earlier. Every % of balance in the app
 // (Overview, weekly review, share cards) is worked out from this, so the numbers always agree.
 function balanceBefore(list) {
+  if (journalMode()) return Number(settings.balance) > 0 ? Number(settings.balance) : 10000;
   if (pctMode()) return 100; // P&L is already a %: 2 on a base of 100 is +2%, and %s add up
   if (!list.length) return startingBalance(ui.account);
   // Trades not linked to an account are sized as if they were on the account you log to by default
@@ -4378,12 +4398,12 @@ function renderDashboard() {
   const freshWeek = hasAny && ui.range === "week" && filterCount() === 0;
   F("welcomeCard").hidden = DEMO || hasAny || loading || unsynced || !!ui.welcomeDone || currentTab() !== "overview";
   // No trading account yet: ask for one instead of offering to log a trade.
-  const noAcct = !DEMO && !loading && !unsynced && !persist.readOnly && !allAccounts().length && !pctMode(); // the % journal needs no account
+  const noAcct = !DEMO && !loading && !unsynced && !persist.readOnly && !allAccounts().length && !journalMode(); // the % journal needs no account
   F("acctFirstCard").hidden = !noAcct; F("quickLog").hidden = noAcct;
   F("dashEmptyBtn").textContent = noAcct && !hasAny ? "Register an account" : "Log a trade";
   F("dashEmptyBtn").hidden = loading || unsynced;
   $("#dashEmpty h3").textContent = loading ? "Loading your journal…" : unsynced ? "Couldn't load your journal" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
-  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically." : !DEMO && !hasAny && !allAccounts().length && !pctMode() ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : ui.acctType && !allAccounts().some(a => a.type === ui.acctType) ? `No ${ui.acctType.toLowerCase()} accounts yet. Add one in Accounts, or pick another account type in Filters.` : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
+  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically." : !DEMO && !hasAny && !allAccounts().length && !journalMode() ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : ui.acctType && !allAccounts().some(a => a.type === ui.acctType) ? `No ${ui.acctType.toLowerCase()} accounts yet. Add one in Accounts, or pick another account type in Filters.` : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
   renderOpen(open);
@@ -4450,7 +4470,7 @@ function renderKpis(st, startBal, list) {
   const pfTxt = v => v === Infinity ? "∞" : v.toFixed(2);
   const cards = [
     { label: "Total P&L", tone: tone(st.total), accent: st.total >= 0 ? "green" : "red", val: st.total, fmt: v => money(v),
-      meta: `<span class="mono">${st.n}</span> trades` + (pctMode() ? "" : ` · <span class="mono ${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span>`) },
+      meta: `<span class="mono">${st.n}</span> trades` + (journalMode() ? "" : ` · <span class="mono ${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span>`) },
     { label: "Win rate", tone: st.winRate >= 0.5 ? "pos" : "neg", accent: "blue", val: st.winRate, fmt: v => pct(v),
       meta: `<span class="mono pos">${st.wins}W</span> / <span class="mono neg">${st.losses}L</span>${st.be ? ` / <span class="mono neu">${st.be}BE</span>` : ""}` },
     { label: "Profit factor", tone: "hl", accent: "teal", val: st.pf, fmt: pfTxt,
@@ -4480,7 +4500,7 @@ let eqState = null;
 // It starts from that account's own balance, never the whole journal added together.
 function equityView(list) {
   const def = acctById(defaultAccount());
-  const id = pctMode() ? "" : ui.account && acctById(ui.account) ? ui.account
+  const id = journalMode() ? "" : ui.account && acctById(ui.account) ? ui.account
     : ofType(def) ? defaultAccount() : ((sortByClose(list).reverse().find(t => ofType(acctById(t.account))) || {}).account || (accounts().find(ofType) || {}).id || "");
   // Plotted in the order the trades closed, so a trade held over several days lands where it was closed.
   const own = sortByClose(id ? list.filter(t => t.account === id) : list);
@@ -4493,7 +4513,7 @@ function equityView(list) {
 }
 function drawEquity(list) {
   const ev = equityView(list), a = acctById(ev.id);
-  F("eqSub").textContent = (a ? acctLabel(a) + " · " : "") + (pctMode() ? "Running total % after each trade" : "Balance after each trade") + " · dots coloured by result";
+  F("eqSub").textContent = (a ? acctLabel(a) + " · " : "") + (journalMode() ? "Running total after each trade" : "Balance after each trade") + " · dots coloured by result";
   if (!ev.list.length) {
     $$("svg", F("equityWrap")).forEach(s => s.remove());
     F("eqEmpty").hidden = false;
@@ -4633,7 +4653,7 @@ function renderEquity(list, startBal, st) {
 
   const ret = startBal ? (bal - startBal) / startBal : 0;
   $("#eqStats").innerHTML = `
-    ${pctMode() ? `<div><span>Total</span><span class="${tone(bal)}">${money(bal)}</span></div>` : `<div><span>Balance</span><span>${money(bal, { signed: false })}</span></div>
+    ${journalMode() ? `<div><span>Total</span><span class="${tone(bal)}">${money(bal)}</span></div>` : `<div><span>Balance</span><span>${money(bal, { signed: false })}</span></div>
     <div><span>Return</span><span class="${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span></div>`}
     <div><span>Max DD</span><span class="neg">${money(st.maxDD)}</span></div>`;
 }
@@ -5320,8 +5340,8 @@ function resetForm(keepDate, keepDraft) {
   $("#tradeForm").reset(); setSign("tPnl", false);
   F("tId").value = "";
   F("tDate").value = keepDate && d ? d : isoDate(new Date());
-  F("tRisk").value = pctMode() ? (settings.defaultRisk > 0 && settings.defaultRisk <= 5 ? settings.defaultRisk : 1) : settings.defaultRisk || "";
-  F("tAccount").value = pctMode() ? "" : defaultAccount();
+  F("tRisk").value = settings.defaultRisk || "";
+  F("tAccount").value = journalMode() ? "" : defaultAccount();
   F("tKind").value = "Live"; syncKindField();
   F("tConfOut").textContent = "3/5";
   if (!keepDraft) discardShots();
@@ -5385,8 +5405,8 @@ function readForm() {
     time: F("tTime").value,
     pair: F("tPair").value.trim().toUpperCase(),
     session: F("tSessionSel").value,
-    account: pctMode() ? "" : F("tAccount").value,
-    kind: pctMode() ? F("tKind").value : "",
+    account: journalMode() ? "" : F("tAccount").value,
+    kind: journalMode() ? F("tKind").value : "",
     direction: ($("input[name=tDir]:checked") || {}).value || "Long",
     setup: F("tSetup").value.trim(),
     entry: num(F("tEntry").value), stop: num(F("tStop").value), target: num(F("tTarget").value), exit: num(F("tExit").value),
@@ -5420,7 +5440,7 @@ function loadIntoForm(t) {
   // A trade from a passed (archived) phase keeps its account when edited.
   const own = acctById(t.account);
   if (own && own.archived && !Array.from(F("tAccount").options).some(o => o.value === own.id)) F("tAccount").insertAdjacentHTML("beforeend", `<option value="${esc(own.id)}">${esc(acctLabel(own))} (${propState(own) || "archived"})</option>`);
-  F("tAccount").value = pctMode() ? "" : own ? t.account : t.id ? "" : defaultAccount();
+  F("tAccount").value = journalMode() ? "" : own ? t.account : t.id ? "" : defaultAccount();
   F("tKind").value = t.kind || "Live"; syncKindField();
   $$("input[name=tDir]").forEach(r => r.checked = r.value === t.direction);
   F("tSetup").value = t.setup || "";
@@ -5499,7 +5519,7 @@ function updatePreview() {
     ["P&L", `<span class="${tone(t.pnl)}">${t.pnl == null ? "—" : money(t.pnl)}</span>`],
     ["R multiple", `<span class="${tone(r)}">${fmtR(r)}</span>`],
     ["Planned R:R", planned == null ? "—" : `<span class="hl">1 : ${planned.toFixed(2)}</span>`],
-    pctMode() ? null : ["Account after", t.pnl == null ? "—" : money(startingBalance(t.account) + sum(trades.filter(x => x.id !== t.id && (!acctById(t.account) || x.account === t.account)).map(x => x.pnl)) + t.pnl, { signed: false })]
+    journalMode() ? null : ["Account after", t.pnl == null ? "—" : money(startingBalance(t.account) + sum(trades.filter(x => x.id !== t.id && (!acctById(t.account) || x.account === t.account)).map(x => x.pnl)) + t.pnl, { signed: false })]
   ];
   F("pvBody").innerHTML = rows.filter(Boolean).map(([a, b]) => `<div class="pv-row"><span class="muted">${a}</span><span>${b}</span></div>`).join("");
 }
@@ -5603,14 +5623,14 @@ function renderAccount() {
   if (![...cur.options].some(o => o.value === sym)) cur.add(new Option(sym, sym));
   cur.value = sym;
   F("sSessionMode").value = settings.sessionMode;
-  F("sUnit").value = pctMode() ? "pct" : "money";
-  F("sCurrencyWrap").hidden = pctMode();
-  F("sCopyJournal").hidden = !pctMode() || !realTrades.some(t => bookOf(t) === "acct");
+  F("sUnit").value = journalMode() ? "pct" : "money";
+  F("sCurrencyWrap").hidden = false;
+  F("sCopyJournal").hidden = !journalMode() || !realTrades.some(t => bookOf(t) === "acct");
   applyUnitLabels();
 }
 // Labels and hints on the trade form follow the journal's unit.
 function applyUnitLabels() {
-  const p = pctMode();
+  const p = pctMode(), j = journalMode();
   F("tPnlLbl").textContent = p ? "Result (%)" : "P&L before fees";
   F("tPnl").placeholder = p ? "e.g. 2" : "e.g. 250";
   F("tPnlHint").textContent = p ? "The % you made or lost. Tap +/− for a loss, 0 for breakeven" : "Tap +/− for a loss, 0 for breakeven";
@@ -5621,18 +5641,17 @@ function applyUnitLabels() {
   F("qPnl").placeholder = p ? "e.g. 2" : "e.g. 150";
   F("qFeesWrap").hidden = p;
   // The normal journal is a plain journal: no accounts, prop firms or rewards on screen.
-  document.documentElement.classList.toggle("pct-journal", p);
-  F("modeSw").querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-checked", String((b.dataset.mode === "pct") === p)));
-  if (p && (ui.account || ui.propStatus || ui.acctType === "Prop firm")) { ui.account = ""; ui.propStatus = ""; if (ui.acctType === "Prop firm") ui.acctType = ""; saveUi(); }
-  if (p && ["accounts", "rewards"].includes(currentTab())) showTab("overview");
+  document.documentElement.classList.toggle("pct-journal", j);
+  F("modeSw").querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-checked", String((b.dataset.mode === "pct") === j)));
+  if (j && (ui.account || ui.propStatus || ui.acctType === "Prop firm")) { ui.account = ""; ui.propStatus = ""; if (ui.acctType === "Prop firm") ui.acctType = ""; saveUi(); }
+  if (j && ["accounts", "rewards"].includes(currentTab())) showTab("overview");
 }
 function setUnit(u) {
   const want = u === "pct" ? "pct" : "money";
   if ((settings.unit === "pct" ? "pct" : "money") === want) return;
   settings.unit = want;
   // A remembered $ risk means nothing in %, and the other way round.
-  if (want === "pct" && !(settings.defaultRisk <= 5)) settings.defaultRisk = 1;
-  if (want === "money" && settings.defaultRisk <= 5) settings.defaultRisk = DEFAULT_SETTINGS.defaultRisk;
+  if (settings.defaultRisk > 0 && settings.defaultRisk <= 5) settings.defaultRisk = DEFAULT_SETTINGS.defaultRisk; // left over from % logging
   saveSettings();
 }
 
@@ -6211,7 +6230,7 @@ $$(".tab").forEach(tab => {
   });
 });
 document.addEventListener("click", e => {
-  if (e.target.closest("[data-acct-first]") || (e.target.closest("#dashEmptyBtn") && !DEMO && !allAccounts().length && !realTrades.length && !pctMode())) {
+  if (e.target.closest("[data-acct-first]") || (e.target.closest("#dashEmptyBtn") && !DEMO && !allAccounts().length && !realTrades.length && !journalMode())) {
     openAccountDlg(null, false); return;
   }
   const go = e.target.closest("[data-goto]");
@@ -6237,10 +6256,10 @@ function syncFilters() {
   $$("#fPeriods button").forEach(b => b.setAttribute("aria-checked", b.dataset.range === ui.range));
   // Prop firm status: only when there are prop firm accounts; Funded only when one is funded.
   // Account type: every type is always offered once there's an account.
-  const types = Object.keys(ACCT_TYPES).filter(k => !pctMode() || k !== "Prop firm");
+  const types = Object.keys(ACCT_TYPES).filter(k => !journalMode() || k !== "Prop firm");
   if (ui.acctType && !types.includes(ui.acctType)) ui.acctType = "";
-  F("fTypeWrap").hidden = !allAccounts().length && !pctMode();
-  F("fTypeLbl").textContent = pctMode() ? "Type" : "Account type";
+  F("fTypeWrap").hidden = !allAccounts().length && !journalMode();
+  F("fTypeLbl").textContent = journalMode() ? "Type" : "Account type";
   F("fType").innerHTML = [["", "All"], ...types.map(k => [k, ACCT_TYPES[k]])].map(([v, t]) => `<button type="button" role="radio" data-type="${esc(v)}" aria-checked="${v === (ui.acctType || "")}">${esc(t)}</button>`).join("");
   const states = new Set(allAccounts().map(propState).filter(Boolean));
   if (ui.propStatus && (!states.size || (ui.acctType && ui.acctType !== "Prop firm"))) ui.propStatus = "";
@@ -6501,7 +6520,7 @@ function quickTrade() {
   const gross = signedVal("qPnl"), fees = num(F("qFees").value) == null ? null : Math.abs(num(F("qFees").value)), risk = num(settings.defaultRisk) || null;
   const pnl = gross == null ? null : netOf(gross, fees);
   return {
-    id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value, account: pctMode() ? "" : F("qAccount").value, kind: pctMode() ? "Live" : "",
+    id: uid(), date: F("qDate").value, time: "", pair: F("qPair").value.trim().toUpperCase(), session: F("qSession").value, account: journalMode() ? "" : F("qAccount").value, kind: journalMode() ? "Live" : "",
     direction: ($("input[name=qDir]:checked") || {}).value || "Long", setup: F("qSetup").value.trim(),
     entry: null, stop: null, target: null, exit: null, size: null, risk, pnl: F("qOpen").checked ? null : pnl, gross: F("qOpen").checked ? null : gross, r: null, fees: F("qOpen").checked ? null : fees, status: F("qOpen").checked ? "open" : "",
     emotionBefore: F("qEmo").value, emotionAfter: "", confidence: null, planChecks: readPlanChecks("qPlanChecks"),
@@ -6517,7 +6536,7 @@ function resetQuick() {
   F("qMsg").textContent = "";
   refreshLists();
   syncPlanQuick();
-  F("qAccount").value = pctMode() ? "" : defaultAccount();
+  F("qAccount").value = journalMode() ? "" : defaultAccount();
   syncQuickOpen();
 }
 function setQuickOpen(open) {
@@ -7044,7 +7063,7 @@ function maybeStartTour() {
   if (afterDemoTour && !persist.loading && !persist.readOnly && !(SB && !inViewer() && !(sb.session && sb.synced))) {
     afterDemoTour = false;
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* ignore */ }
-    if (!allAccounts().length && !pctMode()) setTimeout(() => { if (!document.documentElement.classList.contains("gated") && !document.querySelector("dialog[open]")) offerSetup(); }, 500);
+    if (!allAccounts().length && !journalMode()) setTimeout(() => { if (!document.documentElement.classList.contains("gated") && !document.querySelector("dialog[open]")) offerSetup(); }, 500);
     return;
   }
   if (DEMO || tourSeen() || allAccounts().length || realTrades.length || persist.loading || persist.readOnly) return;
@@ -7944,7 +7963,7 @@ F("rwList").addEventListener("click", async e => {
 
 // After a trade is saved: warn when a prop account gets close to, or past, a limit.
 function propWarn(t) {
-  if (isOpen(t) || pctMode()) return;
+  if (isOpen(t) || journalMode()) return;
   const a = acctById(t.account), st = a && propStatus(a);
   if (!st) return;
   const firm = findFirm(a.firm).name;
@@ -8435,11 +8454,11 @@ F("setNav").addEventListener("click", e => {
 });
 // Journal ⇄ Accounts, from the side menu or Settings › Preferences. Each keeps its own trades.
 function switchMode(want) {
-  if ((pctMode() ? "pct" : "money") === want) return;
+  if ((journalMode() ? "pct" : "money") === want) return;
   setUnit(want);
   const copied = want === "pct" && !settings.journalCopied ? copyToJournal() : 0;
   syncView(); resetForm(true); resetQuick();
-  toast(want === "pct" ? (copied ? `Journal: copied ${plural(copied, "trade")} in as a %` : "Switched to Journal") : "Switched to Accounts");
+  toast(want === "pct" ? (copied ? `Journal: copied ${plural(copied, "trade")} in` : "Switched to Journal") : "Switched to Accounts");
   refreshAll(); onDataChanged();
 }
 F("sUnit").addEventListener("change", e => switchMode(e.target.value));
@@ -8943,7 +8962,7 @@ function offerSetup() {
 // A new journal picks its unit here: % only (no balance or accounts) or money.
 function showUnitPick() {
   F("introUnit").hidden = DEMO || realTrades.length > 0;
-  $$("input[name=introUnit]").forEach(r => r.checked = r.value === (pctMode() ? "pct" : "money"));
+  $$("input[name=introUnit]").forEach(r => r.checked = r.value === (journalMode() ? "pct" : "money"));
 }
 function takeUnitPick() {
   if (F("introUnit").hidden) return;
@@ -8955,7 +8974,7 @@ $$("input[name=introUnit]").forEach(r => r.addEventListener("change", () => {
 }));
 F("introTour").addEventListener("click", () => {
   takeUnitPick();
-  if (introMode === "setup" && pctMode()) { F("introDlg").close(); onDataChanged(); return; } // nothing to register in % mode
+  if (introMode === "setup" && journalMode()) { F("introDlg").close(); onDataChanged(); return; } // nothing to register in % mode
   if (introMode === "tour" && tourInDemo()) { startTour(); return; } // leaving for the demo: closing first would step Back
   F("introDlg").close();
   if (introMode === "setup") setTimeout(() => openAccountDlg(null, false), 50); else startTour();

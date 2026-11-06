@@ -223,14 +223,16 @@ def to_unit(trades, settings):
     """Same as the app's convertTrades: trades on an account with a size are stored in money, trades logged in
     the % journal without one as a % (unit "pct"). Each is turned into the journal's mode: money as a % of its
     account's balance just before it, a % as that share of the account (or the starting balance)."""
-    to_pct = settings.get("unit") == "pct"
+    # unit "pct" now means the plain Journal; results are amounts in both modes.
+    journal = settings.get("unit") == "pct"
+    to_pct = False
     sizes = {a.get("id"): num(a.get("size")) for a in (settings.get("accounts") or []) if isinstance(a, dict)}
     start_bal = num(settings.get("balance")) or 10000.0
     key = lambda t: t.get("account") if sizes.get(t.get("account"), 0) > 0 else ""
     close = lambda t: (t.get("closedDate") or t.get("date") or "") + " " + ((t.get("closedTime") if t.get("closedDate") else t.get("time")) or "")
     # Journal and Accounts are separate journals (the app's bookOf): only this mode's trades count.
     book = lambda t: "pct" if t.get("book") == "pct" or (t.get("book") is None and t.get("unit") == "pct" and not sizes.get(t.get("account"), 0) > 0) else "acct"
-    trades = [t for t in trades if book(t) == ("pct" if to_pct else "acct")]
+    trades = [t for t in trades if book(t) == ("pct" if journal else "acct")]
     bal, out = {}, {}
     for t in sorted(trades, key=close):
         k = key(t)
@@ -270,7 +272,7 @@ def build_week(trades, start, cur, settings=None):
     week, prev = in_week(start, end), in_week(start - dt.timedelta(days=7), end - dt.timedelta(days=7))
     st, pv = stats(week), stats(prev)
 
-    pct = settings.get("unit") == "pct"  # standard journal: every P&L is already a % of the account
+    pct = False  # results are amounts in both modes
 
     def money(v, signed=True):
         s = f"{abs(v):,.2f}%" if pct else f"{cur}{abs(v):,.2f}"
