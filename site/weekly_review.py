@@ -219,8 +219,40 @@ def group(ts, key):
     return sorted(out, key=lambda x: -x["pnl"])
 
 
+def to_unit(trades, settings):
+    """Same as the app's convertTrades: trades on an account with a size are stored in money, trades logged in
+    the % journal without one as a % (unit "pct"). Each is turned into the journal's mode: money as a % of its
+    account's balance just before it, a % as that share of the account (or the starting balance)."""
+    to_pct = settings.get("unit") == "pct"
+    sizes = {a.get("id"): num(a.get("size")) for a in (settings.get("accounts") or []) if isinstance(a, dict)}
+    start_bal = num(settings.get("balance")) or 10000.0
+    key = lambda t: t.get("account") if sizes.get(t.get("account"), 0) > 0 else ""
+    close = lambda t: (t.get("closedDate") or t.get("date") or "") + " " + ((t.get("closedTime") if t.get("closedDate") else t.get("time")) or "")
+    bal, out = {}, {}
+    for t in sorted(trades, key=close):
+        k = key(t)
+        b = bal.setdefault(k, sizes.get(k) if k else start_bal)
+        is_pct = t.get("unit") == "pct"
+        pnl = None if t.get("pnl") is None else num(t.get("pnl"))
+        money = None if pnl is None else (b * pnl / 100 if is_pct else pnl)
+        if is_pct != to_pct and pnl is not None:
+            c = dict(t)
+            risk = num(t.get("risk")) if t.get("risk") is not None else None
+            if to_pct:
+                c["pnl"] = money / b * 100 if b else 0.0
+                c["risk"] = risk / b * 100 if (risk and b) else risk
+            else:
+                c["pnl"] = money
+                c["risk"] = b * risk / 100 if risk else risk
+            out[id(t)] = c
+        if t.get("status") != "open" and money is not None:
+            bal[k] = b + money
+    return [out.get(id(t), t) for t in trades]
+
+
 def build_week(trades, start, cur, settings=None):
     settings = settings or {}
+    trades = to_unit(trades, settings)
     CTX["risk"] = num(settings.get("defaultRisk"))
     accounts = [a for a in (settings.get("accounts") or []) if isinstance(a, dict)]
     CTX["sizes"] = {a.get("id"): num(a.get("size")) for a in accounts}
