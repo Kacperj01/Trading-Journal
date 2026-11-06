@@ -235,8 +235,10 @@ def build_week(trades, start, cur, settings=None):
     week, prev = in_week(start, end), in_week(start - dt.timedelta(days=7), end - dt.timedelta(days=7))
     st, pv = stats(week), stats(prev)
 
+    pct = settings.get("unit") == "pct"  # standard journal: every P&L is already a % of the account
+
     def money(v, signed=True):
-        s = f"{cur}{abs(v):,.2f}"
+        s = f"{abs(v):,.2f}%" if pct else f"{cur}{abs(v):,.2f}"
         return (("+" if v > 0 else "−" if v < 0 else "") + s) if signed else s
     rec = lambda g: f"{g['wins']}W–{g['losses']}L" + (f"–{g['be']}BE" if g.get("be") else "")
     # Size results against risk and the account, so a few dollars isn't called a good or bad week.
@@ -270,6 +272,8 @@ def build_week(trades, start, cur, settings=None):
             bal += base + sum(num(t.get("pnl")) for t in prior)
     else:
         bal = acct_base(None) + sum(num(t.get("pnl")) for t in trades if earlier(t))
+    if pct:
+        bal = 100.0  # same as the app: a % on a base of 100, so the %s add up
     min_move = max(unit * 0.25, bal * 0.0005, 0.01)
     big = lambda v: abs(v) >= min_move
     def size_txt(v):

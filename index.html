@@ -1129,6 +1129,13 @@ fieldset.is-open #tPnl, fieldset.is-open #tR { opacity: .55; }
 .share-opts .check-row { display: flex; gap: 10px; align-items: center; cursor: pointer; }
 .share-opts input { width: 18px; height: 18px; accent-color: var(--accent); }
 @media (max-width: 560px) { #wkShare span, #tdShare span { display: none; } }
+.unit-pick { display: grid; gap: 8px; margin: 0 0 16px; }
+.unit-pick .lbl { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.unit-pick label { text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; }
+.unit-pick label:has(input:checked) { border-color: var(--accent); background: rgba(47,208,200,.08); }
+.unit-pick input { margin-top: 3px; accent-color: var(--accent); }
+.unit-pick b { display: block; font-size: 14.5px; }
+.unit-pick small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; line-height: 1.4; }
 .tour { position: fixed; inset: 0; z-index: 2000; pointer-events: none; }
 .tour-tip, .tour-block { pointer-events: auto; }
 .tour-block { position: fixed; }
@@ -2089,7 +2096,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
               <div class="field"><label for="tTarget">Take profit</label><input type="number" step="any" id="tTarget" inputmode="decimal"></div>
               <div class="field"><label for="tExit">Exit price</label><input type="number" step="any" id="tExit" inputmode="decimal"></div>
               <div class="field"><label for="tSize">Position size (lots / units)</label><input type="number" step="any" id="tSize" inputmode="decimal"></div>
-              <div class="field"><label for="tRisk">Risk amount</label><input type="number" step="any" id="tRisk" inputmode="decimal" min="0"></div>
+              <div class="field"><label for="tRisk" id="tRiskLbl">Risk amount</label><input type="number" step="any" id="tRisk" inputmode="decimal" min="0"></div>
             </div>
           </fieldset>
 
@@ -2098,7 +2105,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
             <label class="toggle open-row"><input type="checkbox" id="tOpen"> <span><b>Trade still open</b> <span class="muted">Save it now and add the result when it closes. Open trades aren't counted in your stats.</span></span></label>
             <div class="fields">
               <div class="field">
-                <label for="tPnl">P&amp;L before fees <span class="req" aria-hidden="true">*</span></label>
+                <label for="tPnl"><span id="tPnlLbl">P&amp;L before fees</span> <span class="req" aria-hidden="true">*</span></label>
                 <div class="signed"><input type="number" step="any" id="tPnl" required aria-required="true" inputmode="decimal" aria-describedby="tPnlHint" placeholder="e.g. 250"><button type="button" class="sign-btn" data-sign-for="tPnl" aria-pressed="false" aria-label="Win. Tap to make it a loss"><span class="sg-pos" aria-hidden="true">+</span><span class="sg-neg" aria-hidden="true">−</span></button></div>
                 <span class="hint" id="tPnlHint">Tap +/− for a loss, 0 for breakeven</span>
               </div>
@@ -2107,7 +2114,7 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
                 <input type="number" step="any" id="tR" inputmode="decimal" aria-describedby="tRHint">
                 <span class="hint" id="tRHint">Leave blank to calculate P&amp;L ÷ risk</span>
               </div>
-              <div class="field">
+              <div class="field" id="tFeesWrap">
                 <label for="tFees">Fees / commission</label>
                 <input type="number" step="any" id="tFees" inputmode="decimal" aria-describedby="tFeesHint">
                 <span class="hint" id="tFeesHint">Taken off your P&amp;L automatically</span>
@@ -2388,7 +2395,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
         <section class="card accent-teal set-narrow" aria-labelledby="prefTitle" id="acctForm">
           <div class="card-head"><div><h3 id="prefTitle">Journal</h3><div class="sub">Saved as soon as you change them</div></div></div>
           <div class="fields fields-pair" style="margin:0">
-            <div class="field"><label for="sCurrency">Currency</label><select id="sCurrency">
+            <div class="field wide"><label for="sUnit">Log results in</label><select id="sUnit">
+              <option value="money">Money: balances, accounts and prop firm tracking</option>
+              <option value="pct">% only: standard journal, no balance or prop firm needed</option></select>
+              <span class="hint" id="sUnitHint">Choose before you start logging. Switching later doesn't convert trades you've already logged.</span></div>
+            <div class="field" id="sCurrencyWrap"><label for="sCurrency">Currency</label><select id="sCurrency">
               <option value="$">$ US dollar</option><option value="€">€ Euro</option><option value="£">£ Pound</option><option value="¥">¥ Yen</option>
               <option value="A$">A$ Australian dollar</option><option value="C$">C$ Canadian dollar</option><option value="CHF">CHF Swiss franc</option></select></div>
             <div class="field"><label for="sSessionMode">Session times</label><select id="sSessionMode">
@@ -2589,6 +2600,11 @@ footer { color: var(--muted); font-size: 12.5px; text-align: center; padding: 20
   <div class="dlg-body">
     <h3 id="introTitle">Welcome to ELEV8</h3>
     <p id="introText">Want a one-minute tour of your journal, or would you rather look around yourself? You can take the tour any time from Settings.</p>
+    <div class="unit-pick" id="introUnit" role="radiogroup" aria-label="How do you want to log results?" hidden>
+      <div class="lbl">How do you want to log your trades?</div>
+      <label><input type="radio" name="introUnit" value="pct"><span><b>Standard journal (%)</b><small>Log each trade as a % win or loss. No balance, account or prop firm needed.</small></span></label>
+      <label><input type="radio" name="introUnit" value="money" checked><span><b>Money and accounts</b><small>Log amounts, track balances and prop firm rules.</small></span></label>
+    </div>
     <div class="dlg-actions">
       <button class="btn ghost" type="button" id="introSelf">Look around myself</button>
       <button class="btn primary" type="button" id="introTour">Take the tour</button>
@@ -2936,6 +2952,7 @@ const ico = (name, cls = "") => `<svg class="ni${cls ? " " + cls : ""}" viewBox=
 
 const DEFAULT_SETTINGS = {
   balance: 10000,
+  unit: "money",    // "money", or "pct" for the standard journal: each trade logged as a % result, no balance needed
   currency: "$",
   defaultRisk: 100,
   sessionMode: "utc",
@@ -3872,15 +3889,19 @@ const calm = () => reduced() || document.documentElement.classList.contains("cal
 
 // The currency symbol from settings, limited to 4 plain characters (it's shown inside HTML everywhere).
 const curSym = () => String(settings.currency || "$").replace(/[<>&"'`\\]/g, "").trim().slice(0, 4) || "$";
+// Standard journal: every trade's P&L is a % of the account (2 means +2%), with no balance behind it.
+const pctMode = () => settings.unit === "pct";
 function money(v, { signed = true, decimals = 2 } = {}) {
   if (v == null || !Number.isFinite(v)) return "—";
-  const abs = Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  const dp = pctMode() ? Math.max(decimals, 2) : decimals;
+  const abs = Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
   const sign = v > 0 ? (signed ? "+" : "") : v < 0 ? "−" : "";
-  return sign + curSym() + abs;
+  return pctMode() ? sign + abs + "%" : sign + curSym() + abs;
 }
 // Compact amount for small calendar cells: +$850, −$1.2k, +$12k.
 function moneyShort(v) {
   const a = Math.abs(v), sign = v > 0 ? "+" : v < 0 ? "−" : "";
+  if (pctMode()) return sign + (+a.toFixed(a < 10 ? 2 : 1)) + "%";
   const body = a < 1000 ? Math.round(a).toLocaleString("en-US") : a < 10000 ? (a / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.round(a / 1000) + "k";
   return sign + curSym() + body;
 }
@@ -3982,6 +4003,7 @@ function resultOf(t) { return isOpen(t) ? "Open" : isScratch(t) ? "BE" : t.pnl >
 // default risk; with neither, under 0.02% of the account). +$1.12 on a $100-risk trade is breakeven.
 function scratchSize(t) {
   const risk = Number(t.risk) > 0 ? Number(t.risk) : Number(settings.defaultRisk) > 0 ? Number(settings.defaultRisk) : 0;
+  if (pctMode()) return Number(t.risk) > 0 ? Number(t.risk) * 0.1 : 0.02;
   return risk ? risk * 0.1 : startingBalance(t.account) * 0.0002;
 }
 function isScratch(t) { const v = Number(t.pnl) || 0; return !isOpen(t) && Math.abs(v) < scratchSize(t); }
@@ -4034,6 +4056,8 @@ function isOpen(t) { return !!t && t.status === "open"; }
 function rOf(t) {
   if (t.r != null && Number.isFinite(t.r)) return t.r;
   if (t.risk && t.pnl != null && !isOpen(t)) return t.pnl / t.risk;
+  // % journal: with no risk logged, R is the result over the usual risk per trade (1% unless set).
+  if (pctMode() && t.pnl != null && !isOpen(t)) return t.pnl / (Number(settings.defaultRisk) > 0 ? Number(settings.defaultRisk) : 1);
   return null;
 }
 
@@ -4125,6 +4149,7 @@ function acctLabel(a) {
 // Balance before any trades: the account's size when one account is in view, every account's size added up
 // for all accounts, or the starting balance from Preferences when no sizes are set.
 function startingBalance(accountId) {
+  if (pctMode()) return 0; // the equity curve starts at 0% and adds up each trade's %
   const one = acctById(accountId);
   if (one) return Number(one.size) > 0 ? Number(one.size) : Number(settings.balance);
   // "All accounts": the accounts still in use. Archived ones (failed or finished) aren't part of the balance.
@@ -4135,6 +4160,7 @@ function startingBalance(accountId) {
 // their starting sizes plus everything they closed earlier. Every % of balance in the app
 // (Overview, weekly review, share cards) is worked out from this, so the numbers always agree.
 function balanceBefore(list) {
+  if (pctMode()) return 100; // P&L is already a %: 2 on a base of 100 is +2%, and %s add up
   if (!list.length) return startingBalance(ui.account);
   // Trades not linked to an account are sized as if they were on the account you log to by default
   // (the one picked in the filter, else the last one used). Only with no accounts at all does the
@@ -4257,12 +4283,12 @@ function renderDashboard() {
   const freshWeek = hasAny && ui.range === "week" && filterCount() === 0;
   F("welcomeCard").hidden = DEMO || hasAny || loading || unsynced || !!ui.welcomeDone || currentTab() !== "overview";
   // No trading account yet: ask for one instead of offering to log a trade.
-  const noAcct = !DEMO && !loading && !unsynced && !persist.readOnly && !allAccounts().length;
+  const noAcct = !DEMO && !loading && !unsynced && !persist.readOnly && !allAccounts().length && !pctMode(); // the % journal needs no account
   F("acctFirstCard").hidden = !noAcct; F("quickLog").hidden = noAcct;
   F("dashEmptyBtn").textContent = noAcct && !hasAny ? "Register an account" : "Log a trade";
   F("dashEmptyBtn").hidden = loading || unsynced;
   $("#dashEmpty h3").textContent = loading ? "Loading your journal…" : unsynced ? "Couldn't load your journal" : freshWeek ? "New week, clean slate" : hasAny ? "No trades in this view" : "Your journal is empty";
-  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically." : !DEMO && !hasAny && !allAccounts().length ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : ui.acctType && !allAccounts().some(a => a.type === ui.acctType) ? `No ${ui.acctType.toLowerCase()} accounts yet. Add one in Accounts, or pick another account type in Filters.` : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
+  $("#dashEmptyText").textContent = loading ? "Fetching your trades." : unsynced ? "Check your connection. It tries again automatically." : !DEMO && !hasAny && !allAccounts().length && !pctMode() ? "Register the account you trade, then log your first trade to start seeing analytics." : freshWeek ? "Your stats start fresh every Monday. No closed trades yet this week. Earlier weeks are all saved: open Filters and pick Last week, This month or All time to see them." : ui.acctType && !allAccounts().some(a => a.type === ui.acctType) ? `No ${ui.acctType.toLowerCase()} accounts yet. Add one in Accounts, or pick another account type in Filters.` : hasAny ? "No trades match these filters. Try a wider period." : "Log your first trade, or import a spreadsheet (XLSX/CSV) from Settings, to start seeing analytics.";
 
   const open = sortChrono(trades.filter(t => isOpen(t) && inAccount(t) && (!ui.session || t.session === ui.session) && (!ui.setup || t.setup === ui.setup))).reverse();
   renderOpen(open);
@@ -4329,7 +4355,7 @@ function renderKpis(st, startBal, list) {
   const pfTxt = v => v === Infinity ? "∞" : v.toFixed(2);
   const cards = [
     { label: "Total P&L", tone: tone(st.total), accent: st.total >= 0 ? "green" : "red", val: st.total, fmt: v => money(v),
-      meta: `<span class="mono">${st.n}</span> trades · <span class="mono ${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span>` },
+      meta: `<span class="mono">${st.n}</span> trades` + (pctMode() ? "" : ` · <span class="mono ${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span>`) },
     { label: "Win rate", tone: st.winRate >= 0.5 ? "pos" : "neg", accent: "blue", val: st.winRate, fmt: v => pct(v),
       meta: `<span class="mono pos">${st.wins}W</span> / <span class="mono neg">${st.losses}L</span>${st.be ? ` / <span class="mono neu">${st.be}BE</span>` : ""}` },
     { label: "Profit factor", tone: "hl", accent: "teal", val: st.pf, fmt: pfTxt,
@@ -4372,7 +4398,7 @@ function equityView(list) {
 }
 function drawEquity(list) {
   const ev = equityView(list), a = acctById(ev.id);
-  F("eqSub").textContent = (a ? acctLabel(a) + " · " : "") + "Balance after each trade · dots coloured by result";
+  F("eqSub").textContent = (a ? acctLabel(a) + " · " : "") + (pctMode() ? "Running total % after each trade" : "Balance after each trade") + " · dots coloured by result";
   if (!ev.list.length) {
     $$("svg", F("equityWrap")).forEach(s => s.remove());
     F("eqEmpty").hidden = false;
@@ -4406,7 +4432,7 @@ function renderEquity(list, startBal, st) {
     const v = minY + (maxY - minY) * (i / gridN);
     const y = sy(v);
     grid += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-dasharray="${i === 0 ? "" : "3 5"}"/>`;
-    grid += `<text class="axis-label" x="${pad.l - 10}" y="${y + 4}" text-anchor="end">${curSym()}${Math.round(v).toLocaleString("en-US")}</text>`;
+    grid += `<text class="axis-label" x="${pad.l - 10}" y="${y + 4}" text-anchor="end">${pctMode() ? (+v.toFixed(1)) + "%" : curSym() + Math.round(v).toLocaleString("en-US")}</text>`;
   }
   // X labels: up to 6 dates.
   const ticks = Math.min(W < 520 ? 3 : 6, list.length);
@@ -4512,8 +4538,8 @@ function renderEquity(list, startBal, st) {
 
   const ret = startBal ? (bal - startBal) / startBal : 0;
   $("#eqStats").innerHTML = `
-    <div><span>Balance</span><span>${money(bal, { signed: false })}</span></div>
-    <div><span>Return</span><span class="${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span></div>
+    ${pctMode() ? `<div><span>Total</span><span class="${tone(bal)}">${money(bal)}</span></div>` : `<div><span>Balance</span><span>${money(bal, { signed: false })}</span></div>
+    <div><span>Return</span><span class="${tone(ret)}">${(ret >= 0 ? "+" : "") + (ret * 100).toFixed(2)}%</span></div>`}
     <div><span>Max DD</span><span class="neg">${money(st.maxDD)}</span></div>`;
 }
 
@@ -5478,6 +5504,28 @@ function renderAccount() {
   if (![...cur.options].some(o => o.value === sym)) cur.add(new Option(sym, sym));
   cur.value = sym;
   F("sSessionMode").value = settings.sessionMode;
+  F("sUnit").value = pctMode() ? "pct" : "money";
+  F("sCurrencyWrap").hidden = pctMode();
+  applyUnitLabels();
+}
+// Labels and hints on the trade form follow the journal's unit.
+function applyUnitLabels() {
+  const p = pctMode();
+  F("tPnlLbl").textContent = p ? "Result (%)" : "P&L before fees";
+  F("tPnl").placeholder = p ? "e.g. 2" : "e.g. 250";
+  F("tPnlHint").textContent = p ? "The % you made or lost. Tap +/− for a loss, 0 for breakeven" : "Tap +/− for a loss, 0 for breakeven";
+  F("tRiskLbl").textContent = p ? "Risk (%)" : "Risk amount";
+  F("tRisk").placeholder = p ? "e.g. 1" : "";
+  F("tFeesWrap").hidden = p;
+}
+function setUnit(u) {
+  const want = u === "pct" ? "pct" : "money";
+  if ((settings.unit === "pct" ? "pct" : "money") === want) return;
+  settings.unit = want;
+  // A remembered $ risk means nothing in %, and the other way round.
+  if (want === "pct" && !(settings.defaultRisk <= 5)) settings.defaultRisk = 1;
+  if (want === "money" && settings.defaultRisk <= 5) settings.defaultRisk = DEFAULT_SETTINGS.defaultRisk;
+  saveSettings();
 }
 
 /* ======================================================================
@@ -5695,7 +5743,7 @@ const ALIASES = {
   direction: ["direction", "side", "type", "position", "longshort", "buysell", "bias"],
   setup: ["setup", "strategy", "pattern", "model", "playbook", "setuptype"],
   r: ["r", "rmultiple", "rmult", "realizedr", "rr", "rresult", "rs", "rachieved"],
-  pnl: ["pnl", "pl", "profit", "profitloss", "netpl", "netpnl", "netprofit", "result$", "pnl$", "amount", "gainloss", "return$"],
+  pnl: ["pnl", "pl", "profit", "profitloss", "pnlpct", "plpct", "return", "returnpct", "percent", "pct", "gain", "netpl", "netpnl", "netprofit", "result$", "pnl$", "amount", "gainloss", "return$"],
   result: ["result", "outcome", "winloss", "wl"],
   entry: ["entry", "entryprice", "open", "openprice"],
   stop: ["stop", "sl", "stoploss", "stopprice"],
@@ -6055,7 +6103,7 @@ $$(".tab").forEach(tab => {
   });
 });
 document.addEventListener("click", e => {
-  if (e.target.closest("[data-acct-first]") || (e.target.closest("#dashEmptyBtn") && !DEMO && !allAccounts().length && !realTrades.length)) {
+  if (e.target.closest("[data-acct-first]") || (e.target.closest("#dashEmptyBtn") && !DEMO && !allAccounts().length && !realTrades.length && !pctMode())) {
     openAccountDlg(null, false); return;
   }
   const go = e.target.closest("[data-goto]");
@@ -6887,7 +6935,7 @@ function maybeStartTour() {
   if (afterDemoTour && !persist.loading && !persist.readOnly && !(SB && !inViewer() && !(sb.session && sb.synced))) {
     afterDemoTour = false;
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* ignore */ }
-    if (!allAccounts().length) setTimeout(() => { if (!document.documentElement.classList.contains("gated") && !document.querySelector("dialog[open]")) offerSetup(); }, 500);
+    if (!allAccounts().length && !pctMode()) setTimeout(() => { if (!document.documentElement.classList.contains("gated") && !document.querySelector("dialog[open]")) offerSetup(); }, 500);
     return;
   }
   if (DEMO || tourSeen() || allAccounts().length || realTrades.length || persist.loading || persist.readOnly) return;
@@ -8274,6 +8322,13 @@ F("setNav").addEventListener("click", e => {
   const b = e.target.closest("button[data-pane]");
   if (b) showSetPane(b.dataset.pane);
 });
+F("sUnit").addEventListener("change", e => {
+  const want = e.target.value;
+  if (realTrades.length && !confirm(want === "pct"
+    ? "Switch to % only? Trades you've already logged keep their numbers, so a $250 trade would read as +250%. Best used on a fresh journal."
+    : "Switch back to money? Trades logged as % keep their numbers, so +2% would read as $2.")) { e.target.value = pctMode() ? "pct" : "money"; return; }
+  setUnit(want); toast("Saved"); refreshAll(); onDataChanged();
+});
 ["sCurrency", "sSessionMode"].forEach(id => F(id).addEventListener("change", () => {
   settings.currency = F("sCurrency").value.replace(/[<>&"'`\\]/g, "").slice(0, 4) || "$";
   settings.sessionMode = F("sSessionMode").value;
@@ -8749,6 +8804,7 @@ function offerTour() {
   F("introText").textContent = DEMO
     ? "This sample journal is full of example trades. Want a one-minute tour, or would you rather look around yourself?"
     : "Want a one-minute tour of your journal, or would you rather look around yourself? You can take the tour any time from Settings.";
+  showUnitPick();
   const dlg = F("introDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   F("introTour").focus();
@@ -8759,16 +8815,32 @@ function offerSetup() {
   F("introTitle").textContent = "Set up your journal";
   F("introText").textContent = "Register the trading account you want to track: live, prop firm, demo or backtest. Or close this and start with an empty journal. You can add accounts any time from Accounts.";
   F("introTour").textContent = "Register an account"; F("introSelf").textContent = "Close";
+  showUnitPick();
   const dlg = F("introDlg");
   if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
   F("introTour").focus();
 }
+// A new journal picks its unit here: % only (no balance or accounts) or money.
+function showUnitPick() {
+  F("introUnit").hidden = DEMO || realTrades.length > 0;
+  $$("input[name=introUnit]").forEach(r => r.checked = r.value === (pctMode() ? "pct" : "money"));
+}
+function takeUnitPick() {
+  if (F("introUnit").hidden) return;
+  const r = $("input[name=introUnit]:checked");
+  if (r) { setUnit(r.value); renderAccount(); }
+}
+$$("input[name=introUnit]").forEach(r => r.addEventListener("change", () => {
+  if (introMode === "setup") F("introTour").textContent = r.value === "pct" && r.checked ? "Start journaling" : "Register an account";
+}));
 F("introTour").addEventListener("click", () => {
+  takeUnitPick();
+  if (introMode === "setup" && pctMode()) { F("introDlg").close(); onDataChanged(); return; } // nothing to register in % mode
   if (introMode === "tour" && tourInDemo()) { startTour(); return; } // leaving for the demo: closing first would step Back
   F("introDlg").close();
   if (introMode === "setup") setTimeout(() => openAccountDlg(null, false), 50); else startTour();
 });
-F("introSelf").addEventListener("click", () => { F("introDlg").close(); if (introMode === "tour") markTourSeen(); });
+F("introSelf").addEventListener("click", () => { takeUnitPick(); F("introDlg").close(); if (introMode === "tour") markTourSeen(); onDataChanged(); });
 // Closing it with Escape or Back counts as looking around.
 F("introDlg").addEventListener("close", () => { if (introMode === "tour" && tourAt < 0 && !tourSeen()) markTourSeen(); });
 F("welcomeX").addEventListener("click", () => { ui.welcomeDone = true; saveUi(); F("welcomeCard").hidden = true; });
