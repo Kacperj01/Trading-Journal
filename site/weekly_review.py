@@ -228,6 +228,9 @@ def to_unit(trades, settings):
     start_bal = num(settings.get("balance")) or 10000.0
     key = lambda t: t.get("account") if sizes.get(t.get("account"), 0) > 0 else ""
     close = lambda t: (t.get("closedDate") or t.get("date") or "") + " " + ((t.get("closedTime") if t.get("closedDate") else t.get("time")) or "")
+    # Journal and Accounts are separate journals (the app's bookOf): only this mode's trades count.
+    book = lambda t: "pct" if t.get("book") == "pct" or (t.get("book") is None and t.get("unit") == "pct" and not sizes.get(t.get("account"), 0) > 0) else "acct"
+    trades = [t for t in trades if book(t) == ("pct" if to_pct else "acct")]
     bal, out = {}, {}
     for t in sorted(trades, key=close):
         k = key(t)
