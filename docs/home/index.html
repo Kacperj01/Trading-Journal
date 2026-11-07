@@ -36,7 +36,7 @@ img{display:block;max-width:100%}h1,h2,h3,h4,p{margin:0}a{color:inherit;text-dec
 .nav{position:fixed;inset:0 0 auto;z-index:20;padding-top:env(safe-area-inset-top,0px);mix-blend-mode:normal}
 .nav .wrap{display:flex;align-items:center;gap:28px;height:72px}.nav .lg{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.14em}.nav .lg img{width:38px}
 .nav nav{display:flex;gap:26px;font-size:14px;color:var(--t2)}.nav .sp{flex:1}.nav .btn{padding:10px 18px;font-size:14px}
-.nav.solid{background:rgba(6,17,31,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav.solid{background:rgba(6,17,31,.96);border-bottom:1px solid var(--line)}
 /* hero: layered parallax scene with a giant wordmark */
 .hero{position:relative;height:100vh;height:100lvh}
 .stage{position:relative;height:100vh;height:100lvh;overflow:hidden;contain:paint}
@@ -110,15 +110,8 @@ html.touch .cols .over{background:radial-gradient(85% 55% at 50% 50%,rgba(6,17,3
 html.touch .lap.rv{transform:translate3d(0,26px,0)!important}html.touch .lap.rv.in{transform:none!important}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
 
-/* Hero depth without code: the browser's own scroll animation (off the main thread). Browsers without it show a still hero. */
+/* The hero is still: a scroll-linked drift here held up the first scroll on Safari for Mac. */
 .layer{will-change:auto;transform:none}
-@supports (animation-timeline: scroll()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .layer[data-speed]{animation:heroDrift linear both;animation-timeline:scroll(root);animation-range:0 100vh;will-change:transform}
-    .layer[data-speed="0.55"]{--d:-38vh}.layer[data-speed="0.3"]{--d:-20vh}.layer[data-speed="0.12"]{--d:-8vh}
-  }
-}
-@keyframes heroDrift{to{transform:translate3d(0,var(--d,0),0)}}
 .chev{will-change:auto}
 .chev-in-wait svg{opacity:0;transform:translate3d(-60px,0,0);transition:opacity .7s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
 .chev-in svg{opacity:1;transform:none}
