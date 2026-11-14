@@ -2,7 +2,8 @@
 
 ## Videos, social posts and marketing
 - Every promo video and social post must say ELEV8 is **for education only, not financial advice**, and that it is **not affiliated with any prop firm or broker**.
-- No pricing on the homepage or in promos; use "Start now".
+- No pricing in promos; use "Start now".
+- Journal plans: Free (EUR 0), Pro (EUR 14.99/mo or 149/yr), Elite (EUR 29.99/mo or 299/yr), with a 7-day Elite trial and no card. Shown in the homepage pricing section and on elev8trading.app. Paid plans aren't built yet ("Launching soon"); until they are, every feature stays free.
 - Keep the ELEV8 colours and the Outfit font.
 
 ## Repo
