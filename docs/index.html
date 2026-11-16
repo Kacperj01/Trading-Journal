@@ -2,7 +2,7 @@
 <html lang="en" class="hosted">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-CfnI8CV1cqIZOSAHe8AC3qZMdubvF1saGTDjjIWeCSc=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-JpV2HLgPvhSLEn3l9xrEvhx3FmtbH6ehNKxXW2+wxj8=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-nQVHNu0WE5DJLwIZORXJhYY7748R28jB2YKYSUaYlsM=' 'sha256-UH3tLkI/vLYUFSjwqLOHXMKN5aewz23q6TR9bEFnYWE=' 'sha256-krVT6bWjdQW5XYFjU4PiqvoltU48V4tcCgIKdKc7EbA=' 'sha256-FGcmVuy+PgMmFzURK4RbDXxIjwLiCVnpHRUwoGQFYeQ=' 'sha256-JvfXQl57NMHbKW05BtX+049N6tFuDpipeJe25lFT6lQ=' 'sha256-TIfIeQZTMbGIzM/1BfNlUtbtkXjRc/3XJqpCygyidcc=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://jkxcoebilwcqeeziqhwn.supabase.co blob: https://cloudflareinsights.com; worker-src 'self' blob:; manifest-src 'self'; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <script>if (window.top !== window.self) { document.documentElement.style.display = "none"; try { window.top.location.replace(window.location.href); } catch (e) {} }</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta property="og:type" content="website">
@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://elev8tradingjournal.com/home/img/overview-desk.jpg">
 <meta property="og:url" content="https://elev8tradingjournal.com/">
 <meta name="twitter:card" content="summary_large_image">
-<script>window.ELEV8_BUILD = "fd38ff1cca";</script>
+<script>window.ELEV8_BUILD = "12867d9c02";</script>
 <script>
   // elev8tradingjournal.com shows the homepage, except for people who are signed in on this device (their
   // journal opens straight away) and someone keeping a journal on this device without an account. The installed
@@ -3059,7 +3059,7 @@ const DEFAULT_SETTINGS = {
 function demoJournal() {
   let seed = 8; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
   const z = n => String(n).padStart(2, "0"), iso = d => d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
-  const live = { id: "demo-live", type: "Live", broker: "Vantage", platform: "MetaTrader 5", size: 10000, name: "Vantage Live" };
+  const live = { id: "demo-live", type: "Live", broker: "", platform: "MetaTrader 5", size: 10000, name: "Live 10K" };
   const challenge = { id: "demo-challenge", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "Challenge", size: 100000, broker: "", platform: "MetaTrader 5", name: "100K Challenge" };
   const funded = { id: "demo-funded", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "FTMO Account", size: 50000, broker: "", platform: "MetaTrader 5", name: "Funded 50K", startDate: "",
     payouts: [] };
@@ -5990,7 +5990,7 @@ function parseMoney(v) {
   const n = parseFloat(s);
   return Number.isFinite(n) ? (neg ? -Math.abs(n) : n) : null;
 }
-// The Account column from an export ("Vantage Live", "FTMO 100K Challenge"…) back to the account it names.
+// The Account column from an export ("Live 10K", "FTMO 100K Challenge"…) back to the account it names.
 function accountByLabel(v) {
   const want = String(v || "").trim().toLowerCase();
   if (!want) return "";

@@ -3008,7 +3008,7 @@ const DEFAULT_SETTINGS = {
 function demoJournal() {
   let seed = 8; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, pick = a => a[Math.floor(rnd() * a.length)];
   const z = n => String(n).padStart(2, "0"), iso = d => d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate());
-  const live = { id: "demo-live", type: "Live", broker: "Vantage", platform: "MetaTrader 5", size: 10000, name: "Vantage Live" };
+  const live = { id: "demo-live", type: "Live", broker: "", platform: "MetaTrader 5", size: 10000, name: "Live 10K" };
   const challenge = { id: "demo-challenge", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "Challenge", size: 100000, broker: "", platform: "MetaTrader 5", name: "100K Challenge" };
   const funded = { id: "demo-funded", type: "Prop firm", firm: "FTMO", program: "ftmo-2step", phase: "FTMO Account", size: 50000, broker: "", platform: "MetaTrader 5", name: "Funded 50K", startDate: "",
     payouts: [] };
@@ -5939,7 +5939,7 @@ function parseMoney(v) {
   const n = parseFloat(s);
   return Number.isFinite(n) ? (neg ? -Math.abs(n) : n) : null;
 }
-// The Account column from an export ("Vantage Live", "FTMO 100K Challenge"…) back to the account it names.
+// The Account column from an export ("Live 10K", "FTMO 100K Challenge"…) back to the account it names.
 function accountByLabel(v) {
   const want = String(v || "").trim().toLowerCase();
   if (!want) return "";
